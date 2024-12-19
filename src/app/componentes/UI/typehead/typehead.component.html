@@ -1,0 +1,31 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="cancelChanges()">Cancelar</ion-button>
+    </ion-buttons>
+    <ion-title class="text-center">{{ title }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="confirmChanges()">Guardar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+  <ion-toolbar>
+    <ion-searchbar
+      (ionInput)="searchbarInput($event.target.value)"
+      debounce="600"
+      placeholder="Buscar..."
+    ></ion-searchbar>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content color="light" class="ion-padding">
+  <ion-list id="modal-list" [inset]="true">
+    <ion-item *ngFor="let item of filteredItems; trackBy: trackItems">
+      <ion-label>{{ item.text }}</ion-label>
+      <ion-checkbox
+        [value]="item.value"
+        [checked]="isChecked(item.value)"
+        (ionChange)="checkboxChange($event)"
+      ></ion-checkbox>
+    </ion-item>
+  </ion-list>
+</ion-content>

@@ -10,28 +10,103 @@
  */
 
 /* Core CSS required for Ionic components to work properly */
-@import "@ionic/angular/css/core.css";
+@import "~@ionic/angular/css/core.css";
 
 /* Basic CSS for apps built with Ionic */
-@import "@ionic/angular/css/normalize.css";
-@import "@ionic/angular/css/structure.css";
-@import "@ionic/angular/css/typography.css";
-@import "@ionic/angular/css/display.css";
+@import "~@ionic/angular/css/normalize.css";
+@import "~@ionic/angular/css/structure.css";
+@import "~@ionic/angular/css/typography.css";
+@import "~@ionic/angular/css/display.css";
 
 /* Optional CSS utils that can be commented out */
-@import "@ionic/angular/css/padding.css";
-@import "@ionic/angular/css/float-elements.css";
-@import "@ionic/angular/css/text-alignment.css";
-@import "@ionic/angular/css/text-transformation.css";
-@import "@ionic/angular/css/flex-utils.css";
+@import "~@ionic/angular/css/padding.css";
+@import "~@ionic/angular/css/float-elements.css";
+@import "~@ionic/angular/css/text-alignment.css";
+@import "~@ionic/angular/css/text-transformation.css";
+@import "~@ionic/angular/css/flex-utils.css";
+@import "~animate.css/animate.min.css";
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
+.ionic-selectable-item {
+	border-bottom: 1px solid rgba(0, 0, 0, 0.13);
+	--border-color: transparent;
+}
 
-/* @import "@ionic/angular/css/palettes/dark.always.css"; */
-/* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import "@ionic/angular/css/palettes/dark.system.css";
+.fontSize {
+	font-size: var(--default-font) !important;
+}
+
+p {
+	color: var(--ion-color-dark);
+}
+
+.text-truncate {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.w-100 {
+	width: 100% !important;
+}
+
+ion-range {
+	--bar-background: var(--ion-color-dark);
+	--bar-background-active: var(--ion-color-dark);
+}
+
+ion-checkbox {
+	--border-color: var(--ion-color-dark);
+}
+
+ion-button {
+	--border-radius: 10px !important;
+}
+
+.modal-color {
+	.alert-title,
+	.alert-radio-label,
+  .alert-checkbox-label,
+	.alert-button {
+		color: var(--ion-color-dark) !important;
+	}
+	.alert-head {
+		text-align: center;
+	}
+	/* .alert-wrapper {
+		background-color: var(--ion-background-color) !important;
+	} */
+}
+
+.header-modal {
+	color: var(--ion-color-dark);
+	background: var(--toolbar-menu);
+}
+
+pdf-viewer {
+	.ng2-pdf-viewer-container {
+		.pdfViewer {
+			.page {
+				margin-top: 20px;
+			}
+			.page:nth-child(1) {
+				margin-top: 0px;
+			}
+		}
+	}
+}
+
+ion-popover{
+	--background:rgb(62, 63, 63) ;
+	--backdrop-opacity: 0.6;
+	--box-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) ;
+	--color: white;
+	--width:80%;
+}
+
+ion-popover ion-content{
+	--background:rgb(62, 63, 63) ;
+}
+
+ion-popover::part(backdrop){
+	background: rgb(127, 128, 130) ;
+}

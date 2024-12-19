@@ -1,0 +1,28 @@
+:host {
+	ion-menu {
+		ion-toolbar {
+			color: var(--ion-color-dark);
+			--background: var(--toolbar-menu);
+			ion-icon {
+				color: var(--ion-color-dark);
+			}
+		}
+		ion-header {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			ion-img {
+				width: 40%;
+				min-height: 100px;
+			}
+		}
+	}
+	ion-content {
+		border-top: 1px solid var(--ion-border-color);
+		ion-list {
+			ion-item-divider {
+				--inner-padding-start: 0px;
+			}
+		}
+	}
+}

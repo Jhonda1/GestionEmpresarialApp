@@ -1,0 +1,14 @@
+ion-header {
+	padding: 3px;
+	border-bottom: 1px solid var(--ion-border-color);
+	background-color: var(--header-menu);
+	ion-toolbar {
+		height: 100%;
+		--color: var(--ion-color-dark);
+		--background: var(--ion-color-ligth);
+		ion-button {
+			--padding-end: 0px !important;
+			--padding-start: 0px !important;
+		}
+	}
+}

@@ -1,0 +1,63 @@
+<!-- eslint-disable @angular-eslint/template/eqeqeq -->
+<ion-menu (ionWillOpen)="obtenerUsuario()" side="start" type='overlay' [swipeGesture]="appMenuSwipeGesture"
+	menuId="first" contentId="main-cont" (ionDidOpen)="appMenuSwipeGesture = false"
+	(ionDidClose)="appMenuSwipeGesture = true">
+	<ion-header class="ion-no-border">
+		<ion-toolbar>
+			<ion-buttons slot="start">
+				<ion-button (click)="toggleMenu()">
+					<ion-icon slot="icon-only" name='close'></ion-icon>
+				</ion-button>
+			</ion-buttons>
+			<!-- <ion-buttons slot="end">
+				<ion-button (click)="mostrarConfiguracion('modulos/configuracion')">
+					<ion-icon name="settings-outline"></ion-icon>
+				</ion-button>
+			</ion-buttons> -->
+		</ion-toolbar>
+		<ion-img (click)="irMiPerfil()" [src]="datosUsuario['validaFoto'] == '1' ? foto + datosUsuario['foto'] : datosUsuario['foto']"></ion-img>
+		<ion-text class="w-100" color="dark" (click)="irMiPerfil()">
+			<h4 class="ion-margin text-truncate ion-text-center">{{ datosUsuario['nombre'] }}</h4>
+			<p class="ion-no-margin  ion-text-center">{{ datosUsuario['email'] }}</p>
+		</ion-text>
+	</ion-header>
+	<ion-content>
+		<ion-list mode="ios" [ngClass]="{'d-none' : men.modulo && !modulos[men.modulo]}" *ngFor="let men of menus;">
+			<ion-item-divider *ngIf="men['hijos'] && men.title != ''" [sticky]="true" color="light">
+				<ion-label color="dark">{{ men.title | titlecase }}</ion-label>
+			</ion-item-divider>
+			<ion-item (click)="toggleMenu(); irPagina(hijo.path)" lines="full" *ngFor="let hijo of men['hijos'];">
+				<ion-icon slot="start" [name]="hijo.icon" color="dark"></ion-icon>
+				<ion-label [ngClass]="size" color="dark" style="cursor: pointer;">{{ hijo.title }}</ion-label>
+			</ion-item>
+		</ion-list>
+	</ion-content>
+	<ion-footer class="ion-no-border">
+    	<ion-toolbar (click)="toggleMenu(true); SincronizarPermisos();">
+			<ion-buttons slot="start">
+				<ion-button>
+					<ion-icon slot="icon-only" name="sync"></ion-icon>
+				</ion-button>
+			</ion-buttons>
+			<ion-title class="ion-no-padding" [ngClass]="size" style="cursor: pointer;">Sincronizar Permisos</ion-title>
+		</ion-toolbar>
+
+    	<ion-toolbar (click)="toggleMenu(true); confirmarCambioClave();">
+			<ion-buttons slot="start">
+				<ion-button>
+					<ion-icon slot="icon-only" name="lock-open-outline"></ion-icon>
+				</ion-button>
+			</ion-buttons>
+			<ion-title class="ion-no-padding" [ngClass]="size" style="cursor: pointer;">Modificar Contraseña</ion-title>
+		</ion-toolbar>
+
+		<ion-toolbar (click)="toggleMenu(true); confirmarCerrarSesion();">
+			<ion-buttons slot="start">
+				<ion-button>
+					<ion-icon slot="icon-only" name="power"></ion-icon>
+				</ion-button>
+			</ion-buttons>
+			<ion-title class="ion-no-padding" [ngClass]="size" style="cursor: pointer;">Cerrar sesión</ion-title>
+		</ion-toolbar>
+	</ion-footer>
+</ion-menu>
