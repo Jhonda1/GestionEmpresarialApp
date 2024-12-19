@@ -1,0 +1,7 @@
+{
+  "name": "GestionEmpApp",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
