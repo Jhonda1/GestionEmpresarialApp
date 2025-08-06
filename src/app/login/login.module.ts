@@ -5,7 +5,6 @@ import { IonicModule } from '@ionic/angular';
 import { LoginPageRoutingModule } from './login-routing.module';
 import { RxReactiveFormsModule } from '@rxweb/reactive-form-validators';
 import { LoginPage } from './login.page';
-
 @NgModule({
 	imports: [
 		CommonModule,
@@ -15,6 +14,5 @@ import { LoginPage } from './login.page';
 		ReactiveFormsModule,
 		RxReactiveFormsModule,
 	],
-	declarations: [LoginPage]
 })
 export class LoginPageModule { }

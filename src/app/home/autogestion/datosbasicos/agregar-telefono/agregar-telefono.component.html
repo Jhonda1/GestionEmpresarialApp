@@ -1,0 +1,57 @@
+<ion-header class="ion-no-border">
+	<ion-toolbar color="ligth">
+		<ion-title color="dark" class="ion-text-center">Agregar Telefono</ion-title>
+		<ion-buttons slot="end" (click)="cerrarModal()">
+			<ion-icon color="dark" slot='icon-only' size='large' name='close-outline'>
+			</ion-icon>
+		</ion-buttons>
+	</ion-toolbar>
+</ion-header>
+
+
+<ion-content class="ion-padding">
+	<form [formGroup]="datosTelefono.formulario">
+		<ion-list lines="full">
+			<ion-item>
+				<ion-label position="floating" color="dark">Teléfono fijo</ion-label>
+				<ion-input formControlName="fijo" color="dark" type="text"></ion-input>
+				<ion-text class="animate__animated animate__bounceIn animate__faster"
+					*ngIf="datosTelefono.formulario.get('fijo')?.touched" color="danger">{{
+					datosTelefono.formulario.get('fijo')?.getError('errorMessage') }}</ion-text>
+			</ion-item>
+
+			<ion-item>
+				<ion-label position="floating" color="dark">* Teléfono celular</ion-label>
+				<ion-input formControlName="celular" color="dark" type="text"></ion-input>
+				<ion-text class="animate__animated animate__bounceIn animate__faster"
+					*ngIf="datosTelefono.formulario.get('celular')?.touched" color="danger">{{
+					datosTelefono.formulario.get('celular')?.getError('errorMessage') }}</ion-text>
+			</ion-item>
+
+			<ion-item>
+				<ion-label position="floating" color="dark">Telefono Principal</ion-label>
+				<ion-select formControlName="principal" okText="Aceptar" cancelText="Cancelar"
+					[interfaceOptions]="{cssClass: 'modal-color'}" placeholder="Selecciona principal">
+					<ion-select-option color="dark" *ngFor="let item of ppal;" [value]="item.valor">
+						{{ item.titulo }}
+					</ion-select-option>
+				</ion-select>
+				<ion-text class="animate__animated animate__bounceIn animate__faster"
+					*ngIf="datosTelefono.formulario.get('principal')?.touched" color="danger">{{
+					datosTelefono.formulario.get('principal')?.getError('errorMessage') }}</ion-text>
+			</ion-item>
+		</ion-list>
+	</form>
+</ion-content>
+
+<ion-footer>
+	<ion-toolbar>
+		<ion-title>
+			<ion-button [disabled]="datosTelefono.formulario.invalid" type="button" class="ion-no-margin" shape="round"
+				expand="full" (click)="submitDataFamiliaContacto('Telefonos')">
+				Agregar
+				<ion-icon slot="start" name="save-outline"></ion-icon>
+			</ion-button>
+		</ion-title>
+	</ion-toolbar>
+</ion-footer>

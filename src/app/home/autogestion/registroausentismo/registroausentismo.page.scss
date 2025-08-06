@@ -1,0 +1,16 @@
+ion-accordion {
+	.b-item {
+		--background: #f1f1f1;
+		--color: #140e0e;
+	}
+}
+
+#select-enfermedades {
+	margin-left: -16px !important;
+}
+
+.invalid {
+	--border-color: var(--ion-color-danger);
+	--background: none;
+	border-bottom: 1px solid var(--ion-color-danger);
+}

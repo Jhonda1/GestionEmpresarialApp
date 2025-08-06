@@ -3,6 +3,7 @@
 import { RxFormGroup, RxFormBuilder } from '@rxweb/reactive-form-validators';
 import * as moment from 'moment';
 import { environment } from '../../../environments/environment';
+import { FormGroup } from '@angular/forms';
 
 export class FuncionesGenerales {
 
@@ -38,14 +39,12 @@ export class FuncionesGenerales {
 		return { formulario, propiedades };
 	}
 
-	static formularioTocado(formulario: RxFormGroup) {
-		Object.values(formulario.controls).forEach(item => {
-			item.markAsTouched();
-			if ((item as RxFormGroup).controls) {
-				this.formularioTocado(item as RxFormGroup);
-			}
+	static formularioTocado(formulario: FormGroup) {
+		Object.keys(formulario.controls).forEach(field => {
+		  const control = formulario.get(field);
+		  control?.markAsTouched({ onlySelf: true });
 		});
-	}
+	  }
 
 	// eslint-disable-next-line arrow-body-style
 	static rastreo = (cambio: any, programa: string) => {

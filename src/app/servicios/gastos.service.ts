@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-
+import { PeticionService } from '../config/peticiones/peticion.service';
 @Injectable({
-  providedIn: 'root'
+	providedIn: 'root'
 })
-export class GastosService {
+export class GastosService  extends PeticionService {
 
-  constructor() { }
+
 }

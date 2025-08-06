@@ -1,0 +1,123 @@
+<app-header titulo="Solicitar Vacaciones"></app-header>
+<ion-progress-bar *ngIf="searching" type="indeterminate"></ion-progress-bar>
+
+<ion-content class="ion-padding-top">
+
+	<ion-refresher slot="fixed" (ionRefresh)="refresh($event)">
+		<ion-refresher-content></ion-refresher-content>
+	</ion-refresher>
+
+	<ion-accordion-group value="SV">
+		<ion-accordion value="SV" *ngIf="permisoPendientes" toggle-icon="arrow-down-circle">
+
+			<ion-item class="b-item" slot="header">
+				<ion-label>Periodos vacacionales Solicitados </ion-label>
+			</ion-item>
+
+			<ion-list slot="content">
+				<div class="informacion-familiar" color="gray">
+					<ion-searchbar (ionChange)="buscarFiltro('buscarListaHistorico', $event)" clearIcon="close-sharp"
+						placeholder="Buscar Estado" [debounce]="250"></ion-searchbar>
+
+					<ion-list lines="full" class="ion-no-padding">
+
+						<ion-item *ngFor="let item of qPendientes | filtro: 'Estado': buscarListaHistorico;"
+							class="ion-margin familiar" lines="none" [style]="item['Color']">
+
+							<ion-label>
+								<h2 class="ion-text-center">{{ item['nombre'] }}</h2>
+								<div class="item d-flex justify-content-between">
+									<span><b>Fecha Inicio</b></span>
+									<span>{{ item['FechaInicio'] }}</span>
+								</div>
+								<div class="item d-flex justify-content-between">
+									<span><b>Días compensados</b></span>
+									<span>{{ item['DiaCompensado'] }}</span>
+								</div>
+
+								<div class="item d-flex justify-content-between">
+									<span><b>Estado solicitud</b></span>
+									<ion-label class="ion-text-wrap">
+										<ion-text [color]="item['ColorEstado']">
+											<span><b>{{ item['Estado'] }}</b></span>
+										</ion-text>
+									</ion-label>
+								</div>
+
+							</ion-label>
+						</ion-item>
+					</ion-list>
+					<div class="ion-padding ion-text-center nohayresultado" *ngIf="!qPendientes.length && !searching">
+						No tiene solicitud en el historico.
+					</div>
+				</div>
+			</ion-list>
+		</ion-accordion>
+
+		<ion-accordion value="VD" *ngIf="permisoDisfrutados" toggle-icon="arrow-down-circle">
+			<ion-item class="b-item" slot="header">
+				<ion-label>Periodos vacacionales disfrutados o pagados</ion-label>
+			</ion-item>
+
+			<ion-list slot="content">
+				<div class="informacion-familiar" color="gray">
+					<ion-searchbar (ionChange)="buscarFiltro('buscarDisfrutados', $event)" clearIcon="close-sharp"
+						placeholder="Buscar Nombre" [debounce]="250">
+					</ion-searchbar>
+					<div>
+						<ion-list lines="full" class="ion-no-padding">
+							<ion-item *ngFor="let item of qAprobados | filtro: 'fechIni': buscarDisfrutados;"
+								class="ion-margin familiar" lines="none" [style]="item['Color']">
+
+								<ion-label>
+									<h2 class="ion-text-center">{{ item['nombre'] }}</h2>
+									<div class="item d-flex justify-content-between">
+										<span><b>Fecha Inicio</b></span>
+										<span>{{ item['fechIni'] }}</span>
+									</div>
+									<div class="item d-flex justify-content-between">
+										<span><b>Fecha Fin</b></span>
+										<span>{{ item['fechaFin'] }}</span>
+									</div>
+
+									<div class="item d-flex justify-content-between">
+										<span><b>Dias Aprobados</b></span>
+										<span>{{ item['dias'] }}</span>
+									</div>
+
+									<div class="item d-flex justify-content-between">
+										<span><b>Dias disfrutados</b></span>
+										<span>{{ item['disfrutado'] }}</span>
+									</div>
+
+									<div class="item d-flex justify-content-between">
+										<span><b>Valor</b></span>
+										<span>{{ item['Valor'] }}</span>
+									</div>
+
+									<div class="item d-flex justify-content-between">
+										<span><b>Fecha liquidación</b></span>
+										<span [style]="item['Color']">{{ item['FechaLiqui'] }}</span>
+									</div>
+
+								</ion-label>
+							</ion-item>
+						</ion-list>
+						<div class="ion-padding ion-text-center nohayresultado"
+							*ngIf="!qAprobados.length && !searching">
+							No tiene solicitud en el historico.
+						</div>
+					</div>
+				</div>
+			</ion-list>
+		</ion-accordion>
+
+	</ion-accordion-group>
+
+	<ion-fab vertical="bottom" *ngIf="permisoCrear" horizontal="end" slot="fixed">
+		<ion-fab-button (click)="irModal()">
+			<ion-icon name="add"></ion-icon>
+		</ion-fab-button>
+	</ion-fab>
+
+</ion-content>

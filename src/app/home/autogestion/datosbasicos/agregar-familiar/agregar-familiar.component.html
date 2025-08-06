@@ -1,0 +1,88 @@
+<ion-header class="ion-no-border">
+	<ion-toolbar color="ligth">
+		<ion-title color="dark" class="ion-text-center">Agregar Familiar</ion-title>
+		<ion-buttons slot="end" (click)="cerrarModal()">
+			<ion-icon color="dark" slot='icon-only' size='large' name='close-outline'>
+			</ion-icon>
+		</ion-buttons>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+	<form [formGroup]="datosFamiliar.formulario">
+		<ion-list lines="full" [formGroup]="datosFamiliar.formulario">
+
+			<app-select-autogestion (valorSelect)="cambiosComponenteSelect($event)" [cambiovalor]="cambiovalor"
+				[lista]="getTipoDocumento" [formulario]="datosFamiliar.formulario" valueField="tipodoc_id"
+				formControlSelect="tipodoc_id" textField="nombre" title="* Tipo de documento" required>
+			</app-select-autogestion>
+
+			<ion-item>
+				<ion-label position="floating" color="dark">* N° de documento</ion-label>
+				<ion-input formControlName="num_docu" color="dark" type="text" required></ion-input>
+				<ion-text class="animate__animated animate__bounceIn animate__faster"
+					*ngIf="datosFamiliar.formulario.get('num_docu')?.touched" color="danger">{{
+					datosFamiliar.formulario.get('num_docu')?.getError('errorMessage') }}</ion-text>
+			</ion-item>
+
+			<app-select-autogestion (valorSelect)="cambiosComponenteSelect($event)" [cambiovalor]="cambiovalor"
+				[lista]="getParentesco" [formulario]="datosFamiliar.formulario" valueField="parentesco_id"
+				formControlSelect="parentesco_id" textField="nombre" title="* Parentesco" required>
+			</app-select-autogestion>
+
+			<ion-item>
+				<ion-label position="floating" color="dark">* Nombre y Apellidos</ion-label>
+				<ion-input formControlName="nombre" color="dark" type="text" required></ion-input>
+				<ion-text class="animate__animated animate__bounceIn animate__faster"
+					*ngIf="datosFamiliar.formulario.get('nombre')?.touched" color="danger">{{
+					datosFamiliar.formulario.get('nombre')?.getError('errorMessage') }}</ion-text>
+			</ion-item>
+
+			<ion-item>
+				<ion-label position="floating" color="dark">* Fecha Nacimiento</ion-label><br>
+				<ion-input formControlName="fecha_nac" id="selectFecha2" expand="block"  display-format="DD-MM-YYYY" presentation='date' [max]="maximoFechanacimiento" required></ion-input>
+				<ion-popover trigger="selectFecha2" size="cover" >
+					<ng-template>
+						<ion-datetime display-format="DD-MM-YYYY"  formControlName="fecha_nac" [max]="maximoFechanacimiento"
+							presentation='date' id="selectFecha" [showDefaultButtons]="true" doneText="Confirmar" cancelText="Cancelar" (ionChange)="confirmar()"></ion-datetime>
+					</ng-template>
+				</ion-popover>
+			</ion-item>
+
+			<ion-item>
+				<ion-label position="floating" color="dark">Telefono fijo</ion-label>
+				<ion-input formControlName="tel_fijo" color="dark" type="text"></ion-input>
+			</ion-item>
+
+			<ion-item>
+				<ion-label position="floating" color="dark">* Telefono celular</ion-label>
+				<ion-input formControlName="celular" color="dark" type="text" required></ion-input>
+				<ion-text class="animate__animated animate__bounceIn animate__faster"
+					*ngIf="datosFamiliar.formulario.get('celular')?.touched" color="danger">{{
+					datosFamiliar.formulario.get('celular')?.getError('errorMessage') }}</ion-text>
+			</ion-item>
+
+			<ion-item>
+				<ion-label position="floating" color="dark">* Dirección</ion-label>
+				<ion-input formControlName="direccion" color="dark" type="text" required></ion-input>
+				<ion-text class="animate__animated animate__bounceIn animate__faster"
+					*ngIf="datosFamiliar.formulario.get('direccion')?.touched" color="danger">{{
+					datosFamiliar.formulario.get('direccion')?.getError('errorMessage') }}</ion-text>
+			</ion-item>
+		</ion-list>
+	</form>
+
+</ion-content>
+
+<ion-footer>
+	<ion-toolbar>
+		<ion-title>
+			<ion-button [disabled]="datosFamiliar.formulario.invalid" type="button" class="ion-no-margin" id="botonAgregar" shape="round"
+				expand="full" (click)="submitDataFamiliaContacto('FamiliaresAcudientes')">
+				Registrar Familiar
+				<ion-icon slot="start" name="save-outline"></ion-icon>
+			</ion-button>
+		</ion-title>
+	</ion-toolbar>
+</ion-footer>

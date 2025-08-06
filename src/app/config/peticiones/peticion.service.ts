@@ -49,11 +49,13 @@ export class PeticionService {
 	}
 
 	async desencriptar(encriptado: any) {
+		// console.log('encriptado', encriptado);
 		const salt = CryptoJS.enc.Hex.parse(encriptado.salt);
 		const iv = CryptoJS.enc.Hex.parse(encriptado.iv);
 		const crypt = JSON.parse(await this.storageService.get('crypt').then(resp => resp));
 		const key = CryptoJS.PBKDF2(crypt.key, salt, { hasher: CryptoJS.algo.SHA512, keySize: 64 / 8, iterations: crypt.it });
 		const decrypted = CryptoJS.AES.decrypt(encriptado.ciphertext, key, { iv: iv });
+		// console.log('decrypted', decrypted);
 		return JSON.parse(decrypted.toString(CryptoJS.enc.Utf8));
 	}
 
@@ -67,7 +69,6 @@ export class PeticionService {
 			encriptado: await this.encriptar(body)
 		};
 		const uri = this.construirUrl(controlador);
-		// eslint-disable-next-line @typescript-eslint/naming-convention
 		const Conexion = await this.storageService.get('conexion').then(resp => resp);
 		let NIT = await this.storageService.get('nit').then(resp => resp);
 		let usuario = await this.desencriptar(JSON.parse(await this.storageService.get('usuario').then(resp => resp)));

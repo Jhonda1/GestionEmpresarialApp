@@ -5,7 +5,7 @@
 export const environment = {
   production: false,
   //urlBack    : 'http://192.168.0.224:8016/dev/GestionEmp_Jhonda/'
-//  urlBack    : 'https://prosof.co:8011/testing/Gestion_Empresarial/'
+  // urlBack    : 'https://prosof.co:8011/testing/Gestion_Empresarial/'
   urlBack      : 'http://192.168.0.224:8016/dev/GestionEmp_Jhonda/'
 
 };

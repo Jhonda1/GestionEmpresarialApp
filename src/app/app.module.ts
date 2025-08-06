@@ -18,8 +18,8 @@ import { fab } from '@fortawesome/free-brands-svg-icons';
 // import { elementosproteccionPageModule } from './home/autogestion/elementosproteccion/elementosproteccion.module';
 @NgModule({
 	declarations: [
-		AppComponent
-	],
+		AppComponent, // Declara aquí el componente principal
+	  ],
 	imports: [
 		BrowserModule
 		, IonicModule.forRoot()

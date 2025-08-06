@@ -1,0 +1,138 @@
+<app-header titulo="Certificados Laborales">
+
+</app-header>
+
+<ion-content class="ion-padding-top">
+  <ion-header *ngIf="src">
+    <ion-toolbar color="ligth">
+      <ion-title color="dark" class="ion-text-center">Carta Laboral</ion-title>
+      <ion-buttons slot="end" (click)="cerrarIframe()">
+        <ion-icon color="dark" slot='icon-only' size='large' name='close-outline'>
+        </ion-icon>
+      </ion-buttons>
+    </ion-toolbar>
+    <iframe [src]="src" frameborder=0 style="width: 100%; height: 100vh;"></iframe>
+  </ion-header>
+
+
+  <div>
+    <ion-refresher slot="fixed" (ionRefresh)="obtenerDatosEmpleado($event)">
+      <ion-refresher-content></ion-refresher-content>
+    </ion-refresher>
+
+    <ion-searchbar (ionChange)="buscarFiltro('buscarListaHistorico', $event)" clearIcon="close-sharp"
+      placeholder="Buscar mes" [debounce]="250"></ion-searchbar>
+    <ion-accordion-group value="EX">
+      <ion-accordion value="EX" *ngIf="this.permisoExtrato" toggle-icon="chevron-down-outline">
+        <ion-item class="b-item" slot="header">
+          <ion-label>Extractos</ion-label>
+        </ion-item>
+
+        <ion-list lines="full" slot="content" class="ion-no-padding">
+          <ion-item-sliding (click)="sliding('slidingExtractos' + i)"
+            *ngFor="let item of qExtractos | filtro: 'mes': buscarListaHistorico; let i = index;"
+            [id]="'slidingExtractos' + i">
+            <ion-item>
+              <ion-label>
+                <h2>{{ item['anio'] }} - {{ item['mes'] }}</h2>
+                <p> {{ item['Tipo'] }}</p>
+              </ion-label>
+              <ion-text class="ion-text-center" color="primary">
+                <h6>Quincena</h6>
+                <ion-badge color="warning">
+                  {{ item['quincena'] }}
+                </ion-badge>
+              </ion-text>
+            </ion-item>
+            <ion-item-options side="end">
+              <ion-item-option slot="end" color="danger" (click)="download(item['base'])">
+                <fa-icon slot="icon-only" icon="file-pdf"></fa-icon>
+              </ion-item-option>
+              <ion-item-option slot="end" color="warning" (click)="obtenerArchivo(item['file_aux'])">
+                <fa-icon slot="icon-only" icon="download"></fa-icon>
+              </ion-item-option>
+            </ion-item-options>
+          </ion-item-sliding>
+          <div class="ion-padding ion-text-center" *ngIf="!qExtractos.length">
+            No tiene adjuntos.
+          </div>
+        </ion-list>
+      </ion-accordion>
+
+      <ion-accordion value="CI" *ngIf="this.permisoCertificado" toggle-icon="chevron-down-outline">
+        <ion-item class="b-item" slot="header">
+          <ion-label>Certificados</ion-label>
+        </ion-item>
+        <ion-list slot="content" class="ion-no-padding">
+          <ion-item-sliding (click)="sliding('slidingCIR' + i)" *ngFor="let item of qCIR; let i = index;"
+            [id]="'slidingCIR' + i">
+            <ion-item>
+              <ion-label>
+                <h2>{{ item['Tipo'] }}</h2>
+                <p> {{ item['filename'] }}</p>
+              </ion-label>
+              <ion-text class="ion-text-center" color="primary">
+                <h6>Año</h6>
+                <ion-badge color="warning">
+                  {{ item['anio'] }}
+                </ion-badge>
+              </ion-text>
+            </ion-item>
+            <ion-item-options side="end">
+              <ion-item-option slot="end" color="danger" (click)="download(item['base'])">
+                <fa-icon slot="icon-only" icon="file-pdf"></fa-icon>
+              </ion-item-option>
+              <ion-item-option slot="end" color="warning" (click)="obtenerArchivo(item['file_aux'])">
+                <fa-icon slot="icon-only" icon="download"></fa-icon>
+              </ion-item-option>
+            </ion-item-options>
+          </ion-item-sliding>
+          <div class="ion-padding ion-text-center" *ngIf="!qCIR.length">
+            No tiene adjuntos.
+          </div>
+        </ion-list>
+      </ion-accordion>
+
+      <ion-accordion *ngIf="this.permisoCartaLaboral" value="CL" toggle-icon="chevron-down-outline">
+        <ion-item class="b-item" slot="header">
+          <ion-label>Carta Laboral</ion-label>
+        </ion-item>
+        <ion-list slot="content" class="ion-no-padding">
+          <ion-item-sliding (click)="sliding('slidingCL' + i)" *ngFor="let item of qCartaLaboral; let i = index;"
+            [id]="'slidingCL' + i">
+            <ion-item>
+              <ion-label>
+                <h2>{{ item['nombre'] }}</h2>
+                <p> {{ item['num_docu'] }}</p>
+              </ion-label>
+              <ion-text class="ion-text-center" color="primary">
+                <h6>Fecha Ingreso</h6>
+                <ion-badge color="warning">
+                  {{ item['FechaIngre'] }}
+                </ion-badge>
+              </ion-text>
+            </ion-item>
+            <ion-item-options side="end">
+              <ion-item-option slot="end" color="danger" (click)="filtros(1)">
+                <fa-icon slot="icon-only" icon="file-pdf"></fa-icon>
+              </ion-item-option>
+              <ion-item-option slot="end" color="warning" (click)="filtros(0)">
+                <fa-icon slot="icon-only" icon="download"></fa-icon>
+              </ion-item-option>
+            </ion-item-options>
+          </ion-item-sliding>
+          <div class="ion-padding ion-text-center" *ngIf="!qCartaLaboral.length">
+            No tiene adjuntos.
+          </div>
+        </ion-list>
+      </ion-accordion>
+    </ion-accordion-group>
+
+    <ion-fab *ngIf="accordionGroup && (accordionGroup.value != 'CL')" horizontal="end" vertical="bottom" slot="fixed">
+      <ion-fab-button [disabled]="searching" color="secondary" (click)="filtros(null)">
+        <ion-icon name="funnel"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+  </div>
+
+</ion-content>

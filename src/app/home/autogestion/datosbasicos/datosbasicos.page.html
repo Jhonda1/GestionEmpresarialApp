@@ -1,0 +1,394 @@
+<app-header titulo="Datos Empleado"></app-header>
+
+<ion-progress-bar *ngIf="searching" type="indeterminate"></ion-progress-bar>
+
+<ion-content class="ion-padding-top">
+
+	<ion-refresher slot="fixed" (ionRefresh)="refresh($event)">
+		<ion-refresher-content></ion-refresher-content>
+	</ion-refresher>
+
+	<div class="foto-perfil">
+		<ion-avatar>
+			<img [src]="datosUsuario['validaFoto'] == '1' ? foto + (datosUsuario['foto'] ?? '') : (datosUsuario['foto'] ?? '')" />
+		</ion-avatar>
+		<ion-button (click)="obtenerFotoPerfil()">
+			<ion-icon slot="icon-only" name="camera"></ion-icon>
+		</ion-button>
+	</div>
+
+	<ion-accordion-group value="DP">
+
+		<ion-accordion value="DP" toggle-icon="chevron-down-outline">
+			<ion-item class="b-item" slot="header">
+				<ion-label>Datos personales</ion-label>
+			</ion-item>
+
+			<ion-list class="formularios" lines="full" slot="content" [ngStyle]="{'padding-bottom': '0px;'}"
+				[formGroup]="datosFormulario.formulario">
+				<ion-item>
+					<ion-label position="floating" color="dark">* Nombre Completo</ion-label>
+					<ion-input formControlName="nombre" color="dark" type="text" required></ion-input>
+					<ion-text class="animate__animated animate__bounceIn animate__faster"
+						*ngIf="datosFormulario.formulario.get('nombre')?.touched" color="danger">{{
+						datosFormulario.formulario.get('nombre')?.getError('errorMessage') }}</ion-text>
+				</ion-item>
+
+				<ion-item>
+					<ion-label position="floating" color="dark">* Primer Nombre</ion-label>
+					<ion-input formControlName="nombruno" color="dark" type="text" required>
+					</ion-input>
+					<ion-text class="animate__animated animate__bounceIn animate__faster"
+						*ngIf="datosFormulario.formulario.get('nombruno')?.touched" color="danger">{{
+						datosFormulario.formulario.get('nombruno')?.getError('errorMessage') }}</ion-text>
+				</ion-item>
+				<ion-item>
+					<ion-label position="floating" color="dark">Segundo Nombre</ion-label>
+					<ion-input formControlName="nombrdos" color="dark" type="text"></ion-input>
+					<ion-text class="animate__animated animate__bounceIn animate__faster"
+						*ngIf="datosFormulario.formulario.get('nombrdos')?.touched" color="danger">{{
+						datosFormulario.formulario.get('nombrdos')?.getError('errorMessage') }}</ion-text>
+				</ion-item>
+				<ion-item>
+					<ion-label position="floating" color="dark">* Primer Apellido</ion-label>
+					<ion-input formControlName="apelluno" color="dark" type="text" required></ion-input>
+					<ion-text class="animate__animated animate__bounceIn animate__faster"
+						*ngIf="datosFormulario.formulario.get('apelluno')?.touched" color="danger">{{
+						datosFormulario.formulario.get('apelluno')?.getError('errorMessage') }}</ion-text>
+				</ion-item>
+				<ion-item>
+					<ion-label position="floating" color="dark">Segundo Apellido</ion-label>
+					<ion-input formControlName="apelldos" color="dark" type="text"></ion-input>
+					<ion-text class="animate__animated animate__bounceIn animate__faster"
+						*ngIf="datosFormulario.formulario.get('apelldos')?.touched" color="danger">{{
+						datosFormulario.formulario.get('apelldos')?.getError('errorMessage') }}</ion-text>
+				</ion-item>
+
+				<app-select-autogestion (valorSelect)="cambiosComponenteSelect($event,'datospersonales', 'Tercero')"
+					[cambiovalor]="cambiovalor" [lista]="estadoCivil" [formulario]="datosFormulario.formulario"
+					valueField="estadocivil_id" formControlSelect="estadocivil_id" textField="nombre"
+					title="* Estado Civil">
+				</app-select-autogestion>
+
+				<ion-item>
+					<ion-label position="floating" color="dark">* Sexo</ion-label>
+					<ion-select formControlName="sexo" okText="Aceptar" cancelText="Cancelar"
+						[interfaceOptions]="{cssClass: 'modal-color'}" placeholder="Selecciona el Genero">
+						<ion-select-option color="dark" *ngFor="let item of generos;" [value]="item.valor">{{
+							item.titulo }}
+						</ion-select-option>
+					</ion-select>
+					<ion-text class="animate__animated animate__bounceIn animate__faster"
+						*ngIf="datosFormulario.formulario.get('sexo')?.touched" color="danger">{{
+						datosFormulario.formulario.get('sexo')?.getError('errorMessage') }}</ion-text>
+				</ion-item>
+
+				<ion-item>
+					<ion-label position="floating" color="dark">* RH</ion-label>
+					<ion-select formControlName="grupo_sanguineo" okText="Aceptar" cancelText="Cancelar"
+						[interfaceOptions]="{cssClass: 'modal-color'}" placeholder="Selecciona el Genero">
+						<ion-select-option color="dark" *ngFor="let item of grupo_sanguineo;" [value]="item.valor">{{
+							item.titulo }}
+						</ion-select-option>
+					</ion-select>
+					<ion-text class="animate__animated animate__bounceIn animate__faster"
+						*ngIf="datosFormulario.formulario.get('grupo_sanguineo')?.touched" color="danger">{{
+						datosFormulario.formulario.get('grupo_sanguineo')?.getError('errorMessage') }}</ion-text>
+				</ion-item>
+
+				<ion-item id="open-model">
+					<ion-label position="floating" color="dark">* Fecha Nacimiento</ion-label><br>
+					<ion-input formControlName="fecha_nac" expand="block"  display-format="DD-MM-YYYY"  
+					[max]="maximoFechanacimiento" presentation='date'></ion-input>
+					<div>
+						<ion-modal #modalFecha trigger="open-model"  >
+							<ng-template>
+								<ion-content>
+									<ion-header>
+										<ion-toolbar>
+											<ion-title slot="start">Fecha Nacimiento</ion-title>
+											<ion-buttons slot="end">
+												<ion-button (click)="cerrarModalFecha()">
+													<ion-icon slot="icon-only" name="close"></ion-icon>
+												</ion-button>
+											</ion-buttons>
+										</ion-toolbar>
+									</ion-header>
+									<ion-datetime #updateFechaModal formControlName="fecha_nac" display-format="DD-MM-YYYY"  
+									[max]="maximoFechanacimiento" presentation='date'></ion-datetime>
+								</ion-content>
+							</ng-template>
+						</ion-modal>
+					</div>
+					<ion-text class="animate__animated animate__bounceIn animate__faster"
+						*ngIf="datosFormulario.formulario.get('fecha_nac')?.touched" color="danger">{{
+						datosFormulario.formulario.get('fecha_nac')?.getError('errorMessage') }}</ion-text>
+				</ion-item>
+				
+			</ion-list>
+		</ion-accordion>
+
+    	<ion-accordion value="IE" toggle-icon="chevron-down-outline">
+			<ion-item class="b-item" slot="header">
+				<ion-label>Información del empleado </ion-label>
+			</ion-item>
+
+			<ion-list lines="full" class="formularios" slot="content" [ngStyle]="{'padding-bottom': '0px;'}"
+				[formGroup]="datosAdicionales.formulario">
+				<app-select-autogestion
+					(valorSelect)="cambiosComponenteSelect($event,'informacionempleado', 'Empleados')"
+					[cambiovalor]="cambiovalor" [lista]="paisnacido" [formulario]="datosAdicionales.formulario"
+					valueField="paisid" formControlSelect="paisid" textField="nombre" title="* Pais de nacimiento">
+				</app-select-autogestion>
+
+				<app-select-autogestion
+					(valorSelect)="cambiosComponenteSelect($event,'informacionempleado', 'Empleados')"
+					[cambiovalor]="cambiovalor" [lista]="dptonacido" [formulario]="datosAdicionales.formulario"
+					valueField="dptoid" formControlSelect="dptoid" textField="nombre" title="* Dpto de nacimiento">
+				</app-select-autogestion>
+
+				<app-select-autogestion
+					(valorSelect)="cambiosComponenteSelect($event,'informacionempleado', 'Empleados')"
+					[cambiovalor]="cambiovalor" [lista]="ciudadnacido" [formulario]="datosAdicionales.formulario"
+					valueField="ciudadid" formControlSelect="ciudadid" textField="nombre" title="* Ciudad de nacimiento">
+				</app-select-autogestion>
+
+				<ion-item>
+					<ion-label position="floating" color="dark">Pasatiempos</ion-label>
+					<ion-input formControlName="pasatiempo" color="dark" type="text"></ion-input>
+				</ion-item>
+			</ion-list>
+		</ion-accordion>
+
+    	<ion-accordion value="FI" toggle-icon="chevron-down-outline">
+			<ion-item class="b-item" slot="header">
+				<ion-label>Información familiar </ion-label>
+			</ion-item>
+
+			<ion-list class="formularios" slot="content">
+
+				<div class="informacion-familiar" color="gray">
+
+					<ion-searchbar (ionChange)="buscarFiltro('buscarListaHistorico', $event)" clearIcon="close-sharp"
+						placeholder="Buscar Nombre" [debounce]="250"></ion-searchbar>
+
+
+					<ion-list lines="full" class="ion-no-padding">
+
+						<ion-item *ngFor="let item of qFamiliar | filtro: 'nombre': buscarListaHistorico;"
+							class="ion-margin familiar" lines="none" [style]="item['Color']">
+
+							<ion-label>
+								<h2 class="ion-text-center">{{ item['nombre'] }}</h2>
+								<div class="item d-flex justify-content-between">
+									<span><b>Tipo. doc</b></span>
+									<span>{{ item['tipoDoc'] }}</span>
+								</div>
+								<div class="item d-flex justify-content-between">
+									<span><b>Nº de documento</b></span>
+									<span>{{ item['num_docu'] }}</span>
+								</div>
+								<div class="item d-flex justify-content-between">
+									<span><b>Parentesco</b></span>
+									<span>{{ item['parentesco'] }}</span>
+								</div>
+								<div class="item d-flex justify-content-between">
+									<span><b>Tel. Fijo</b></span>
+									<span>{{ item['tel_fijo'] }}</span>
+								</div>
+								<div class="item d-flex justify-content-between">
+									<span><b>Tel. Celular</b></span>
+									<span>{{ item['celular'] }}</span>
+								</div>
+								<div class="item d-flex justify-content-between">
+									<span><b>Fecha nac.</b></span>
+									<span>{{ item['fecha_nac'] }}</span>
+								</div>
+								<div class="item d-flex justify-content-between">
+									<span><b>Dirección</b></span>
+									<span>{{ item['direccion'] }}</span>
+								</div>
+							</ion-label>
+						</ion-item>
+					</ion-list>
+					<div class="ion-padding ion-text-center nohayresultado" *ngIf="!qFamiliar.length && !searching">
+						No tiene familia en el historico.
+					</div>
+
+				</div>
+			</ion-list>
+		</ion-accordion>
+
+    	<ion-accordion value="IC" toggle-icon="chevron-down-outline">
+			<ion-item class="b-item" slot="header">
+				<ion-label>Información academica</ion-label>
+			</ion-item>
+
+			<ion-list class="formularios" slot="content">
+				<div class="informacion-familiar" color="gray">
+
+					<ion-searchbar (ionChange)="buscarFiltro('buscarListaAcademia', $event)" clearIcon="close-sharp"
+						placeholder="Buscar Título" [debounce]="250"></ion-searchbar>
+
+					<ion-list lines="full" class="ion-no-padding">
+						<ion-item *ngFor="let item of qAcademica | filtro: 'titulo': buscarListaAcademia;"
+							class="ion-margin familiar" lines="none" [style]="item['Color']">
+
+							<ion-label>
+								<h2 class="ion-text-center">{{ item['titulo'] }}</h2>
+								<div class="item d-flex justify-content-between">
+									<span><b>Nivel educativo</b></span>
+									<span>{{ item['nivel'] }}</span>
+								</div>
+								<div class="item d-flex justify-content-between">
+									<span><b>últomo año / semestre cursado</b></span>
+									<span>{{ item['ultimocursado'] }}</span>
+								</div>
+								<div class="item d-flex justify-content-between">
+									<span><b>Fecha finalización</b></span>
+									<span>{{ item['fecha_finalizacion'] }}</span>
+								</div>
+								<div class="item d-flex justify-content-between">
+									<span><b>Institución</b></span>
+									<span>{{ item['institucion'] }}</span>
+								</div>
+							</ion-label>
+						</ion-item>
+					</ion-list>
+					<div class="ion-padding ion-text-center nohayresultado" *ngIf="!qAcademica.length && !searching">
+						No tiene estudios en el historico.
+					</div>
+				</div>
+			</ion-list>
+		</ion-accordion>
+
+
+		<ion-accordion value="DR" toggle-icon="chevron-down-outline">
+			<ion-item class="b-item" slot="header">
+				<ion-label>Datos de Contacto</ion-label>
+			</ion-item>
+
+			<ion-list slot="content">
+				<div class="informacion-familiar" color="gray">
+					<ion-searchbar (ionChange)="buscarFiltro('buscarListaRe', $event)" clearIcon="close-sharp"
+						placeholder="Buscar Residencia" [debounce]="250"></ion-searchbar>
+
+					<ion-list lines="full" class="ion-no-padding">
+						<ion-item *ngFor="let item of qResidencia | filtro: 'direccion': buscarListaRe;"
+							class="ion-margin familiar" lines="none" [style]="item['Color']">
+
+							<ion-label>
+								<div class="item d-flex justify-content-between">
+									<span><b>Pais</b></span>
+									<span>{{ item['pais'] }}</span>
+								</div>
+
+								<div class="item d-flex justify-content-between">
+									<span><b>Departamento</b></span>
+									<span>{{ item['dpto'] }}</span>
+								</div>
+								<div class="item d-flex justify-content-between">
+									<span><b>Ciudad</b></span>
+									<span>{{ item['ciudad'] }}</span>
+								</div>
+
+								<div class="item d-flex justify-content-between">
+									<span><b>Direccion</b></span>
+									<span>{{ item['direccion'] }}</span>
+								</div>
+
+								<div class="item d-flex justify-content-between">
+									<span><b>Principal</b></span>
+									<span>{{ item['ppal'] }}</span>
+								</div>
+
+							</ion-label>
+						</ion-item>
+					</ion-list>
+					<div class="ion-padding ion-text-center nohayresultado" *ngIf="!qResidencia.length && !searching">
+						No tiene direcciones en el historico.
+					</div>
+
+				</div>
+			</ion-list>
+		</ion-accordion>
+
+		<ion-accordion value="DC" toggle-icon="chevron-down-outline">
+			<ion-item class="b-item" slot="header">
+				<ion-label>Telefonos </ion-label>
+			</ion-item>
+
+			<ion-list class="formularios" slot="content">
+				<div class="informacion-familiar" color="gray">
+					<ion-searchbar (ionChange)="buscarFiltro('buscarListaTelefono', $event)" clearIcon="close-sharp"
+						placeholder="Buscar Celular" [debounce]="250"></ion-searchbar>
+
+					<ion-list lines="full" class="ion-no-padding">
+						<ion-item *ngFor="let item of qTelefono | filtro: 'celular': buscarListaTelefono;"
+							class="ion-margin familiar" lines="none" [style]="item['Color']">
+
+							<ion-label>
+								<div class="item d-flex justify-content-between">
+									<span><b>Fijo</b></span>
+									<span>{{ item['fijo'] }}</span>
+								</div>
+								<div class="item d-flex justify-content-between">
+									<span><b>Celular</b></span>
+									<span>{{ item['celular'] }}</span>
+								</div>
+								<div class="item d-flex justify-content-between">
+									<span><b>Principal</b></span>
+									<span>{{ item['ppal'] }}</span>
+								</div>
+							</ion-label>
+						</ion-item>
+					</ion-list>
+					<div class="ion-padding ion-text-center nohayresultado" *ngIf="!qTelefono.length && !searching">
+						No tiene telefonos en el historico.
+					</div>
+
+				</div>
+			</ion-list>
+		</ion-accordion>
+
+		<ion-accordion value="CC" toggle-icon="chevron-down-outline">
+			<ion-item class="b-item" slot="header">
+				<ion-label>Correos</ion-label>
+			</ion-item>
+
+			<ion-list class="formularios" slot="content">
+				<div class="informacion-familiar" color="gray">
+					<ion-searchbar (ionChange)="buscarFiltro('buscarListaCorreo', $event)" clearIcon="close-sharp"
+						placeholder="Buscar Correo" [debounce]="250"></ion-searchbar>
+
+					<ion-list lines="full" class="ion-no-padding">
+						<ion-item *ngFor="let item of qCorreo | filtro: 'correo': buscarListaCorreo;"
+							class="ion-margin familiar" lines="none" [style]="item['Color']">
+
+							<ion-label>
+								<h2 class="ion-text-center">{{ item['correo'] }}</h2>
+								<div class="item d-flex justify-content-between">
+									<span><b>Principal</b></span>
+									<span>{{ item['ppal'] }}</span>
+								</div>
+							</ion-label>
+						</ion-item>
+					</ion-list>
+					<div class="ion-padding ion-text-center nohayresultado" *ngIf="!qCorreo.length && !searching">
+						No tiene correos en el historico.
+					</div>
+				</div>
+			</ion-list>
+		</ion-accordion>
+
+	</ion-accordion-group>
+
+	<ion-fab
+		*ngIf="accordionGroup && (accordionGroup.value === 'DR' || accordionGroup.value === 'DC' || accordionGroup.value === 'CC' || accordionGroup.value === 'IC' || accordionGroup.value === 'FI')"
+		vertical="bottom" horizontal="end" slot="fixed">
+		<ion-fab-button (click)="irModal()">
+			<ion-icon name="add"></ion-icon>
+		</ion-fab-button>
+	</ion-fab>
+
+</ion-content>

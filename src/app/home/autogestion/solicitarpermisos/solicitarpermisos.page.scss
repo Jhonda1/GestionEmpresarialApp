@@ -1,0 +1,23 @@
+ion-content {
+	.informacion-familiar {
+		ion-list {
+			.familiar {
+				box-shadow: rgb(8 8 8 / 19%) 0px 4px 10px;
+				border-radius: 15px;
+				--border-width: 0px 5px 0px 0px;
+			}
+		}
+	}
+
+	ion-accordion {
+		.b-item {
+			--background: #f1f1f1;
+			--color: #140e0e;
+		}
+	}
+
+	ion-accordion.acoordion-expanding ion-item[slot="header"],
+	ion-accordion.acoordion-expanded ion-item[slot="header"] {
+		--color: red;
+	}
+}

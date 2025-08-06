@@ -1,0 +1,186 @@
+<app-header titulo="Registro Ausentismo"></app-header>
+
+
+<ion-content class="ion-padding-top">
+
+	<ion-accordion-group [multiple]="true" [value]="['first','second','third']">
+		<form [formGroup]="ausentismoForm" (ngSubmit)="guardarDatos()">
+			<ion-accordion value="first" toggle-icon="chevron-down-outline">
+				<ion-item class="b-item" slot="header">
+					<ion-label>Datos Básicos</ion-label>
+				</ion-item>
+				<div class="ion-padding" slot="content">
+					<ion-list class="formularios" lines="full" slot="content" [ngStyle]="{'padding-bottom': '0px;'}"
+					>
+						<ion-item>
+							<ion-label position="stacked" color="dark">Numero Documento</ion-label>
+							<ion-input name="documento" color="dark" type="text" [value]="empleado?.documento" readonly></ion-input>
+						</ion-item>				
+						<ion-item>
+							<ion-label position="stacked" color="dark">Nombre</ion-label>
+							<ion-input name="nombre" color="dark" type="text" [value]="empleado?.nombre" readonly></ion-input>
+						</ion-item>				
+						<ion-item>
+							<ion-label position="stacked" color="dark">Cargo</ion-label>
+							<ion-input name="cargo" color="dark" type="text" [value]="empleado?.cargo" readonly></ion-input>
+						</ion-item>				
+						<ion-item> 
+							<ion-label position="floating" color="dark">* Área</ion-label>
+							<ion-select formControlName="areaId"  name="areaId" okText="Aceptar" cancelText="Cancelar" 
+								[interfaceOptions]="{cssClass: 'modal-color'}" placeholder="Selecciona el tipo de calculo" required>
+								<ion-select-option color="dark" *ngFor="let item of areas;" [value]="item.id" >{{
+									item['nombre'] }}
+								</ion-select-option>
+							</ion-select>
+						</ion-item>				
+						<ion-item>
+							<ion-label position="floating" color="dark">* Tipo de Ausentismo</ion-label>
+							<ion-select formControlName="tiposausentismoid" name="tiposausentismoid" okText="Aceptar" cancelText="Cancelar" 
+								[interfaceOptions]="{cssClass: 'modal-color'}" placeholder="Selecciona el tipo de calculo" required>
+								<ion-select-option color="dark" *ngFor="let item of ausentismo;" [value]="item.id">{{
+									item['nombre'] }}
+								</ion-select-option>
+							</ion-select>
+						</ion-item>				
+						<ion-item>
+							<ion-label position="floating" color="dark">Escala</ion-label>
+							<ion-select formControlName="grado" name="grado" okText="Aceptar" cancelText="Cancelar" 
+								[interfaceOptions]="{cssClass: 'modal-color'}" placeholder="Selecciona el tipo de calculo">
+								<ion-select-option color="dark" *ngFor="let item of escalaAusentismo;" [value]="item.valor">{{
+									item['titulo'] }}
+								</ion-select-option>
+							</ion-select>
+						</ion-item>					
+
+						<ion-item>
+							<ion-label position="floating" for="selectfechainicio" color="dark">* Fecha Inicio</ion-label>
+							<ion-input [class.invalid]="ausentismoForm.get('fechainicio')?.touched && ausentismoForm.get('fechainicio')?.invalid" formControlName="fechainicio" name="fechainicio" id="selectfechainicio" expand="block"  display-format="DD-MM-YYYY"  
+							presentation='date' required readonly></ion-input>
+								<ion-popover trigger="selectfechainicio" size="cover" class="">
+									<ng-template>
+										<ion-datetime display-format="DD-MM-YYYY"  
+											presentation='date' id="fechainicio" [showDefaultButtons]="true" doneText="Confirmar" cancelText="Cancelar" (ionChange)="confirmarInicio()"></ion-datetime>
+									</ng-template>
+								</ion-popover>
+								<ion-text class="animate__animated animate__bounceIn animate__faster" *ngIf="ausentismoForm.get('fechainicio')?.touched && ausentismoForm.get('fechainicio')?.invalid" color="danger">
+									{{ ausentismoForm.get('fechainicio')?.getError('errorMessage') }}
+								</ion-text>
+						</ion-item>
+
+						<ion-item>
+							<ion-label position="floating" for="selectfechafin" color="dark">* Fecha Fin</ion-label>
+							<ion-input [class.invalid]="ausentismoForm.get('fechafin')?.touched && ausentismoForm.get('fechafin')?.invalid" formControlName="fechafin" name="fechafin" id="selectfechafin" expand="block"  display-format="DD-MM-YYYY"  
+							presentation='date' required readonly></ion-input>
+								<ion-popover trigger="selectfechafin" size="cover" alignment="end">
+									<ng-template>
+										<ion-datetime display-format="DD-MM-YYYY"  
+											presentation='date' id="fechafin" [showDefaultButtons]="true" doneText="Confirmar" cancelText="Cancelar" (ionChange)="confirmarFin()"></ion-datetime>
+									</ng-template>
+								</ion-popover>
+								<ion-text class="animate__animated animate__bounceIn animate__faster" *ngIf="ausentismoForm.get('fechafin')?.touched && ausentismoForm.get('fechafin')?.invalid" color="danger">
+									{{ ausentismoForm.get('fechafin')?.getError('errorMessage') }}
+								</ion-text>
+						</ion-item>
+	
+						<ion-item class="Cie10Div">
+							<ion-item [button]="true" [detail]="false" id="select-enfermedades">
+							  <ion-label>CIE 10</ion-label>
+							  <div slot="end" id="selected-enfermedades" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ selectedEnfermedadesText }}</div>
+							</ion-item>
+						</ion-item>
+						
+						<ion-item>
+							<ion-label position="floating" color="dark">* Observación</ion-label>
+							<ion-input  [class.invalid]="ausentismoForm.get('observacion')?.touched && ausentismoForm.get('observacion')?.invalid" formControlName="observacion"  name="observacion" color="dark" type="text" required></ion-input>
+							<ion-text class="animate__animated animate__bounceIn animate__faster"
+								*ngIf="ausentismoForm.get('observacion')?.touched && ausentismoForm.get('observacion')?.invalid" color="danger">{{
+								ausentismoForm.get('observacion')?.getError('errorMessage') }}</ion-text>
+						</ion-item>				
+					</ion-list>
+				</div>
+			</ion-accordion>
+	
+			<ion-accordion value="second" toggle-icon="chevron-down-outline">
+				<ion-item class="b-item" slot="header">
+					<ion-label>Calcular Duración y Costo del Ausentismo</ion-label>
+				</ion-item>
+				<div class="ion-padding" slot="content">
+					<ion-list>
+						<ion-item>
+							<ion-label position="floating" color="dark">* Tipo Calculo</ion-label>
+							<ion-select formControlName="TipoCalculo"  name="TipoCalculo" [(ngModel)]="selectedOption" (ionChange)="onSelectChange()" okText="Aceptar" cancelText="Cancelar" 
+								[interfaceOptions]="{cssClass: 'modal-color'}" placeholder="Selecciona el tipo de calculo" required>
+								<ion-select-option color="dark" *ngFor="let item of tipoCalculo;" [value]="item.valor">{{
+									item['titulo'] }}
+								</ion-select-option>
+							</ion-select>
+						</ion-item>
+		
+						<ion-item>
+							<ion-label position="floating" color="dark">Horas Laborales Diarias</ion-label>
+							<ion-input formControlName="horas_dia_laboradas" name="horas_dia_laboradas" [(ngModel)]="selectedOptionHoras"  (ionChange)="onSelectChangeHoras()" color="dark" type="text" id="HorasLaborales"></ion-input>
+						</ion-item>	
+						<ion-item>
+							<ion-label position="floating" color="dark">Dias Ausentismo</ion-label>
+							<ion-input formControlName="dias" name="dias" color="dark" type="text" [(ngModel)]="diasAusentismo" id="diasAusentismo" readonly></ion-input>
+						</ion-item>	
+						<ion-item>
+							<ion-label position="floating" color="dark">Horas Ausentismo</ion-label>
+							<ion-input formControlName="horas" name="horas" color="dark" type="text" [(ngModel)]="horasAusentismo" (ionChange)="onSelectChangeHorasAusentismo()" id="horasAusentismo" readonly></ion-input>
+						</ion-item>	
+						<ion-item>
+							<ion-label position="floating" color="dark"> Total Horas Ausente</ion-label>
+							<ion-input formControlName="total_horas" name="total_horas" color="dark" type="text"  [(ngModel)]="totalHorasAusente" id="totalHorasAusente" readonly></ion-input>
+						</ion-item>	
+						<ion-item>
+							<ion-label position="floating" color="dark"> Precio Hora Laboral</ion-label>
+							<ion-input formControlName="costo_hora" name="costo_hora" color="dark" type="text" [(ngModel)]="precioHoraLaboral" id="PrecioHoraLaboral" readonly></ion-input>
+						</ion-item>	
+						<ion-item>
+							<ion-label position="floating" color="dark"> Costo Ausentismo</ion-label>
+							<ion-input formControlName="costo_total" name="costo_total" color="dark" type="text" [(ngModel)]="costoAusentismo" id="costoAusentismo" readonly></ion-input>
+						</ion-item>	
+		
+					</ion-list>
+				</div>
+			</ion-accordion>
+	
+			<ion-accordion value="third" toggle-icon="chevron-down-outline">
+				<ion-item class="b-item" slot="header">
+					<ion-label>Anexar Archivos</ion-label>
+				</ion-item>
+				<div class="ion-padding" slot="content" >
+					<ion-input [disabled]="guardarAusentismoPermiso" name="anexo" color="dark" type="file" id="inputAnexos" (change)="onFileSelected($event)" multiple accept=".jpg, .jpeg, .png, .pdf, .doc, .docx, .xls, .xlsx"></ion-input>	
+					<ion-list>
+						<ion-item *ngFor="let file of selectedFiles">
+							<ion-button fill="clear" (click)="eliminarArchivo(file)"><ion-icon  slot="start" name="close-circle"></ion-icon></ion-button>
+							{{file.name}}
+							<ion-thumbnail slot="end" style="padding: 20px;margin: 0px">
+								<ion-img [src]="getFileIcon(file)" style="width: 15px;height: 15px;"></ion-img>
+							</ion-thumbnail>
+						</ion-item>
+					</ion-list>
+				</div>
+			</ion-accordion>
+			<ion-button  type="submit" class="ion-no-margin" [disabled]="guardarAusentismoPermiso" shape="round"
+				expand="full">
+				Guardar
+				<ion-icon slot="start" name="save-outline"></ion-icon>
+			</ion-button>
+		</form>
+
+	</ion-accordion-group>
+</ion-content>
+
+<ion-modal trigger="select-enfermedades" #modal>
+	<ng-template>
+	  <app-typeahead
+		class="ion-page"
+		title="CIE 10"
+		[items]="enfermedades"
+		[selectedItems]="selectedEnfermedades"
+		(selectionChange)="enfermedadesSelectionChanged($event)"
+		(selectionCancel)="modal.dismiss()"
+	  ></app-typeahead>
+	</ng-template>
+  </ion-modal>

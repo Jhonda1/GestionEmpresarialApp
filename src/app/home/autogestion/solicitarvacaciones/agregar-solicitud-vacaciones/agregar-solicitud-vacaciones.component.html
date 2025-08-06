@@ -1,0 +1,52 @@
+<ion-header class="ion-no-border">
+	<ion-toolbar color="ligth">
+		<ion-title color="dark" class="ion-text-center">Solicitar Vacaciones</ion-title>
+		<ion-buttons slot="end" (click)="cerrarModal()">
+			<ion-icon color="dark" slot='icon-only' size='large' name='close-outline'>
+			</ion-icon>
+		</ion-buttons>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+	<form [formGroup]="datosSolicitud.formulario">
+		<ion-list lines="full">
+			<ion-item class="inputfechas">
+				<ion-label position="floating" for="selectFechaInicio" color="dark">* Fecha Inicio</ion-label>
+				<ion-input formControlName="FechaInicio" id="selectFechaInicio" expand="block" display-format="DD-MM-YYYY" presentation="date" readonly (click)="abrirPopover('inicio')">
+				</ion-input>
+			  </ion-item>
+		
+			  <!-- Popover para Fecha Inicio -->
+			  <ion-popover trigger="selectFechaInicio" [isOpen]="popoverAbierto === 'inicio'" size="cover">
+				<ng-template>
+				  <ion-datetime	display-format="DD-MM-YYYY"	formControlName="FechaInicio" presentation="date" [showDefaultButtons]="true"
+					doneText="Confirmar" cancelText="Cancelar" (ionChange)="confirmarInicio($event)">
+				  </ion-datetime>
+				</ng-template>
+			  </ion-popover>
+
+			<ion-item>
+				<ion-label position="floating" color="dark">* Dias compensados</ion-label>
+				<ion-input formControlName="DiaCompensado" color="dark" type="text"></ion-input>
+				<ion-text class="animate__animated animate__bounceIn animate__faster"
+					*ngIf="datosSolicitud.formulario.get('DiaCompensado')?.touched" color="danger">{{
+					datosSolicitud.formulario.get('DiaCompensado')?.getError('errorMessage') }}</ion-text>
+			</ion-item>
+		</ion-list>
+	</form>
+
+</ion-content>
+
+<ion-footer>
+	<ion-toolbar>
+		<ion-title>
+			<ion-button [disabled]="datosSolicitud.formulario.invalid" type="submit" class="ion-no-margin" shape="round"
+				expand="full" (click)="submitDataFamiliaContacto()">
+				Agregar
+				<ion-icon slot="start" name="save-outline"></ion-icon>
+			</ion-button>
+		</ion-title>
+	</ion-toolbar>
+</ion-footer>

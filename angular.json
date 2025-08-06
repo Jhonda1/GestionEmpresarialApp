@@ -81,6 +81,10 @@
             },
             "ci": {
               "progress": false
+            },
+            "hmr": {
+              "buildTarget": "app:build",
+              "hmr": true
             }
           },
           "defaultConfiguration": "development"
@@ -136,7 +140,8 @@
   "cli": {
     "schematicCollections": [
       "@ionic/angular-toolkit"
-    ]
+    ],
+    "analytics": "af3ebccf-23d6-4dff-a2e4-fb819333ca9e"
   },
   "schematics": {
     "@ionic/angular-toolkit:component": {
@@ -145,5 +150,12 @@
     "@ionic/angular-toolkit:page": {
       "styleext": "scss"
     }
+  },
+  "build": {
+  "options": {
+    "allowedCommonJsDependencies": ["crypto-js", "localforage", "moment"]
   }
 }
+}
+
+

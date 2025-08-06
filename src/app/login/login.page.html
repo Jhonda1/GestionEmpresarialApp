@@ -1,34 +1,34 @@
 <ion-content [fullscreen]="true">
-	<div [style]="obtenerFondo()">
-		<div class="content">
+    <div [style]="obtenerFondo()">
+        <div class="content">
 
-			<form [formGroup]="formLogin.formulario" *ngIf="ingresoDocumento">
-				<ion-item class="ion-margin-top" lines="none">
-					<ion-icon class="ion-margin-end" slot="start" name="card-outline"></ion-icon>
-					<ion-input formControlName="nit" type="text" placeholder="Nit"></ion-input>
-				</ion-item>
-				<ion-grid class="ion-no-margin">
-					<ion-row>
-						<ion-col size="12" class="ion-align-self-center">
-							<ion-button [disabled]="formLogin.formulario.get('nit').invalid" (click)="irFormulario()"
-								class="ion-no-margin">
-								Ingresar
-								<ion-icon slot="end" name="arrow-forward"></ion-icon>
-							</ion-button>
-						</ion-col>
-					</ion-row>
-				</ion-grid>
-			</form>
+            <form [formGroup]="formLogin.formulario" *ngIf="ingresoDocumento">
+                <ion-item class="ion-margin-top" lines="none">
+                    <ion-icon class="ion-margin-end" slot="start" name="card-outline"></ion-icon>
+                    <ion-input formControlName="nit" type="text" placeholder="Nit"></ion-input>
+                </ion-item>
+                <ion-grid class="ion-no-margin">
+                    <ion-row>
+                        <ion-col size="12" class="ion-align-self-center">
+                            <ion-button [disabled]="formLogin.formulario.get('nit')?.invalid" (click)="irFormulario()"
+                                class="ion-no-margin">
+                                Ingresar
+                                <ion-icon slot="end" name="arrow-forward"></ion-icon>
+                            </ion-button>
+                        </ion-col>
+                    </ion-row>
+                </ion-grid>
+            </form>
 
-			<form [formGroup]="formLogin.formulario" (ngSubmit)="login()" *ngIf="!ingresoDocumento"
+           <form [formGroup]="formLogin.formulario" (ngSubmit)="login()" *ngIf="!ingresoDocumento"
 				[class]="'animate__animated animate__faster ' + claseUsuario">
 				<ion-item class="ion-margin-top" lines="full">
 					<ion-icon class="ion-margin-end" name="person-outline"></ion-icon>
 					<ion-input formControlName="num_docu" type="text" placeholder="N°. Documento"></ion-input>
 				</ion-item>
 				<ion-text class="animate__animated animate__bounceIn animate__faster validadores"
-					*ngIf="formLogin.formulario.get('num_docu').touched && formLogin.formulario.get('num_docu').invalid">
-					{{ formLogin.formulario.get('num_docu')['errorMessage'] }}
+					*ngIf="formLogin.formulario.get('num_docu')?.touched && formLogin.formulario.get('num_docu')?.invalid">
+					{{ formLogin.formulario.get('num_docu')?.getError('errorMessage') }}
 				</ion-text>
 				<ion-item class="ion-margin-top" lines="none">
 					<ion-icon class="ion-margin-end" slot="start" name="lock-closed-outline"></ion-icon>
@@ -38,15 +38,15 @@
 					</ion-icon>
 				</ion-item>
 				<ion-text class="animate__animated animate__bounceIn animate__faster validadores"
-					*ngIf="formLogin.formulario.get('password').touched && formLogin.formulario.get('password').invalid">
-					{{formLogin.formulario.get('password')['errorMessage'] }}
+					*ngIf="formLogin.formulario.get('password')?.touched && formLogin.formulario.get('password')?.invalid">
+					{{formLogin.formulario.get('password')?.getError('errorMessage') }}
 				</ion-text>
 				<ion-grid class="ion-no-margin">
 					<ion-row>
 						<ion-col size="6" size-xs='12' size-lg='6' size-md='6'
 							class="ion-align-self-center ion-text-center">
 							<ion-button
-								[disabled]="formLogin.formulario.get('num_docu').invalid || formLogin.formulario.get('password').invalid"
+								[disabled]="formLogin.formulario.get('num_docu')?.invalid || formLogin.formulario.get('password')?.invalid"
 								type="submit" class="ion-no-margin">
 								Iniciar sesión
 								<ion-icon slot="start" name="log-in-outline"></ion-icon>
@@ -60,11 +60,19 @@
 							</ion-button>
 						</ion-col>
 					</ion-row>
+                    <!-- <ion-row>
+                        <ion-col size="12" class="ion-align-self-center ion-text-center">
+                            <ion-button class="ion-no-margin" (click)="loginWithFingerprint()" color="secondary">
+                                Ingresar con huella
+                                <ion-icon slot="start" name="finger-print-outline"></ion-icon>
+                            </ion-button>
+                        </ion-col>
+                    </ion-row> -->
 				</ion-grid>
 				<!-- <ion-text class="ion-margin ion-text-center" (click)="olvidoPass()">
 					<h4 class="text-light">¿Recuperar tu contraseña?</h4>
 				</ion-text> -->
 			</form>
-		</div>
-	</div>
+        </div>
+    </div>
 </ion-content>

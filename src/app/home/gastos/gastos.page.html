@@ -1,0 +1,34 @@
+<app-header  [titulo]="'Gastos'"></app-header>
+
+<!-- <ion-header>
+	<ion-toolbar class="toolbarPrincipal">
+		<ion-buttons slot="start">
+			<ion-menu-button></ion-menu-button>
+		</ion-buttons>
+		<ion-title>Gastos</ion-title>
+	</ion-toolbar>
+</ion-header> -->
+
+<ion-progress-bar type="indeterminate" [hidden]=cargando></ion-progress-bar>
+
+
+<ion-content>
+	<ion-refresher class="refresh" slot="fixed" pullFactor="0.5" pullMin="35" pullMax="150" (ionRefresh)="doRefresh($event)">
+		<ion-refresher-content
+			pullingIcon="arrow-down"
+			refreshingSpinner="crescent"
+		>
+		</ion-refresher-content>
+	</ion-refresher>
+	<div>
+		<ion-list id="lista">
+		</ion-list>
+
+		<ion-infinite-scroll threshold="100px" (ionInfinite)="loadData($event)">
+		<ion-infinite-scroll-content
+			loadingSnipper="none"
+			loadingText="Cargando...">
+			</ion-infinite-scroll-content>
+		</ion-infinite-scroll>
+	</div>
+</ion-content>

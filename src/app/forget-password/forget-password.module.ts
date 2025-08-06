@@ -15,6 +15,5 @@ import { RxReactiveFormsModule } from '@rxweb/reactive-form-validators';
 	ReactiveFormsModule,
 	RxReactiveFormsModule
   ],
-  declarations: [ForgetPasswordPage]
 })
 export class ForgetPasswordPageModule {}

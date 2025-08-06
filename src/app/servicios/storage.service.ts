@@ -20,7 +20,7 @@ export class StorageService {
 		this.storage.set(llave, valor);
 	}
 
-	async get(llave: string) {
+	async get(llave: any) {
 		return await this.storage.get(llave);
 	}
 
@@ -28,15 +28,21 @@ export class StorageService {
 		this.storage.remove(llave);
 	}
 
-	limpiarTodo(logout?: boolean) {
-		let tema = this.get('theme');
-		//let version = this.get('version');
-		this.storage.clear();
-		if (!logout) this.notifcaciones.alerta("Error de conexión", '', [], [{ text: 'Cerrar', role: 'aceptar' }]);
-		if (this.modalController) this.modalController.dismiss();
-		this.set('theme', tema);
-		//this.set('version', version);
-		this.router.navigateByUrl('login');
+	async limpiarTodo(logout?: boolean) {
+		try {
+			let tema = await this.get('theme');
+			//let version = await this.get('version');
+			await this.storage.clear();
+			if (!logout) this.notifcaciones.alerta("Error de conexión", '', [], [{ text: 'Cerrar', role: 'aceptar' }]);
+			if (this.modalController) this.modalController.dismiss();
+			if (tema) this.set('theme', tema);
+			//if (version) this.set('version', version);
+			this.router.navigateByUrl('login');
+		} catch (error) {
+			console.error('Error al limpiar storage:', error);
+			// En caso de error, al menos navegar al login
+			this.router.navigateByUrl('login');
+		}
 	}
 
   public clear() {

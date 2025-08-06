@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import { Component, Input, Output, EventEmitter, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
@@ -6,10 +5,10 @@ import type { OnInit } from '@angular/core';
 import { Item } from '../types';
 import { DatosEmpleadosService } from 'src/app/servicios/datosEmpleados.service';
 
-
 @Component({
   selector: 'app-typeahead',
-  templateUrl: 'typeahead.component.html',
+  templateUrl: 'typehead.component.html',
+  standalone: false
 })
 export class TypeaheadComponent implements OnInit, OnDestroy {
   @Input() items: Item[] = [];
@@ -42,7 +41,6 @@ export class TypeaheadComponent implements OnInit, OnDestroy {
 
     // Guarda una copia de los valores seleccionados inicialmente
     this.initialSelectedValues = [...this.workingSelectedValues];
-
 
     // Inicializa `filteredItems` con los elementos seleccionados y los items
     this.filteredItems = this.items.length ? [...this.items] : [...this.workingSelectedValues.map(item => ({ value: item.id, text: item.name }))];
@@ -77,8 +75,7 @@ export class TypeaheadComponent implements OnInit, OnDestroy {
     // Restaura los valores seleccionados a su estado inicial
     this.workingSelectedValues = [...this.initialSelectedValues];
     this.selectionCancel.emit();
-    this.cdr.detectChanges(); // Forzar la detección de cambios
-
+    this.cdr.detectChanges();
   }
 
   confirmChanges() {
@@ -119,14 +116,40 @@ export class TypeaheadComponent implements OnInit, OnDestroy {
     // Mapea los IDs seleccionados a objetos completos si no están en la búsqueda
     const selectedItems = this.workingSelectedValues.map(selectedItem => ({
       value: selectedItem.id,
-      text: selectedItem.name
+      text: selectedItem.name,
+      selected: true, // Indicador de elemento seleccionado
     }));
-
+  
     // Combina los elementos seleccionados con los nuevos resultados
     this.filteredItems = [...selectedItems, ...items].filter(
-      (item, index, self) => self.findIndex(i => i.value === item.value) === index // Elimina duplicados
+      (item, index, self) =>
+        self.findIndex(i => i.value.trim() === item.value.trim()) === index // Elimina duplicados
     );
-
+  
+    // Asegúrate de mantener el estado "selected" en los elementos que ya estaban seleccionados
+    this.filteredItems = this.filteredItems.map(item => {
+      const isSelected = selectedItems.some(selected => selected.value === item.value);
+      return {
+        ...item,
+        selected: isSelected, // Preserva el estado seleccionado
+      };
+    });
+  
+    // Filtra los elementos duplicados basándose en el valor
+    const uniqueFilteredItems = this.filteredItems.reduce((acc: { value: string; text: string; selected?: boolean }[], current) => {
+      // Eliminar espacios en blanco al inicio y al final del valor
+      current.value = current.value.trim();
+      const exists = acc.find(item => item.value.split(' ')[0] === current.value.split(' ')[0]);
+      if (!exists) {
+        return acc.concat([current]);
+      } else {
+        return acc;
+      }
+    }, []);
+  
+    this.filteredItems = uniqueFilteredItems;
+    
+    // Manejar caso sin resultados
     if (items.length === 0 && selectedItems.length === 0) {
       this.filteredItems = [{ value: 'no-results', text: 'No hay resultados' }];
       this.noResults = true;
@@ -134,29 +157,36 @@ export class TypeaheadComponent implements OnInit, OnDestroy {
       this.noResults = false;
     }
   }
+  
 
-  isChecked(value: string) {
-    return this.workingSelectedValues.some(item => item.id === value);
+  isChecked(value: string): boolean {
+    return this.workingSelectedValues.some(item => item.id.trim() === value.trim());
   }
+  
 
   checkboxChange(ev: any) {
     const { checked, value } = ev.detail;
-    const item = this.items.find(i => i.value === value);
-
-    if (item && value !== 'no-results') {
-      if (checked) {
+    // Buscar el item en la lista original
+    const item = this.items.find(i => i.value.trim() === value.trim());
+    
+    if (value !== 'no-results') {
+      if (checked && item) {
+        // Agregar el item a la lista de seleccionados
         this.workingSelectedValues = [...this.workingSelectedValues, { id: value, name: item.text }];
       } else {
+        // Eliminar el item de la lista de seleccionados
         this.workingSelectedValues = this.workingSelectedValues.filter(
-          (selectedItem) => selectedItem.id !== value
+          (selectedItem) => selectedItem.id.trim() !== value.trim()
         );
       }
-      // Emitir el cambio de selección
+  
+      // Emitir los cambios de selección
       this.selectionChange.emit(this.workingSelectedValues.map((selectedItem) => selectedItem.id));
-      // Actualizar la lista filtrada para incluir los elementos seleccionados
+      // Actualizar la lista filtrada para reflejar los cambios
       this.updateFilteredList(this.filteredItems);
     }
   }
+  
 
   //esta funcion es para obtener el nombre de los items seleccionados
   getItemNameById(id: string): string {

@@ -1,0 +1,88 @@
+ion-content {
+    div {
+          ion-list {
+              ion-item {
+                  ion-text {
+                      ion-badge {
+                          ion-icon {
+                              font-size: 20px;
+                              vertical-align: middle;
+                          }
+                      }
+                  }
+              }
+          }
+      }
+  
+      .foto-perfil {
+          display: flex;
+          justify-content: center;
+          ion-avatar {
+              width: 200px;
+              height: 200px;
+          }
+          ion-button {
+              position: absolute;
+              top: 170px;
+              z-index: 3;
+              width: 40px;
+              font-size: 10px;
+              height: 40px;
+              --border-radius: 50%;
+          }
+      }
+      form {
+          ion-list {
+              ion-item-divider {
+                  --background: #737373;
+              }
+              ion-item {
+                  ion-select {
+                      color: var(--ion-color-dark) !important;
+                  }
+                  ion-text {
+                      font-size: 13px !important;
+                  }
+                  ion-datetime {
+                      --background: var(--ion-color-light);
+                      .datetime-calendar {
+                          .calendar-header {
+                              .calendar-action-buttons {
+                                  color: red;
+                              }
+                              .calendar-days-of-week {
+                                  color: var(--ion-color-dark) !important;
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      }
+      .informacion-familiar {
+          div {
+              ion-list {
+                  .familiar {
+                      box-shadow: rgb(8 8 8 / 19%) 0px 4px 10px;
+                      border-radius: 15px;
+                      --border-width: 0px 5px 0px 0px;
+                  }
+              }
+          }
+      }
+  
+    ion-accordion {
+      .b-item {
+        --background: #f1f1f1;
+        --color: #140e0e;
+      }
+    }
+  
+    ion-accordion.acoordion-expanding ion-item[slot="header"],
+    ion-accordion.acoordion-expanded ion-item[slot="header"]{
+      --color:red;
+    }
+  
+  }
+  
+  

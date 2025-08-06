@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/member-delimiter-style */
 /* eslint-disable quote-props */
 /* eslint-disable @typescript-eslint/member-ordering */
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { FuncionesGenerales } from '../config/funciones/funciones';
@@ -12,12 +12,16 @@ import { StorageService } from '../servicios/storage.service';
 import { ThemeService } from '../servicios/theme.service';
 import { RxFormGroup } from '@rxweb/reactive-form-validators';
 import { timer } from 'rxjs';
-
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { IonicModule } from '@ionic/angular';
 @Component({
 	selector: 'app-login',
 	templateUrl: './login.page.html',
 	styleUrls: ['./login.page.scss'],
-})
+	standalone: true,
+	imports: [CommonModule, FormsModule, ReactiveFormsModule, IonicModule],
+  })
 export class LoginPage implements OnInit {
 	[key: string]: any;
 
@@ -27,6 +31,8 @@ export class LoginPage implements OnInit {
 	claseUsuario = '';
 	verPassword = false;
 	urlFondoImagen = '/assets/images/fondoLogin.jpg';
+    mostrarBotonesSesion: boolean = false;
+
 
 	constructor(
 		private sanitizer: DomSanitizer,
@@ -35,7 +41,7 @@ export class LoginPage implements OnInit {
 		private notificaciones: NotificacionesService,
 		private loginService: LoginService,
 		private storageService: StorageService,
-		private cargadorService: CargadorService
+		private cargadorService: CargadorService,
 	) { }
 
 	ngOnInit() {
@@ -73,6 +79,7 @@ export class LoginPage implements OnInit {
 		if (this.formLogin.formulario.get('nit')?.valid) {
 			const nit = this.formLogin.formulario.get('nit')?.value;
 			this.loginService.validarNit(nit).then(respuesta => {
+				// console.log('nit', respuesta, (respuesta && respuesta.success));
 				if (respuesta && respuesta.success) {
 					this.storageService.set('nit', nit);
 					this.storageService.set('crypt', respuesta.crypt);
@@ -80,7 +87,7 @@ export class LoginPage implements OnInit {
 					this.storageService.set('conexion', respuesta.db);
 					this.claseDocumento = 'animate__fadeOutLeft';
 					this.ejecutarTimer('claseUsuario', 'animate__fadeInRight')
-					.then(item => this.ingresoDocumento = !this.ingresoDocumento);
+						.then(item => this.ingresoDocumento = !this.ingresoDocumento);
 				} else {
 					this.notificaciones.notificacion(respuesta.mensaje);
 				}
@@ -90,6 +97,8 @@ export class LoginPage implements OnInit {
 				this.notificaciones.notificacion('Error de conexión.');
 				this.cargadorService.ocultar();
 			});
+		} else {
+			this.cargadorService.ocultar();
 		}
 	}
 
@@ -100,6 +109,7 @@ export class LoginPage implements OnInit {
 	retornar() {
 		this.formLogin.formulario.reset();
 		this.formLogin.formulario.markAsUntouched();
+		this.mostrarBotonesSesion = false;
 		this.claseUsuario = 'animate__fadeOutRight';
 		this.ejecutarTimer('claseDocumento', 'animate__fadeInLeft').then(item => this.ingresoDocumento = !this.ingresoDocumento);
 	}
@@ -137,10 +147,10 @@ export class LoginPage implements OnInit {
 		} else {
 			FuncionesGenerales.formularioTocado(this.formLogin.formulario);
 		}
-	}
+	}  
 
 	olvidoPass(extra = 0) {
-		console.log(this.formLogin.formulario.value);
+		// console.log(this.formLogin.formulario.value);
 		this.router.navigateByUrl(`forget-password/${this.formLogin.formulario.get('num_docu')?.value || '0'}/${extra}`);
 	}
 }

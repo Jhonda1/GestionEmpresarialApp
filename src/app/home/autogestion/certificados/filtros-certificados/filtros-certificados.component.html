@@ -1,0 +1,75 @@
+<ion-header class="ion-no-border">
+	<ion-toolbar color="ligth">
+		<ion-title color="dark" class="ion-text-center">Filtros</ion-title>
+		<ion-buttons slot="end" (click)="cerrarModal()">
+			<ion-icon color="dark" slot='icon-only' size='large' name='close-outline'>
+			</ion-icon>
+		</ion-buttons>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content color="gray">
+	<form [formGroup]="formFiltro" (ngSubmit)="filtrar()">
+		<ion-list lines="full">
+      <ion-item *ngIf="inputsalario == null">
+        <ion-label position="floating" color="dark">Docuemento </ion-label>
+        <ion-select  formControlName="documento" okText="Aceptar" cancelText="Cancelar"
+          [interfaceOptions]="{cssClass: 'modal-color'}" placeholder="Seleccione documento" >
+          <ion-select-option color="dark" *ngFor="let item of documento;" [value]="item.valor">{{
+            item.titulo }}
+          </ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item *ngIf="inputsalario == null">
+        <ion-label position="floating" color="dark">Año</ion-label>
+        <ion-datetime [yearValues]="anio" [size]="'cover'" formControlName="anio" [presentation]="'year'"></ion-datetime>
+      </ion-item>
+
+      <ion-item *ngIf="inputsalario == null">
+        <ion-label position="floating" color="dark">Mes</ion-label>
+        <ion-select  multiple="true" formControlName="meses" okText="Aceptar" cancelText="Cancelar"
+          [interfaceOptions]="{cssClass: 'modal-color'}" placeholder="Seleccione mes">
+          <ion-select-option color="dark" *ngFor="let item of meses;" [value]="item.valor">{{
+            item.titulo }}
+          </ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item *ngIf="inputsalario == null">
+        <ion-label position="floating" color="dark">Quincena</ion-label>
+        <ion-select  multiple="true" formControlName="quincena" okText="Aceptar" cancelText="Cancelar"
+          [interfaceOptions]="{cssClass: 'modal-color'}" placeholder="Seleccione una quincena" >
+          <ion-select-option color="dark" *ngFor="let item of quincena;" [value]="item.valor">{{
+            item.titulo }}
+          </ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item *ngIf="inputsalario != null">
+        <ion-label position="floating" color="dark">Con Salario</ion-label>
+        <ion-select  multiple="false" formControlName="salario" okText="Aceptar" cancelText="Cancelar"
+          [interfaceOptions]="{cssClass: 'modal-color'}" placeholder="Seleccione una opción" >
+          <ion-select-option color="dark" *ngFor="let item of arraySalario;" [value]="item.valor">{{
+            item.titulo }}
+          </ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item *ngIf="inputsalario != null">
+				<ion-label position="floating" color="dark">Expide destino:</ion-label>
+				<ion-input formControlName="destino" color="dark" type="text" placeholder="Expide destino"></ion-input>
+			</ion-item>
+
+		</ion-list>
+		<ion-button class="ion-margin-top" mode="md" expand="full" type="submit" shape="round">
+			<ion-icon slot="start" name="funnel"></ion-icon>
+			Filtrar
+		</ion-button>
+		<ion-button (click)="limpiarFormulario()" class="ion-margin-top" color="danger" mode="md" expand="full"
+			shape="round">
+			<ion-icon slot="start" name="reload"></ion-icon>
+			Limpiar
+		</ion-button>
+	</form>
+</ion-content>

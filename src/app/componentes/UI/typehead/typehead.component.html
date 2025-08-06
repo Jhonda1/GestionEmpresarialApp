@@ -10,7 +10,7 @@
   </ion-toolbar>
   <ion-toolbar>
     <ion-searchbar
-      (ionInput)="searchbarInput($event.target.value)"
+      (ionInput)="searchbarInput($event.target.value ?? '')"
       debounce="600"
       placeholder="Buscar..."
     ></ion-searchbar>
@@ -18,14 +18,27 @@
 </ion-header>
 
 <ion-content color="light" class="ion-padding">
-  <ion-list id="modal-list" [inset]="true">
-    <ion-item *ngFor="let item of filteredItems; trackBy: trackItems">
-      <ion-label>{{ item.text }}</ion-label>
-      <ion-checkbox
-        [value]="item.value"
-        [checked]="isChecked(item.value)"
-        (ionChange)="checkboxChange($event)"
-      ></ion-checkbox>
-    </ion-item>
-  </ion-list>
+  <!-- Verificar si no hay resultados -->
+  <ng-container *ngIf="!noResults; else noResultsTemplate">
+    <ion-list id="modal-list" [inset]="true">
+      <ion-item *ngFor="let item of filteredItems; trackBy: trackItems" style="width: 100%;">
+        <ion-label style="flex: 1;">{{ item.text }}</ion-label>
+        <ion-checkbox
+          style="flex: 0;"
+          [value]="item.value"
+          [checked]="isChecked(item.value)"
+          (ionChange)="checkboxChange($event)"
+        ></ion-checkbox>
+      </ion-item>
+    </ion-list>
+  </ng-container>
+
+  <!-- Plantilla para "No hay resultados" -->
+  <ng-template #noResultsTemplate>
+    <ion-list>
+      <ion-item>
+        <ion-label color="medium" class="ion-text-center">No hay resultados</ion-label>
+      </ion-item>
+    </ion-list>
+  </ng-template>
 </ion-content>

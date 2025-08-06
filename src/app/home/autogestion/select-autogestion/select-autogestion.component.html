@@ -1,0 +1,29 @@
+<ion-item [disabled]="formulario.get(formControlSelect)?.disabled">
+	<ion-label position="stacked" color="dark">{{ title }}</ion-label>
+	<ionic-selectable [disabled]="formulario.get(formControlSelect)?.disabled ?? false" #selectConjuntos
+		placeholder="Elija una opción" [itemValueField]="valueField" [(ngModel)]="valorCampo"
+		[itemTextField]="textField" [items]="lista" searchPlaceholder="Buscar" [canSearch]="true"
+		(onChange)="cambioConjunto($event)">
+		<ng-template ionicSelectableHeaderTemplate>
+			<ion-toolbar mode="md">
+				<ion-buttons slot="end">
+					<ion-button (click)="selectConjuntos.close()">
+						<ion-icon color="dark" slot="icon-only" name="close-outline"></ion-icon>
+					</ion-button>
+				</ion-buttons>
+				<ion-title>{{ title }}</ion-title> 
+			</ion-toolbar>
+		</ng-template>
+		<ng-template ionicSelectableSearchFailTemplate>
+			<div class="ion-padding ion-text-center">
+				No hay resultados.
+			</div>
+		</ng-template>
+		<ng-template ionicSelectableIconTemplate>
+			<ion-icon name="caret-down-outline"></ion-icon>
+		</ng-template>
+	</ionic-selectable>
+	<ion-text class="animate__animated animate__bounceIn animate__faster"
+		*ngIf="formulario.get(formControlSelect)?.touched" color="danger">{{
+		formulario.get(formControlSelect)?.getError('errorMessage') }}</ion-text>
+</ion-item>

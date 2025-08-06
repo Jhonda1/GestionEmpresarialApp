@@ -17,12 +17,12 @@ import { RxFormGroup } from '@rxweb/reactive-form-validators';
 	selector: 'app-menu',
 	templateUrl: './menu.component.html',
 	styleUrls: ['./menu.component.scss'],
+	standalone: false,
 })
 export class MenuComponent implements OnInit {
-	// eslint-disable-next-line @typescript-eslint/member-delimiter-style
 	formLogin!: { formulario: RxFormGroup, propiedades: Array<string> };
 	appMenuSwipeGesture: boolean = false;
-	// eslint-disable-next-line @typescript-eslint/member-delimiter-style
+
 	menus: Array<{ icon: string, title: string, path: string, badge?: boolean, hijos?: Array<any>, modulo?: string }> = [
 		{
 			modulo: 'GASTOSAPP', icon: '', title: 'Gastos', path: '', hijos: [{
@@ -50,9 +50,12 @@ export class MenuComponent implements OnInit {
 			}]
 		}
 	];
+
 	datosUsuario: { perfilid?: string, [key: string]: any } = {};
 	public logo = 'assets/images/nofoto.png';
-	modulos: Array<object> = [];
+
+	// Definimos `modulos` como un objeto indexado
+	modulos: { [key: string]: boolean } = {};
 
 	foto: string = FuncionesGenerales.urlGestion();
 
@@ -82,16 +85,28 @@ export class MenuComponent implements OnInit {
 		this.datosUsuario = await this.loginService.desencriptar(
 			JSON.parse(await this.storageService.get('usuario').then(resp => resp))
 		);
-		this.modulos = await this.loginService.desencriptar(
+
+		const modulosRaw = await this.loginService.desencriptar(
 			JSON.parse(await this.storageService.get('modulos').then(resp => resp))
 		);
+	
+		// Verificamos si modulosRaw es un objeto
+		if (modulosRaw && typeof modulosRaw === 'object') {
+			// Usamos Object.keys() para obtener las claves de modulosRaw
+			this.modulos = Object.keys(modulosRaw).reduce((acc: { [key: string]: boolean }, modulo: string) => {
+				acc[modulo] = true; // O puedes hacer algo más con el valor si lo necesitas
+				return acc;
+			}, {});
+		} else {
+			console.error('modulosRaw no es un objeto:', modulosRaw);
+			// Aquí puedes manejar el caso si `modulosRaw` no es un objeto de la manera que prefieras
+		}
 	}
 
 	toggleMenu(sesion?: boolean) {
 		this.menuController.close('first');
 	}
 
-	// eslint-disable-next-line @angular-eslint/use-lifecycle-interface
 	ngOnDestroy() {
 		this.menuController.enable(false);
 	}
@@ -133,7 +148,6 @@ export class MenuComponent implements OnInit {
 	confirmarCambioClave(extra = 0) {
 		this.notificacionesService.alerta('¿Esta seguro de cambiar la clave?').then(respuesta => {
 			if (respuesta.role === 'aceptar') {
-				console.log('respuesta.role', respuesta.role);
 				this.router.navigateByUrl(`forget-password/${this.formLogin.formulario.get('num_docu')?.value || '0'}/${extra}`);
 			}
 		}, console.error);
@@ -145,13 +159,8 @@ export class MenuComponent implements OnInit {
 		const data = { perfilid, permisos };
 
 		try {
-			// Llamada al servicio
 			const resp = await this.loginService.informacion(data, `Login/sincronizarPermisos`);
-
-			// Modificar o utilizar los datos desencriptados
 			this.datosUsuario['SEGUR'] = resp;
-
-			// Encriptar antes de guardar en storage
 			const datosEncriptados = this.loginService.encriptar(this.datosUsuario);
 			this.storageService.set('usuario', datosEncriptados);
 			location.reload();
@@ -163,5 +172,4 @@ export class MenuComponent implements OnInit {
 	irMiPerfil() {
 		//this.router.navigateByUrl('modulos/mi-perfil');
 	}
-
 }

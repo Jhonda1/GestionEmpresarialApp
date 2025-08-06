@@ -1,0 +1,15 @@
+ion-item {
+    --padding-start: 0;
+  }
+    
+  /* iOS places the subtitle above the title */
+  ion-card-header.ios {
+    display: flex;
+    flex-flow: column-reverse;
+  }
+
+  .invalid {
+    --border-color: var(--ion-color-danger);
+    --background: none;
+    border-bottom: 1px solid var(--ion-color-danger);
+  }

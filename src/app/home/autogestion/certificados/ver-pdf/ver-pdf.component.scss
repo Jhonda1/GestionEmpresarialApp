@@ -1,0 +1,29 @@
+ion-content::part(scroll) {
+	justify-content: center;
+	display: flex;
+}
+ion-footer {
+	ion-toolbar {
+		--opacity: 0;
+		ion-fab {
+			height: 100%;
+			width: 100%;
+			ion-grid {
+				ion-row {
+					ion-col {
+						display: flex;
+						justify-content: center;
+						ion-fab-button {
+							color: var(--ion-color-medium);
+						}
+					}
+				}
+			}
+		}
+		.fab-horizontal-start {
+			left: 0vw !important;
+			bottom: 0px;
+			position: inherit;
+		}
+	}
+}
