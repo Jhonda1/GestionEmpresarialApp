@@ -10,14 +10,14 @@ import { PeticionService } from '../config/peticiones/peticion.service';
 })
 export class DatosbasicosService extends PeticionService {
 
-  private _nombre: string = '';
+  	private _nombre: string = '';
 	private _nombruno: string = '';
 	private _nombrdos: string = '';
 	private _apelluno: string = '';
 	private _apelldos: string = '';
 	private _fecha_nac: string = '';
 	private _sexo: string = '';
-  private _grupo_sanguineo: string = '';
+  	private _grupo_sanguineo: string = '';
 	private _estadocivil_id: string = '';
 
 	constructor() {
@@ -26,7 +26,7 @@ export class DatosbasicosService extends PeticionService {
 
 	@required({ message: 'Campo requerido.' })
 
-  @maxLength({ value: 100, message: 'Maximo 100 caracteres' })
+  	@maxLength({ value: 100, message: 'Maximo 100 caracteres' })
 	public get nombre(): string {
 		return this._nombre;
 	}
@@ -75,8 +75,8 @@ export class DatosbasicosService extends PeticionService {
 		this._sexo = value;
 	}
 
-  @maxLength({ value: 5, message: 'Maximo 5 caracteres' })
-  @prop()
+  	@maxLength({ value: 5, message: 'Maximo 5 caracteres' })
+  	@prop()
 	public get grupo_sanguineo(): string {
 		return this._grupo_sanguineo;
 	}

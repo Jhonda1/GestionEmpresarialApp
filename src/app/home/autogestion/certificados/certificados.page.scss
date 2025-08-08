@@ -82,7 +82,56 @@ ion-content {
     ion-accordion.acoordion-expanded ion-item[slot="header"]{
       --color:red;
     }
+}
+
+// Estilos para el visualizador de PDF
+.pdf-viewer-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: white;
   
+  .pdf-content {
+    --background: #f5f5f5;
+    
+    .iframe-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      padding: 10px;
+      
+      iframe {
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        background: white;
+      }
+    }
   }
+}
+
+// Estilos adicionales para mejorar la UX
+.main-content {
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.pdf-viewer-container {
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+@keyframes slideInFromRight {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
   
   

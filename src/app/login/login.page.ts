@@ -1,7 +1,4 @@
-/* eslint-disable @typescript-eslint/member-delimiter-style */
-/* eslint-disable quote-props */
-/* eslint-disable @typescript-eslint/member-ordering */
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { FuncionesGenerales } from '../config/funciones/funciones';

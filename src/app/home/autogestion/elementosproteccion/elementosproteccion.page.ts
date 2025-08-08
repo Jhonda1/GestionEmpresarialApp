@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable @typescript-eslint/quotes */
 /* eslint-disable @typescript-eslint/dot-notation */
-import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { DatosEmpleadosService } from 'src/app/servicios/datosEmpleados.service';
 import { LoginService } from 'src/app/servicios/login.service';
 import { StorageService } from 'src/app/servicios/storage.service';
@@ -9,6 +9,8 @@ import { IonModal, AlertController } from '@ionic/angular';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import QrScanner from 'qr-scanner';
 import { NotificacionesService } from 'src/app/servicios/notificaciones.service';
+import { Camera } from '@capacitor/camera';
+import { Capacitor } from '@capacitor/core';
 
 
 @Component({
@@ -17,7 +19,7 @@ import { NotificacionesService } from 'src/app/servicios/notificaciones.service'
   styleUrls: ['./elementosproteccion.page.scss'],
   standalone: false
 })
-export class ElementosproteccionPage implements OnInit {
+export class ElementosproteccionPage implements OnInit, OnDestroy {
   @ViewChild('modal', { static: true }) modal!: IonModal;
   @ViewChild('modal1', { static: true }) modal1!: IonModal;
   rutaGeneral = 'Autogestion/cElementosProteccion/';
@@ -54,6 +56,11 @@ export class ElementosproteccionPage implements OnInit {
 
   ngOnInit() {
     this.obtenerUsuario();
+  }
+
+  ngOnDestroy() {
+    // Limpiar recursos cuando el componente se destruye
+    this.stopQRScanner();
   }
 
   async obtenerUsuario() {
@@ -149,14 +156,43 @@ export class ElementosproteccionPage implements OnInit {
     this.isClaveModalOpen = false;
   }
 
-  openQRModal() {
-    this.isQRModalOpen = true;
-    this.startQRScanner();
+  async openQRModal() {
+    try {
+      // Verificar si estamos en un dispositivo nativo
+      if (Capacitor.isNativePlatform()) {
+        // Solicitar permisos de cámara explícitamente
+        const permissions = await Camera.requestPermissions({
+          permissions: ['camera']
+        });
+        
+        if (permissions.camera !== 'granted') {
+          this.notificacionService.notificacion('Permisos de cámara requeridos para escanear QR');
+          return;
+        }
+      }
+
+      // Verificar permisos de cámara antes de abrir el modal
+      const hasCamera = await QrScanner.hasCamera();
+      if (!hasCamera) {
+        this.notificacionService.notificacion('No se detectó una cámara disponible');
+        return;
+      }
+
+      this.isQRModalOpen = true;
+      this.cdRef.detectChanges();
+      
+      // Esperar a que el DOM se actualice antes de iniciar el scanner
+      await this.startQRScanner();
+    } catch (error) {
+      console.error('Error al abrir modal QR:', error);
+      this.notificacionService.notificacion('Error al acceder a la cámara');
+    }
   }
 
   closeQRModal() {
     this.isQRModalOpen = false;
     this.stopQRScanner();
+    this.validandoClave = false; // Resetear estado de validación
     this.cdRef.detectChanges(); 
   }
   
@@ -164,21 +200,53 @@ export class ElementosproteccionPage implements OnInit {
     this.closeQRModal();
   }
 
-  startQRScanner() {
-    setTimeout(() => {
+  async startQRScanner() {
+    try {
+      // Detener scanner previo si existe
+      if (this.lectorQR) {
+        this.stopQRScanner();
+      }
+
+      // Esperar más tiempo para que el DOM esté completamente renderizado
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
       const videoElement = document.getElementById('videoQR') as HTMLVideoElement;
       if (!videoElement) {
         console.error('Elemento de video no encontrado');
+        this.notificacionService.notificacion('No se pudo inicializar la cámara');
         return;
       }
-  
+
+      // Configurar el elemento de video
+      videoElement.setAttribute('autoplay', 'true');
+      videoElement.setAttribute('muted', 'true');
+      videoElement.setAttribute('playsinline', 'true');
+
+      // Verificar si QrScanner tiene cámaras disponibles
+      let cameras;
+      try {
+        cameras = await QrScanner.listCameras(true);
+      } catch (cameraError) {
+        console.error('Error al listar cámaras:', cameraError);
+        this.notificacionService.notificacion('Error al acceder a las cámaras del dispositivo');
+        return;
+      }
+
+      if (!cameras || cameras.length === 0) {
+        this.notificacionService.notificacion('No hay cámaras disponibles');
+        return;
+      }
+
+      console.log('Cámaras disponibles:', cameras);
+
       this.lectorQR = new QrScanner(
         videoElement,
         async (result) => {
           if (this.validandoClave) return;
           this.validandoClave = true;
-  
+
           try {
+            console.log('Resultado escaneado:', result.data);
             const datosScan = JSON.parse(result.data);
             const { fechaAsignacion, empleadoId, tercero_id } = this.currentItem;
             
@@ -189,15 +257,16 @@ export class ElementosproteccionPage implements OnInit {
               datosScan.Clave,
               datosScan.id_tercero
             );
-  
+
             if (esClaveValida) {
-              this.validandoClave = false; // Restablecer validación
+              this.validandoClave = false;
               this.obtenerUsuario();
             } else {
               setTimeout(() => (this.validandoClave = false), 1000);
             }
           } catch (error) {
             console.error('Error al procesar el resultado del escaneo:', error);
+            this.notificacionService.notificacion('Error al procesar código QR');
             this.validandoClave = false;
           }
         },
@@ -205,19 +274,86 @@ export class ElementosproteccionPage implements OnInit {
           highlightScanRegion: true,
           highlightCodeOutline: true,
           returnDetailedScanResult: true,
+          maxScansPerSecond: 5,
+          preferredCamera: 'environment' // Usar cámara trasera por defecto
         }
       );
-  
-      this.lectorQR.start().catch((error) => {
-        console.error('Error al iniciar el escáner QR:', error);
-      });
-    }, 500);
+
+      // Intentar usar la cámara trasera si está disponible
+      const rearCamera = cameras.find(camera => 
+        camera.label.toLowerCase().includes('back') || 
+        camera.label.toLowerCase().includes('rear') ||
+        camera.label.toLowerCase().includes('environment') ||
+        camera.label.toLowerCase().includes('trasera')
+      );
+      
+      if (rearCamera) {
+        try {
+          await this.lectorQR.setCamera(rearCamera.id);
+          console.log('Cámara trasera seleccionada:', rearCamera.label);
+        } catch (setCameraError) {
+          console.warn('Error al configurar cámara trasera, usando la por defecto:', setCameraError);
+        }
+      }
+
+      // Intentar iniciar el scanner con reintentos
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (attempts < maxAttempts) {
+        try {
+          await this.lectorQR.start();
+          console.log('Scanner QR iniciado correctamente');
+          break;
+        } catch (startError) {
+          attempts++;
+          console.error(`Intento ${attempts} falló:`, startError);
+          
+          if (attempts >= maxAttempts) {
+            throw startError;
+          }
+          
+          // Esperar un poco antes del siguiente intento
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error al iniciar el escáner QR:', error);
+      
+      let errorMessage = 'Error al iniciar la cámara';
+      
+      // Mensajes de error más específicos
+      if (error.name === 'NotAllowedError') {
+        errorMessage = 'Permisos de cámara denegados. Por favor, habilita los permisos en configuración.';
+      } else if (error.name === 'NotFoundError') {
+        errorMessage = 'No se encontró una cámara disponible en el dispositivo.';
+      } else if (error.name === 'NotSupportedError') {
+        errorMessage = 'La cámara no es compatible con este dispositivo.';
+      } else if (error.name === 'NotReadableError') {
+        errorMessage = 'La cámara está siendo usada por otra aplicación.';
+      } else if (error.message) {
+        errorMessage += ': ' + error.message;
+      }
+      
+      this.notificacionService.notificacion(errorMessage);
+      this.validandoClave = false;
+      
+      // Si hay error, cerrar el modal
+      this.closeQRModal();
+    }
   }
 
   stopQRScanner() {
-    if (this.lectorQR) {
-      this.lectorQR.stop();
-      this.lectorQR.destroy();
+    try {
+      if (this.lectorQR) {
+        this.lectorQR.stop();
+        this.lectorQR.destroy();
+        this.lectorQR = null;
+        console.log('Scanner QR detenido correctamente');
+      }
+    } catch (error) {
+      console.error('Error al detener scanner:', error);
       this.lectorQR = null;
     }
   }
@@ -284,7 +420,6 @@ export class ElementosproteccionPage implements OnInit {
   }
 
   async openScanner() {
-    this.isQRModalOpen = true;
-    this.startQRScanner();
+    await this.openQRModal();
   }
 }

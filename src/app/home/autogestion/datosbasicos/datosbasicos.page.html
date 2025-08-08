@@ -10,7 +10,7 @@
 
 	<div class="foto-perfil">
 		<ion-avatar>
-			<img [src]="datosUsuario['validaFoto'] == '1' ? foto + (datosUsuario['foto'] ?? '') : (datosUsuario['foto'] ?? '')" />
+			<img [src]="getFotoUsuario()" alt="Foto de perfil" />
 		</ion-avatar>
 		<ion-button (click)="obtenerFotoPerfil()">
 			<ion-icon slot="icon-only" name="camera"></ion-icon>

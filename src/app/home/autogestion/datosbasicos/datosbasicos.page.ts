@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { RxFormGroup } from '@rxweb/reactive-form-validators';
-import * as moment from 'moment';
+import moment from 'moment';
 import { Constantes } from 'src/app/config/constantes/constantes';
 import { Camera, CameraResultType, CameraSource, ImageOptions } from '@capacitor/camera';
 import { Subject } from 'rxjs';
@@ -95,6 +95,48 @@ export class DatosbasicosPage implements OnInit {
 	dptoResidencia: any = [];
 	ciudadResidencia: any = [];
 
+	/**
+	 * Helper para obtener la URL de la foto del usuario
+	 * Maneja la lógica de mostrar la foto correcta basada en el estado
+	 */
+	getFotoUsuario(): string {
+		// Si hay una foto de perfil recién tomada, usarla
+		if (this.fotoDePerfil) {
+			return this.fotoDePerfil;
+		}
+
+		// Si hay foto en datosUsuario
+		if (this.datosUsuario?.foto) {
+			// Si tiene validaFoto = 'S', usar la URL del servidor
+			if (this.datosUsuario.validaFoto === 'S') {
+				return this.foto + this.datosUsuario.foto;
+			}
+			// Si no, usar directamente la foto (base64)
+			return this.datosUsuario.foto;
+		}
+
+		// Foto por defecto
+		return 'assets/images/nofoto.png';
+	}
+
+	/**
+	 * Verifica si el usuario tiene una foto válida
+	 */
+	tieneFotoValida(): boolean {
+		return !!(this.fotoDePerfil || this.datosUsuario?.foto);
+	}
+
+	/**
+	 * Limpia la foto actual
+	 */
+	limpiarFoto(): void {
+		this.fotoDePerfil = undefined;
+		if (this.datosUsuario) {
+			this.datosUsuario.foto = '';
+			this.datosUsuario.validaFoto = 'N';
+		}
+	}
+
 	constructor(
 		private notificacionService: NotificacionesService,
 		private loginService: LoginService,
@@ -109,8 +151,6 @@ export class DatosbasicosPage implements OnInit {
 		this.datosFormulario = FuncionesGenerales.crearFormulario(this.datosBasicosService);
 		this.datosFormulario.formulario.get('nombre')?.disable();
 		this.datosAdicionales = FuncionesGenerales.crearFormulario(this.informacionEmpleado);
-		console.log(this.datosAdicionales,this.datosFormulario);
-		
 
 		if (this.accordionGroup) {
 			this.accordionGroup.ionChange.subscribe(({ detail }) => {
@@ -124,26 +164,62 @@ export class DatosbasicosPage implements OnInit {
 	}
 
 	async obtenerUsuario() {
-		this.datosUsuario = await this.loginService.desencriptar(
-			JSON.parse(await this.storage.get('usuario').then(resp => resp))
-		);
-		console.log('obtenerUsuario', this.datosUsuario);
-		this.segur = this.datosUsuario['SEGUR'] || []; 
-		this.irPermisos('datosFormulario', 'DP');
+		try {
+			const userStorage = await this.storage.get('usuario');
+			
+			if (!userStorage) {
+				console.log('No hay usuario en storage');
+				return;
+			}
+
+			const userParsed = JSON.parse(userStorage);
+			this.datosUsuario = await this.loginService.desencriptar(userParsed);
+			
+			if (this.datosUsuario) {
+				this.segur = this.datosUsuario['SEGUR'] || [];
+				
+				// Si el usuario tiene id_tercero, establecerlo
+				if (this.datosUsuario['id_tercero']) {
+					this.terceroId = this.datosUsuario['id_tercero'];
+				}
+				
+				// Establecer la foto si existe
+				if (this.datosUsuario['foto']) {
+					console.log('Cargando foto desde usuario:', this.datosUsuario['foto'].substring(0, 50) + '...');
+				}
+								
+				this.irPermisos('datosFormulario', 'DP');
+			}
+			
+		} catch (error) {
+			console.error('Error obteniendo usuario:', error);
+			this.notificacionService.notificacion('Error al obtener información del usuario');
+		}
 	}
 
-	ionViewDidEnter() {
+	async ionViewDidEnter() {
 		this.searching = true;
-		this.obtenerDatosEmpleado();
-		this.obtenerUsuario();
-		this.menu.suscripcion().pipe(
-			takeUntil(this.subjectMenu)
-		).subscribe(() => {
-			this.subject.next(true);
-			this.subjectMenu.next(true);
-		}, error => {
-			console.log('Error ', error);
-		}, () => console.log());
+		
+		try {
+			// IMPORTANTE: Primero obtener usuario para establecer terceroId
+			await this.obtenerUsuario();
+			
+			// Luego obtener datos del empleado
+			this.obtenerDatosEmpleado();
+			
+			this.menu.suscripcion().pipe(
+				takeUntil(this.subjectMenu)
+			).subscribe(() => {
+				this.subject.next(true);
+				this.subjectMenu.next(true);
+			}, error => {
+				console.log('Error ', error);
+			}, () => console.log());
+			
+		} catch (error) {
+			console.log('Error en ionViewDidEnter:', error);
+			this.searching = false;
+		}
 	}
 
 	suscripcionCambios() {
@@ -175,7 +251,6 @@ export class DatosbasicosPage implements OnInit {
 	}
 
 	guardarInformacion(tabla: string) {
-		console.log('guardarInformacion', tabla);
 		if (tabla === 'Empleados') {
 			this.datosForm = Object.assign({}, this.datosAdicionales.formulario.value);
 		} else {
@@ -255,7 +330,6 @@ export class DatosbasicosPage implements OnInit {
 			role: 'cancelar'
 		}];
 		this.notificacionService.alerta('Seleccionemos tu foto empleado', undefined, [], botones).then(async ({ role }) => {
-			console.log('obtenerFotoPerfil', role);
 			if (role === 'camara' || role === 'galeria') {
 				try {
 					const image = await Camera.getPhoto({
@@ -263,7 +337,6 @@ export class DatosbasicosPage implements OnInit {
 						resultType: CameraResultType.DataUrl,
 						source: role === 'camara' ? CameraSource.Camera : CameraSource.Photos
 					});
-					console.log(image);
 					this.actualizarFotoPerfil(image.dataUrl || '');
 					this.extBase64 = `data:image/${image.format};base64,`;
 				} catch (err) {
@@ -277,19 +350,68 @@ export class DatosbasicosPage implements OnInit {
 	}
 
 	async actualizarFotoPerfil(foto: any) {
-		const datos = { id_tercero: this.terceroId, foto };
-		console.log('actualizarFotoPerfil', this);
-		this.datosBasicosService.informacion(datos, this.rutaGeneral + 'fotoPerfil').then(async ({ mensaje, success, archivo }) => {
-			this.notificacionService.notificacion(mensaje);
-			if (success) {
-				this.fotoDePerfil = foto;
-				let user = await this.storage.get('usuario').then(resp => resp);
-				user = this.datosBasicosService.desencriptar(JSON.parse(user));
-				user.foto = foto;
-				this.storage.set('usuario', JSON.stringify(user));
-				this.obtenerDatosEmpleado();
+		try {
+			// Verificar que terceroId esté disponible
+			if (!this.terceroId) {
+				this.notificacionService.notificacion('Error: No se puede identificar el usuario');
+				return;
 			}
-		}).catch(error => console.log('Error ', error));
+
+			const datos = { id_tercero: this.terceroId, foto };
+			
+			const response = await this.datosBasicosService.informacion(datos, this.rutaGeneral + 'fotoPerfil');
+			const { mensaje, success, archivo } = response;
+			
+			this.notificacionService.notificacion(mensaje);
+			
+			if (success) {
+				// Actualizar TODAS las propiedades relacionadas con la foto
+				this.fotoDePerfil = foto;
+				this.datosUsuario.foto = foto;
+				
+				try {
+					// Obtener datos del storage de forma correcta
+					const userStorage = await this.storage.get('usuario');
+					
+					if (!userStorage) {
+						this.notificacionService.notificacion('Error: No se encontró información del usuario en storage');
+						return;
+					}
+
+					// Parsear y desencriptar correctamente
+					const userParsed = JSON.parse(userStorage);
+					let userDecrypted = await this.loginService.desencriptar(userParsed);
+					
+					if (!userDecrypted) {
+						this.notificacionService.notificacion('Error: No se pudo desencriptar la información del usuario');
+						return;
+					}
+
+					// Actualizar la foto
+					userDecrypted.foto = foto;
+					userDecrypted.validaFoto = 'S'; 
+
+					// Encriptar y guardar correctamente
+					const userEncrypted = await this.loginService.encriptar(userDecrypted);					
+					await this.storage.set('usuario', JSON.stringify(userEncrypted));
+					
+					// Actualizar datosUsuario local también
+					this.datosUsuario.foto = foto;
+					this.datosUsuario.validaFoto = 'S';
+					
+					// Forzar actualización de la vista
+					this.cambiovalor = !this.cambiovalor;
+					
+				} catch (storageError) {
+					console.error('Error manejando storage:', storageError);
+					this.notificacionService.notificacion('Error al actualizar la información del usuario');
+				}
+			}
+			
+		} catch (error) {
+			console.error('Error actualizando foto:', error);
+			this.notificacionService.notificacion('Error al actualizar la foto de perfil');
+		}
 	}
 
 	obtenerDatosEmpleado(event?: any) {
@@ -318,7 +440,6 @@ export class DatosbasicosPage implements OnInit {
 
 	cambiosComponenteSelect(evento: any, tabs: string, tabla: string) {
 		this.datosSeleccionados[evento.control] = evento.valor[evento.key];
-		console.log('cambiosComponenteSelect', evento, tabs, tabla);
 		if (tabs === 'informacionempleado') {
 			if (evento.key === 'paisid') {
 				this.datosAdicionales.formulario.get('dptoid')?.setValue(null);

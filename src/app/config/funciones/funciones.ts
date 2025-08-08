@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/dot-notation */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 import { RxFormGroup, RxFormBuilder } from '@rxweb/reactive-form-validators';
-import * as moment from 'moment';
+import  moment from 'moment';
 import { environment } from '../../../environments/environment';
 import { FormGroup } from '@angular/forms';
 

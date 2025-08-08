@@ -1,5 +1,5 @@
-import { DOCUMENT } from '@angular/common';
-import { Injectable, Inject } from '@angular/core';
+
+import { Injectable, Inject, DOCUMENT } from '@angular/core';
 import { DomController } from '@ionic/angular';
 import { Constantes } from '../config/constantes/constantes';
 import { StorageService } from './storage.service';

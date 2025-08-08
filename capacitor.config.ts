@@ -3,7 +3,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.gestionemp.app',
   appName: 'gestionEmp',
-  webDir: 'www',
+  webDir: 'www/browser',
   // server: {
   //   androidScheme: 'https'
   // },

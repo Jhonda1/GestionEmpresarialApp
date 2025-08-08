@@ -1,7 +1,6 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { NotificacionesService } from 'src/app/servicios/notificaciones.service';
-import * as moment from 'moment';
 import { FormControl, FormGroup } from '@angular/forms';
 import { IonDatetime } from '@ionic/angular';
 import { format, parseISO } from 'date-fns';
@@ -14,7 +13,7 @@ import { format, parseISO } from 'date-fns';
 export class FiltrosCertificadosComponent implements OnInit {
 	@ViewChild(IonDatetime, { static: true }) datetime!: IonDatetime;
 
-  anio: number[] = []; 
+  	anio: number[] = []; 
 	meses: any = [
 		{ valor: '01', titulo: 'Enero' },
 		{ valor: '02', titulo: 'Febrero' },
@@ -41,17 +40,17 @@ export class FiltrosCertificadosComponent implements OnInit {
 		{ valor: 'C', titulo: 'Certificado' }
 	];
 
-  arraySalario: any = [
+  	arraySalario: any = [
 		{ valor: 'S', titulo: 'SI' },
 		{ valor: 'N', titulo: 'NO' }
 	];
 
-  @Input() inputanio!: string;
+  	@Input() inputanio!: string;
 	@Input() inputmeses!: string;
 	@Input() inputquincena!: string;
 	@Input() inputdocumento!: string;
-  @Input() inputsalario!: string;
-  @Input() inputdestino!: string;
+  	@Input() inputsalario!: string;
+  	@Input() inputdestino!: string;
 	formFiltro!: FormGroup;
 
 	constructor(

@@ -9,7 +9,7 @@
 				</ion-button>
 			</ion-buttons>
 		</ion-toolbar>
-		<ion-img (click)="irMiPerfil()" [src]="datosUsuario['validaFoto'] == '1' ? foto + datosUsuario['foto'] : datosUsuario['foto']"></ion-img>
+		<ion-img (click)="irMiPerfil()" [src]="datosUsuario['validaFoto'] == 'S' ? foto + datosUsuario['foto'] : datosUsuario['foto']"></ion-img>
 		<ion-text class="w-100" color="dark" (click)="irMiPerfil()">
 			<h4 class="ion-margin text-truncate ion-text-center">{{ datosUsuario['nombre'] }}</h4>
 			<p class="ion-no-margin  ion-text-center">{{ datosUsuario['email'] }}</p>

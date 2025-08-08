@@ -3,7 +3,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { RxFormGroup } from '@rxweb/reactive-form-validators';
 import { ModalController, } from '@ionic/angular';
-import * as moment from 'moment';
+import  moment from 'moment';
 import { InformacionFamiliar } from 'src/app/servicios/informacionfamiliar.service';
 import { FuncionesGenerales } from 'src/app/config/funciones/funciones';
 

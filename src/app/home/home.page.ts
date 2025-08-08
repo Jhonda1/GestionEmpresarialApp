@@ -2,11 +2,6 @@ import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { Subject, timer } from 'rxjs';
 import { debounce, distinct } from 'rxjs/operators';
 import { ThemeService } from '../servicios/theme.service';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
-import { HomePageRoutingModule } from './home-routing.module';
-import { ComponentesModule } from '@app/componentes/componentes.module';
 
 @Component({
   selector: 'app-home',
