@@ -1,0 +1,14 @@
+/* Estilos para el modal de filtros */
+.modal-color {
+  --background: var(--ion-color-light);
+  --color: var(--ion-color-dark);
+}
+
+ion-item {
+  --background: transparent;
+  --color: var(--ion-color-dark);
+}
+
+ion-select {
+  --color: var(--ion-color-dark);
+}

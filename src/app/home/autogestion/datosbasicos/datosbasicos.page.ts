@@ -18,6 +18,8 @@ import { AgregarTelefonoComponent } from './agregar-telefono/agregar-telefono.co
 import { AgregarCorreoComponent } from './agregar-correo/agregar-correo.component';
 import { AgregarEstudioComponent } from './agregar-estudio/agregar-estudio.component';
 import { AgregarFamiliarComponent } from './agregar-familiar/agregar-familiar.component';
+import { SecureImageService } from 'src/app/servicios/secure-image.service';
+import { PhotoSyncService } from 'src/app/servicios/photo-sync.service';
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
 
 defineCustomElements(window);
@@ -56,6 +58,9 @@ export class DatosbasicosPage implements OnInit {
 	datosFormulario!: { formulario: RxFormGroup, propiedades: Array<string> };
 	datosAdicionales!: { formulario: RxFormGroup, propiedades: Array<string> };
 	BotonAgregar = '';
+	
+	// Propiedad para almacenar la URL de la foto optimizada
+	urlFotoUsuario: string = 'assets/images/nofoto.png';
 
 	generos = Constantes.generos;
 	grupo_sanguineo = Constantes.grupo_sanguineo;
@@ -96,44 +101,74 @@ export class DatosbasicosPage implements OnInit {
 	ciudadResidencia: any = [];
 
 	/**
+	 * Actualiza la URL de la foto del usuario
+	 * Se ejecuta solo cuando es necesario actualizar la foto
+	 * Maneja el problema de Mixed Content en dispositivos móviles usando SecureImageService
+	 */
+	private actualizarUrlFoto(): void {		
+		if (this.fotoDePerfil) {
+			this.urlFotoUsuario = this.fotoDePerfil;
+			// Notificar cambio al servicio de sincronización
+			this.photoSyncService.notifyPhotoUpdate(this.fotoDePerfil);
+		} else if (this.datosUsuario?.foto) {			
+			// Si es base64, usar directamente
+			if (this.datosUsuario.foto.startsWith('data:image')) {
+				this.urlFotoUsuario = this.datosUsuario.foto;
+				this.photoSyncService.notifyPhotoUpdate(this.datosUsuario.foto);
+			} else {
+				// Es una ruta del servidor
+				let rutaFoto = this.datosUsuario.foto;
+				if (rutaFoto.startsWith('./')) {
+					rutaFoto = rutaFoto.substring(2);
+				}
+				
+				const urlCompleta = this.foto + rutaFoto;
+				
+				// Usar el servicio seguro para obtener la imagen
+				this.secureImageService.getSecureImageUrl(urlCompleta).subscribe(
+					(urlSegura) => {
+						this.urlFotoUsuario = urlSegura;
+						
+						// Notificar cambio al servicio de sincronización
+						this.photoSyncService.notifyPhotoUpdate(urlSegura);
+						
+						// Solo guardar en storage si no es base64 (para evitar storage pesado)
+						if (!urlSegura.startsWith('data:image')) {
+							this.storage.set('urlFotoUsuarioSesion', urlSegura);
+						}
+					},
+					(error) => {
+						console.error('Error obteniendo imagen segura:', error);
+						this.urlFotoUsuario = 'assets/images/nofoto.png';
+						this.photoSyncService.notifyPhotoUpdate('assets/images/nofoto.png');
+					}
+				);
+			}
+		} else {
+			// Foto por defecto
+			this.urlFotoUsuario = 'assets/images/nofoto.png';
+			this.photoSyncService.notifyPhotoUpdate('assets/images/nofoto.png');
+		}
+	}
+
+	/**
 	 * Helper para obtener la URL de la foto del usuario
-	 * Maneja la lógica de mostrar la foto correcta basada en el estado
+	 * Ahora solo retorna la propiedad calculada
 	 */
 	getFotoUsuario(): string {
-		// Si hay una foto de perfil recién tomada, usarla
-		if (this.fotoDePerfil) {
-			return this.fotoDePerfil;
-		}
-
-		// Si hay foto en datosUsuario
-		if (this.datosUsuario?.foto) {
-			// Si tiene validaFoto = 'S', usar la URL del servidor
-			if (this.datosUsuario.validaFoto === 'S') {
-				return this.foto + this.datosUsuario.foto;
-			}
-			// Si no, usar directamente la foto (base64)
-			return this.datosUsuario.foto;
-		}
-
-		// Foto por defecto
-		return 'assets/images/nofoto.png';
+		return this.urlFotoUsuario;
 	}
 
 	/**
-	 * Verifica si el usuario tiene una foto válida
+	 * Maneja errores de carga de imagen
 	 */
-	tieneFotoValida(): boolean {
-		return !!(this.fotoDePerfil || this.datosUsuario?.foto);
-	}
-
-	/**
-	 * Limpia la foto actual
-	 */
-	limpiarFoto(): void {
-		this.fotoDePerfil = undefined;
-		if (this.datosUsuario) {
-			this.datosUsuario.foto = '';
-			this.datosUsuario.validaFoto = 'N';
+	onImageError(event: any): void {
+		console.warn('Error cargando imagen, usando imagen por defecto');
+		event.target.src = 'assets/images/nofoto.png';
+		
+		// Si era una URL del servidor que falló, intentar usar foto base64 del storage
+		if (this.datosUsuario?.foto && this.datosUsuario.foto.startsWith('data:image')) {
+			event.target.src = this.datosUsuario.foto;
 		}
 	}
 
@@ -144,7 +179,9 @@ export class DatosbasicosPage implements OnInit {
 		private informacionEmpleado: InformacionEmpleado,
 		private menu: CambioMenuService,
 		private storage: StorageService,
-		private modalController: ModalController
+		private modalController: ModalController,
+		private secureImageService: SecureImageService,
+		private photoSyncService: PhotoSyncService
 	) { }
 
 	ngOnInit() {
@@ -161,6 +198,9 @@ export class DatosbasicosPage implements OnInit {
 				}
 			});
 		}
+		
+		// Inicializar URL de foto
+		this.actualizarUrlFoto();
 	}
 
 	async obtenerUsuario() {
@@ -168,26 +208,18 @@ export class DatosbasicosPage implements OnInit {
 			const userStorage = await this.storage.get('usuario');
 			
 			if (!userStorage) {
-				console.log('No hay usuario en storage');
 				return;
 			}
 
 			const userParsed = JSON.parse(userStorage);
-			this.datosUsuario = await this.loginService.desencriptar(userParsed);
-			
+			this.datosUsuario = await this.loginService.desencriptar(userParsed);			
 			if (this.datosUsuario) {
 				this.segur = this.datosUsuario['SEGUR'] || [];
 				
 				// Si el usuario tiene id_tercero, establecerlo
 				if (this.datosUsuario['id_tercero']) {
 					this.terceroId = this.datosUsuario['id_tercero'];
-				}
-				
-				// Establecer la foto si existe
-				if (this.datosUsuario['foto']) {
-					console.log('Cargando foto desde usuario:', this.datosUsuario['foto'].substring(0, 50) + '...');
-				}
-								
+				}								
 				this.irPermisos('datosFormulario', 'DP');
 			}
 			
@@ -203,7 +235,7 @@ export class DatosbasicosPage implements OnInit {
 		try {
 			// IMPORTANTE: Primero obtener usuario para establecer terceroId
 			await this.obtenerUsuario();
-			
+
 			// Luego obtener datos del empleado
 			this.obtenerDatosEmpleado();
 			
@@ -220,6 +252,9 @@ export class DatosbasicosPage implements OnInit {
 			console.log('Error en ionViewDidEnter:', error);
 			this.searching = false;
 		}
+		
+		// Asegurar que la URL de la foto se actualice al entrar en la vista
+		this.actualizarUrlFoto();
 	}
 
 	suscripcionCambios() {
@@ -364,10 +399,16 @@ export class DatosbasicosPage implements OnInit {
 			
 			this.notificacionService.notificacion(mensaje);
 			
-			if (success) {
-				// Actualizar TODAS las propiedades relacionadas con la foto
+			if (success) {				
+				// Actualizar fotoDePerfil para visualización inmediata
 				this.fotoDePerfil = foto;
+				
+				// Actualizar datosUsuario (puede ser sobrescrito por obtenerDatosEmpleado)
+				if (!this.datosUsuario) {
+					this.datosUsuario = {};
+				}
 				this.datosUsuario.foto = foto;
+				this.datosUsuario.validaFoto = '1';
 				
 				try {
 					// Obtener datos del storage de forma correcta
@@ -387,22 +428,26 @@ export class DatosbasicosPage implements OnInit {
 						return;
 					}
 
-					// Actualizar la foto
-					userDecrypted.foto = foto;
-					userDecrypted.validaFoto = 'S'; 
+					// Actualizar la foto en el storage con base64 para funcionar offline
+					userDecrypted.foto = foto; // Mantener base64 en storage
+					userDecrypted.validaFoto = '1'; // '1' para indicar que es base64
 
 					// Encriptar y guardar correctamente
 					const userEncrypted = await this.loginService.encriptar(userDecrypted);					
 					await this.storage.set('usuario', JSON.stringify(userEncrypted));
 					
-					// Actualizar datosUsuario local también
-					this.datosUsuario.foto = foto;
-					this.datosUsuario.validaFoto = 'S';
-					
-					// Forzar actualización de la vista
-					this.cambiovalor = !this.cambiovalor;
-					
-				} catch (storageError) {
+				// Actualizar datosUsuario local también con base64
+				this.datosUsuario.foto = foto;
+				this.datosUsuario.validaFoto = '1';
+								
+				// Actualizar la URL de la foto
+				this.actualizarUrlFoto();
+									
+				// Forzar actualización de la vista
+				this.cambiovalor = !this.cambiovalor;
+				
+				// Notificar cambio inmediatamente
+				this.photoSyncService.notifyPhotoUpdate(foto);				} catch (storageError) {
 					console.error('Error manejando storage:', storageError);
 					this.notificacionService.notificacion('Error al actualizar la información del usuario');
 				}
@@ -428,8 +473,22 @@ export class DatosbasicosPage implements OnInit {
 			});
 			const { datos } = resp;
 			this.terceroId = datos.id_tercero;
+			
+			// Solo actualizar foto del servidor si no hay una foto recién tomada
+			if (datos.foto && !this.fotoDePerfil) {
+				if (!this.datosUsuario) {
+					this.datosUsuario = {};
+				}
+				this.datosUsuario.foto = datos.foto;
+				this.datosUsuario.validaFoto = '1';
+			}
+			
 			this.datosFormulario.formulario.patchModelValue(datos);
 			this.datosAdicionales.formulario.patchModelValue(datos);
+
+			// Actualizar la URL de la foto después de cargar los datos del empleado
+			this.actualizarUrlFoto();
+			
 			this.suscripcionCambios();
 			this.searching = false;
 			if (event) {

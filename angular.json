@@ -36,15 +36,22 @@
             ],
             "styles": ["src/global.scss", "src/theme/variables.scss"],
             "scripts": [],
-            "browser": "src/main.ts"
+            "browser": "src/main.ts",
+            "allowedCommonJsDependencies": [
+              "crypto-js",
+              "localforage", 
+              "moment",
+              "pdfjs-dist/build/pdf",
+              "pdfjs-dist/web/pdf_viewer"
+            ]
           },
           "configurations": {
             "production": {
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2mb",
-                  "maximumError": "5mb"
+                  "maximumWarning": "3mb",
+                  "maximumError": "6mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -176,12 +183,7 @@
     "@schematics/angular:resolver": {
       "typeSeparator": "."
     }
-  },
-  "build": {
-  "options": {
-    "allowedCommonJsDependencies": ["crypto-js", "localforage", "moment"]
   }
-}
 }
 
 

@@ -9,7 +9,19 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "dev": "ionic serve --host=localhost --port=8100",
+    "dev:http": "ionic serve --host=localhost --port=8100 --no-open",
+    "dev:https": "ionic serve --ssl --host=localhost --port=8100 --no-open",
+    "build:prod": "ionic build --prod",
+    "android:dev": "npm run build:prod && cap sync android && cap open android",
+    "android:sync": "npm run build:prod && cap sync android",
+    "ios:dev": "npm run build:prod && cap sync ios && cap open ios",
+    "ios:sync": "npm run build:prod && cap sync ios",
+    "capacitor:sync": "npm run build:prod && cap sync",
+    "capacitor:clean": "rmdir /s /q www 2>nul || rm -rf www",
+    "clean:install": "rmdir /s /q node_modules 2>nul || rm -rf node_modules && npm install",
+    "rebuild": "npm run clean:install && npm run build:prod && cap sync"
   },
   "private": true,
   "dependencies": {
@@ -45,6 +57,7 @@
     "animate.css": "^4.1.1",
     "capacitor-native-biometric": "^4.2.2",
     "crypto-js": "^4.2.0",
+    "html5-qrcode": "^2.3.8",
     "ionic-selectable": "^5.0.3",
     "ionicons": "^7.0.0",
     "jspdf": "^3.0.1",
@@ -90,11 +103,11 @@
   },
   "description": "An Ionic project",
   "browserslist": [
-    "Chrome >=79",
-    "ChromeAndroid >=79",
-    "Firefox >=70",
-    "Edge >=79",
-    "Safari >=14",
-    "iOS >=14"
+    "Chrome >=108",
+    "ChromeAndroid >=108",
+    "Firefox >=105",
+    "Edge >=108",
+    "Safari >=16",
+    "iOS >=16"
   ]
 }

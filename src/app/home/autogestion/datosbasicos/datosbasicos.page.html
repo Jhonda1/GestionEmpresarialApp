@@ -10,7 +10,10 @@
 
 	<div class="foto-perfil">
 		<ion-avatar>
-			<img [src]="getFotoUsuario()" alt="Foto de perfil" />
+			<img [src]="urlFotoUsuario" 
+				alt="Foto de perfil" 
+				(error)="onImageError($event)" 
+			/>
 		</ion-avatar>
 		<ion-button (click)="obtenerFotoPerfil()">
 			<ion-icon slot="icon-only" name="camera"></ion-icon>

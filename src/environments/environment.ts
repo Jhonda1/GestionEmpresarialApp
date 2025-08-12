@@ -4,10 +4,18 @@
 
 export const environment = {
   production: false,
-  //urlBack    : 'http://192.168.0.224:8016/dev/GestionEmp_Jhonda/'
-  // urlBack    : 'https://prosof.co:8011/testing/Gestion_Empresarial/'
-  urlBack      : 'http://192.168.0.224:8016/dev/GestionEmp_Jhonda/'
-
+  // Configuración para desarrollo - HTTP
+  urlBack: 'http://192.168.0.224:8016/dev/GestionEmp_Jhonda/',
+  
+  // Configuración alternativa para desarrollo con HTTPS (si tienes certificados SSL en tu servidor)
+  // urlBack: 'https://192.168.0.224:8017/dev/GestionEmp_Jhonda/',
+  
+  // Configuración para servidor de pruebas HTTPS
+  // urlBack: 'https://prosof.co:8011/testing/Gestion_Empresarial/',
+  
+  // Configuración adicional para manejo de Mixed Content
+  allowMixedContent: true,
+  isDevelopment: true
 };
 
 /*

@@ -1,9 +1,7 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { NotificacionesService } from 'src/app/servicios/notificaciones.service';
 import { FormControl, FormGroup } from '@angular/forms';
-import { IonDatetime } from '@ionic/angular';
-import { format, parseISO } from 'date-fns';
 @Component({
 	selector: 'app-filtros-certificados',
 	templateUrl: './filtros-certificados.component.html',
@@ -11,8 +9,6 @@ import { format, parseISO } from 'date-fns';
   standalone: false
 })
 export class FiltrosCertificadosComponent implements OnInit {
-	@ViewChild(IonDatetime, { static: true }) datetime!: IonDatetime;
-
   	anio: number[] = []; 
 	meses: any = [
 		{ valor: '01', titulo: 'Enero' },
@@ -59,6 +55,12 @@ export class FiltrosCertificadosComponent implements OnInit {
 	) { }
 
 	ngOnInit() {
+		// Inicializar array de años (últimos 10 años y 2 años hacia adelante)
+		const currentYear = new Date().getFullYear();
+		for (let i = currentYear - 10; i <= currentYear + 2; i++) {
+			this.anio.push(i);
+		}
+
 		this.formFiltro = new FormGroup({
       anio      : new FormControl(this.inputanio),
 			meses     : new FormControl(this.inputmeses),
@@ -69,31 +71,11 @@ export class FiltrosCertificadosComponent implements OnInit {
 		});
 	}
 
-	confirm() {
-		this.datetime.confirm();
-	}
-
-	reset() {
-		this.datetime.reset();
-	}
-
-	formatDate(value: string) {
-		return format(parseISO(value), 'MMM');
-	}
-
-	cambioFechaDesde($event: any) {
-		// this.minFechaHasta = $event;
-	}
-
-	cambioFechaHasta($event: any) {
-		// this.maximoFechaDesde = $event;
-	}
-
 	filtrar() {
 		let informacion = Object.assign({}, this.formFiltro.value);
 		if (this.inputsalario == null &&
         (informacion['meses'] == null || informacion['meses'].length== 0) &&
-        (informacion['anio'] == null  || informacion['anio'].length == 0) &&
+        (informacion['anio'] == null) &&
         (informacion['quincena'] == null || informacion['quincena'].length == 0) &&
         informacion['documento'] == null){
         this.notificaciones.notificacion("Ingrese algún filtro.");

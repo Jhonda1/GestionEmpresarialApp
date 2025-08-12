@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { MenuController } from '@ionic/angular';
 import { CambioMenuService } from 'src/app/config/cambio-menu/cambio-menu.service';
@@ -8,7 +8,12 @@ import { LoginService } from 'src/app/servicios/login.service';
 import { NotificacionesService } from 'src/app/servicios/notificaciones.service';
 import { StorageService } from 'src/app/servicios/storage.service';
 import { ThemeService } from 'src/app/servicios/theme.service';
+import { SecureImageService } from 'src/app/servicios/secure-image.service';
+import { PhotoSyncService } from 'src/app/servicios/photo-sync.service';
 import { RxFormGroup } from '@rxweb/reactive-form-validators';
+import { ChangeDetectorRef } from '@angular/core';
+import { Subject, interval } from 'rxjs';
+import { takeUntil, filter } from 'rxjs/operators';
 
 @Component({
 	selector: 'app-menu',
@@ -16,9 +21,10 @@ import { RxFormGroup } from '@rxweb/reactive-form-validators';
 	styleUrls: ['./menu.component.scss'],
 	standalone: false,
 })
-export class MenuComponent implements OnInit {
+export class MenuComponent implements OnInit, OnDestroy {
 	formLogin!: { formulario: RxFormGroup, propiedades: Array<string> };
 	appMenuSwipeGesture: boolean = false;
+	private destroy$ = new Subject<void>();
 
 	menus: Array<{ icon: string, title: string, path: string, badge?: boolean, hijos?: Array<any>, modulo?: string }> = [
 		{
@@ -48,8 +54,9 @@ export class MenuComponent implements OnInit {
 		}
 	];
 
-	datosUsuario: { perfilid?: string, [key: string]: any } = {};
+	datosUsuario: { perfilid?: string, foto?: string, [key: string]: any } = {};
 	public logo = 'assets/images/nofoto.png';
+	public urlFotoUsuario: string = 'assets/images/nofoto.png';
 
 	// Definimos `modulos` como un objeto indexado
 	modulos: { [key: string]: boolean } = {};
@@ -59,12 +66,15 @@ export class MenuComponent implements OnInit {
 	constructor(
 		private menuController: MenuController,
 		private router: Router,
-		public theme: ThemeService,
+		public  theme: ThemeService,
 		private notificacionesService: NotificacionesService,
 		private storageService: StorageService,
 		private loginService: LoginService,
 		private cambioMenuService: CambioMenuService,
 		private cargadorService: CargadorService,
+		private cdr: ChangeDetectorRef,
+		private secureImageService: SecureImageService,
+		private photoSyncService: PhotoSyncService
 	) {
 		this.menus = this.menus.sort((a, b) => FuncionesGenerales.ordenar(a, 'title', 1, b));
 	}
@@ -72,6 +82,124 @@ export class MenuComponent implements OnInit {
 	ngOnInit() {
 		this.obtenerUsuario();
 		this.configForm();
+		this.inicializarFotoUsuario();
+		this.configurarListenerFoto();
+	}
+
+	/**
+	 * Inicializa la foto del usuario desde diferentes fuentes
+	 */
+	private inicializarFotoUsuario() {
+		// 1. Primero intentar desde storage de sesión
+		this.storageService.get('urlFotoUsuarioSesion').then(urlSesion => {
+			if (urlSesion && urlSesion !== 'assets/images/nofoto.png') {
+				this.urlFotoUsuario = urlSesion;
+				this.cdr.detectChanges();
+			} else {
+				// 2. Si no hay en sesión, usar la del usuario
+				this.actualizarFotoDesdeUsuario();
+			}
+		}).catch(error => {
+			console.error('Menu - Error obteniendo foto de sesión:', error);
+			this.actualizarFotoDesdeUsuario();
+		});
+	}
+
+	/**
+	 * Actualiza la foto desde los datos del usuario
+	 */
+	private actualizarFotoDesdeUsuario() {
+		if (this.datosUsuario?.foto) {
+			
+			// Si es base64, usar directamente
+			if (this.datosUsuario.foto.startsWith('data:image')) {
+				this.urlFotoUsuario = this.datosUsuario.foto;
+				this.cdr.detectChanges();
+			} else {
+				// Es una ruta del servidor, usar servicio seguro
+				let rutaFoto = this.datosUsuario.foto;
+				if (rutaFoto.startsWith('./')) {
+					rutaFoto = rutaFoto.substring(2);
+				}
+				
+				const urlCompleta = this.foto + rutaFoto;
+				
+				this.secureImageService.getSecureImageUrl(urlCompleta).subscribe(
+					(urlSegura) => {
+						this.urlFotoUsuario = urlSegura;
+						this.cdr.detectChanges();
+					},
+					(error) => {
+						console.error('Menu - Error obteniendo imagen segura:', error);
+						this.urlFotoUsuario = 'assets/images/nofoto.png';
+						this.cdr.detectChanges();
+					}
+				);
+			}
+		} else {
+			this.urlFotoUsuario = 'assets/images/nofoto.png';
+			this.cdr.detectChanges();
+		}
+	}
+
+	/**
+	 * Configura un listener para detectar cambios en la foto
+	 */
+	private configurarListenerFoto() {
+		// Escuchar notificaciones del PhotoSyncService
+		this.photoSyncService.photoUpdated$.pipe(
+			takeUntil(this.destroy$),
+			filter(url => url !== '' && url !== this.urlFotoUsuario)
+		).subscribe(newPhotoUrl => {
+			this.urlFotoUsuario = newPhotoUrl;
+			this.cdr.detectChanges();
+		});
+
+		// Verificar cambios en el storage cada 3 segundos (backup)
+		interval(3000).pipe(
+			takeUntil(this.destroy$)
+		).subscribe(() => {
+			this.verificarCambiosFoto();
+		});
+
+		// También escuchar cambios del servicio de menú
+		this.cambioMenuService.suscripcion().pipe(
+			takeUntil(this.destroy$)
+		).subscribe(() => {
+			setTimeout(() => {
+				this.verificarCambiosFoto();
+			}, 500);
+		});
+	}
+
+	/**
+	 * Verifica si hay cambios en la foto y actualiza si es necesario
+	 */
+	private async verificarCambiosFoto() {
+		try {
+			// Verificar si hay una nueva foto en el storage de sesión
+			const urlSesion = await this.storageService.get('urlFotoUsuarioSesion');
+			
+			if (urlSesion && urlSesion !== this.urlFotoUsuario) {
+				this.urlFotoUsuario = urlSesion;
+				this.cdr.detectChanges();
+				return;
+			}
+
+			// También verificar cambios en los datos del usuario
+			const userStorage = await this.storageService.get('usuario');
+			if (userStorage) {
+				const userParsed = JSON.parse(userStorage);
+				const userDecrypted = await this.loginService.desencriptar(userParsed);
+				
+				if (userDecrypted?.foto && userDecrypted.foto !== this.datosUsuario?.foto) {
+					this.datosUsuario.foto = userDecrypted.foto;
+					this.actualizarFotoDesdeUsuario();
+				}
+			}
+		} catch (error) {
+			console.error('Menu - Error verificando cambios de foto:', error);
+		}
 	}
 
 	configForm() {
@@ -106,6 +234,8 @@ export class MenuComponent implements OnInit {
 
 	ngOnDestroy() {
 		this.menuController.enable(false);
+		this.destroy$.next();
+		this.destroy$.complete();
 	}
 
 	mostrarConfiguracion(ruta: string) {
@@ -154,13 +284,17 @@ export class MenuComponent implements OnInit {
 		const perfilid = this.datosUsuario['perfilid'];
 		const permisos = FuncionesGenerales.permisos();
 		const data = { perfilid, permisos };
+		console.log('Datos para sincronizar permisos:', this.datosUsuario);
 
 		try {
 			const resp = await this.loginService.informacion(data, `Login/sincronizarPermisos`);
+			// console.log('Respuesta de sincronización de permisos:',this.datosUsuario, resp);
+			return;
 			this.datosUsuario['SEGUR'] = resp;
+			console.log('Datos de usuario después de sincronizar permisos:', this.datosUsuario);
 			const datosEncriptados = this.loginService.encriptar(this.datosUsuario);
 			this.storageService.set('usuario', datosEncriptados);
-			location.reload();
+			// location.reload();
 		} catch (error) {
 			console.error('Error durante la sincronización de permisos:', error);
 		}
@@ -168,5 +302,25 @@ export class MenuComponent implements OnInit {
 
 	irMiPerfil() {
 		//this.router.navigateByUrl('modulos/mi-perfil');
+	}
+
+	/**
+	 * Maneja errores de carga de imagen en el menú
+	 */
+	onImageError(event: any): void {
+		console.warn('Menu - Error cargando imagen, usando imagen por defecto');
+		event.target.src = 'assets/images/nofoto.png';
+		
+		// Intentar recargar la foto desde el storage
+		setTimeout(() => {
+			this.inicializarFotoUsuario();
+		}, 1000);
+	}
+
+	/**
+	 * Método público para forzar actualización de foto (puede ser llamado desde otros componentes)
+	 */
+	public actualizarFoto() {
+		this.inicializarFotoUsuario();
 	}
 }

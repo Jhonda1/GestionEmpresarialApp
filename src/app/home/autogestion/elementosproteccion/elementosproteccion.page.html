@@ -96,7 +96,7 @@
         <ion-button expand="block" (click)="openModalClave()">
           <ion-icon slot="start" name="key"></ion-icon> Firma con Clave
         </ion-button>
-        <ion-button expand="block" (click)="openQRModal()">
+        <ion-button expand="block" (click)="openQRModalImproved()">
           <ion-icon slot="start" name="qr-code"></ion-icon> Firma con QR
         </ion-button>
       </ion-content>
@@ -104,19 +104,30 @@
   </ion-modal>
 
   <!-- Modal para Firma con QR -->
-  <ion-modal [isOpen]="isQRModalOpen">
+  <ion-modal #modalQR [isOpen]="isQRModalOpen" (didPresent)="onQRModalDidPresent()" (willDismiss)="onQRModalWillDismiss()">
     <ng-template>
       <ion-header>
         <ion-toolbar>
-          <ion-title>Firma con QR  </ion-title>
+          <ion-title>Firma con QR</ion-title>
           <ion-buttons slot="end">
-            <ion-button id="botonCerrar"  (click)="closeQRModal()">Cerrar</ion-button>
+            <ion-button (click)="closeQRModal()">Cerrar</ion-button>
           </ion-buttons>
         </ion-toolbar>
       </ion-header>
       <ion-content>
-        <video id="videoQR" width="100%"></video>
-        <ion-button expand="full" (click)="closeQRModal()">Cancelar</ion-button>
+        <div style="position: relative; width: 100%; height: 400px; background: #000;">
+          <video #videoQR style="width: 100%; height: 100%; object-fit: cover;"></video>
+          <div *ngIf="validandoClave" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; padding: 10px; border-radius: 5px;">
+            Validando...
+          </div>
+        </div>
+        <ion-text style="display: block; text-align: center; margin: 20px; color: #666;">
+          Enfoca el código QR en el recuadro para escanearlo
+        </ion-text>
+        <ion-button expand="full" (click)="closeQRModal()" color="medium">
+          <ion-icon slot="start" name="close"></ion-icon>
+          Cancelar
+        </ion-button>
       </ion-content>
     </ng-template>
   </ion-modal>
