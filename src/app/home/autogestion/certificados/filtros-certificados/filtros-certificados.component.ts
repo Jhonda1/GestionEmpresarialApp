@@ -1,14 +1,22 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { ModalController } from '@ionic/angular';
+import { Component, Input, OnInit, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule, FormControl, FormGroup } from '@angular/forms';
+import { IonicModule, ModalController } from '@ionic/angular';
 import { NotificacionesService } from 'src/app/servicios/notificaciones.service';
-import { FormControl, FormGroup } from '@angular/forms';
 @Component({
 	selector: 'app-filtros-certificados',
 	templateUrl: './filtros-certificados.component.html',
 	styleUrls: ['./filtros-certificados.component.scss'],
-  standalone: false
+	standalone: true,
+	imports: [
+		CommonModule,
+		FormsModule,
+		ReactiveFormsModule,
+		IonicModule
+	]
 })
-export class FiltrosCertificadosComponent implements OnInit {
+export class FiltrosCertificadosComponent implements OnInit, AfterViewInit {
+	@ViewChild('firstFocusableElement', { read: ElementRef }) firstFocusableElement!: ElementRef;
   	anio: number[] = []; 
 	meses: any = [
 		{ valor: '01', titulo: 'Enero' },
@@ -71,6 +79,15 @@ export class FiltrosCertificadosComponent implements OnInit {
 		});
 	}
 
+	ngAfterViewInit() {
+		// Asegurar que el foco esté correctamente manejado al abrir el modal
+		setTimeout(() => {
+			if (this.firstFocusableElement && this.firstFocusableElement.nativeElement) {
+				this.firstFocusableElement.nativeElement.focus();
+			}
+		}, 300); // Dar tiempo para que las animaciones terminen
+	}
+
 	filtrar() {
 		let informacion = Object.assign({}, this.formFiltro.value);
 		if (this.inputsalario == null &&
@@ -82,10 +99,6 @@ export class FiltrosCertificadosComponent implements OnInit {
         return;
 		}
 
-    if (this.inputsalario != null && !informacion['destino']){
-        this.notificaciones.notificacion("El campo expide destino no puede estar vacio.");
-        return;
-		}
 		this.cerrarModal(informacion);
 	}
 

@@ -8,9 +8,37 @@
 		<ion-refresher-content></ion-refresher-content>
 	</ion-refresher>
 
-	<div class="foto-perfil">
+	<!-- Mensaje de sin permisos -->
+	<div *ngIf="!tienePermisos && !searching" class="sin-permisos-container">
+		<div class="sin-permisos-content">
+			<div style="display: flex; justify-content: center; align-items: center;">
+				<ion-icon name="lock-closed-outline" class="sin-permisos-icon"></ion-icon>
+			</div>
+			<h2 class="sin-permisos-titulo">Acceso Restringido</h2>
+			<p class="sin-permisos-mensaje">
+				No tiene permisos para acceder a <strong>Datos Básicos del Empleado</strong>.
+			</p>
+		</div>
+	</div>
+
+	<!-- Contenido principal (solo se muestra si tiene permisos) -->
+	<div *ngIf="tienePermisos">
+
+		<div class="foto-perfil">
 		<ion-avatar>
-			<img [src]="urlFotoUsuario" 
+			<!-- Spinner específico para carga de imagen del servidor -->
+			<div *ngIf="isLoadingSecureImage" class="avatar-spinner">
+				<app-loading-spinner 
+					[isLoading]="true" 
+					[overlay]="false" 
+					[size]="'small'"
+					[message]="'Cargando imagen...'"
+					[showMessage]="false">
+				</app-loading-spinner>
+			</div>
+			
+			<img *ngIf="!isLoadingSecureImage" 
+				[src]="urlFotoUsuario" 
 				alt="Foto de perfil" 
 				(error)="onImageError($event)" 
 			/>
@@ -18,6 +46,14 @@
 		<ion-button (click)="obtenerFotoPerfil()">
 			<ion-icon slot="icon-only" name="camera"></ion-icon>
 		</ion-button>
+		
+		<!-- Spinner para captura/subida de foto -->
+		<app-loading-spinner 
+			*ngIf="isLoadingPhoto" 
+			[isLoading]="true" 
+			[message]="'Procesando foto...'"
+			[size]="'medium'">
+		</app-loading-spinner>
 	</div>
 
 	<ion-accordion-group value="DP">
@@ -387,11 +423,19 @@
 	</ion-accordion-group>
 
 	<ion-fab
-		*ngIf="accordionGroup && (accordionGroup.value === 'DR' || accordionGroup.value === 'DC' || accordionGroup.value === 'CC' || accordionGroup.value === 'IC' || accordionGroup.value === 'FI')"
+		*ngIf="tienePermisos && accordionGroup && (accordionGroup.value === 'DR' || accordionGroup.value === 'DC' || accordionGroup.value === 'CC' || accordionGroup.value === 'IC' || accordionGroup.value === 'FI')"
 		vertical="bottom" horizontal="end" slot="fixed">
 		<ion-fab-button (click)="irModal()">
 			<ion-icon name="add"></ion-icon>
 		</ion-fab-button>
 	</ion-fab>
 
+	</div> <!-- Cierre del contenido principal -->
+
 </ion-content>
+
+<!-- Spinner global -->
+<app-loading-spinner 
+	[isLoading]="loadingService.isLoading()" 
+	[message]="loadingService.getCurrentMessage()">
+</app-loading-spinner>

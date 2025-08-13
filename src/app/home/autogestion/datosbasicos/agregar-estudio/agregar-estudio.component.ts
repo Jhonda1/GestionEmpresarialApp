@@ -1,15 +1,26 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ModalController } from '@ionic/angular';
-import { RxFormGroup } from '@rxweb/reactive-form-validators';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { IonicModule, ModalController } from '@ionic/angular';
+import { RxReactiveFormsModule, RxFormGroup } from '@rxweb/reactive-form-validators';
 import  moment from 'moment';
 import { FuncionesGenerales } from 'src/app/config/funciones/funciones';
 import { InformacionAcademica } from 'src/app/servicios/informacionacademica.service';
+import { SelectAutogestionComponent } from 'src/app/home/autogestion/select-autogestion/select-autogestion.component';
 
 @Component({
 	selector: 'app-agregar-estudio',
 	templateUrl: './agregar-estudio.component.html',
 	styleUrls: ['./agregar-estudio.component.scss'],
-  standalone: false
+	standalone: true,
+	imports: [
+		CommonModule,
+		FormsModule,
+		ReactiveFormsModule,
+		IonicModule,
+		RxReactiveFormsModule,
+		SelectAutogestionComponent
+	]
 })
 export class AgregarEstudioComponent implements OnInit {
 

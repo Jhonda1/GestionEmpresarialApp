@@ -1,16 +1,27 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { ModalController } from '@ionic/angular';
-import { RxFormGroup } from '@rxweb/reactive-form-validators';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { IonicModule, ModalController } from '@ionic/angular';
+import { RxReactiveFormsModule, RxFormGroup } from '@rxweb/reactive-form-validators';
 import { Constantes } from 'src/app/config/constantes/constantes';
 import { FuncionesGenerales } from 'src/app/config/funciones/funciones';
 import { DatosbasicosService } from 'src/app/servicios/datosbasicos.service';
 import { InformacionResidencia } from 'src/app/servicios/informacionresidencia.service';
+import { SelectAutogestionComponent } from 'src/app/home/autogestion/select-autogestion/select-autogestion.component';
 
 @Component({
 	selector: 'app-agregar-residencia',
 	templateUrl: './agregar-residencia.component.html',
 	styleUrls: ['./agregar-residencia.component.scss'],
-  standalone: false
+	standalone: true,
+	imports: [
+		CommonModule,
+		FormsModule,
+		ReactiveFormsModule,
+		IonicModule,
+		RxReactiveFormsModule,
+		SelectAutogestionComponent
+	]
 })
 export class AgregarResidenciaComponent implements OnInit {
 

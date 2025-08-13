@@ -1,17 +1,28 @@
 /* eslint-disable @typescript-eslint/dot-notation */
 /* eslint-disable @typescript-eslint/member-delimiter-style */
 import { Component, Input, OnInit } from '@angular/core';
-import { RxFormGroup } from '@rxweb/reactive-form-validators';
-import { ModalController, } from '@ionic/angular';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { IonicModule, ModalController } from '@ionic/angular';
+import { RxReactiveFormsModule, RxFormGroup } from '@rxweb/reactive-form-validators';
 import  moment from 'moment';
 import { InformacionFamiliar } from 'src/app/servicios/informacionfamiliar.service';
 import { FuncionesGenerales } from 'src/app/config/funciones/funciones';
+import { SelectAutogestionComponent } from 'src/app/home/autogestion/select-autogestion/select-autogestion.component';
 
 @Component({
 	selector: 'app-agregar-familiar',
 	templateUrl: './agregar-familiar.component.html',
 	styleUrls: ['./agregar-familiar.component.scss'],
-  standalone: false
+	standalone: true,
+	imports: [
+		CommonModule,
+		FormsModule,
+		ReactiveFormsModule,
+		IonicModule,
+		RxReactiveFormsModule,
+		SelectAutogestionComponent
+	]
 })
 export class AgregarFamiliarComponent implements OnInit {
 	@Input() getTipoDocumento: Array<any> = [];

@@ -1,9 +1,12 @@
-import { Component, Input, OnInit,ViewChild } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { IonicModule } from '@ionic/angular';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DatosEmpleadosService } from 'src/app/servicios/datosEmpleados.service';
 import { Constantes } from 'src/app/config/constantes/constantes';
-import { IonAccordionGroup, IonModal ,Platform} from '@ionic/angular';
+import { IonAccordionGroup, IonModal, Platform} from '@ionic/angular';
 import { NotificacionesService } from 'src/app/servicios/notificaciones.service';
-import { RxFormGroup } from '@rxweb/reactive-form-validators';
+import { RxFormGroup, RxReactiveFormsModule } from '@rxweb/reactive-form-validators';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { FuncionesGenerales } from 'src/app/config/funciones/funciones';
@@ -12,6 +15,8 @@ import { StorageService } from 'src/app/servicios/storage.service';
 import { FormGroup, FormControl} from '@angular/forms';
 import { DatosAusentismosService } from 'src/app/servicios/datosAusentismo.service';
 import { Item } from '@app/componentes/UI/types';
+import { HeaderComponent } from 'src/app/componentes/header/header.component';
+import { TypeaheadModule } from 'src/app/componentes/UI/typehead/typehead.module';
 
 interface Empleado {
   id: number;
@@ -35,10 +40,19 @@ interface Ausentismo {
 	selector: 'app-registroausentismo',
 	templateUrl: './registroausentismo.page.html',
 	styleUrls: ['./registroausentismo.page.scss'],
-  standalone: false,
+	standalone: true,
+	imports: [
+		CommonModule,
+		IonicModule,
+		FormsModule,
+		ReactiveFormsModule,
+		RxReactiveFormsModule,
+		HeaderComponent,
+		TypeaheadModule
+	]
 })
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export class registroausentismoPage implements OnInit {
+export class registroausentismoPage implements OnInit, OnDestroy {
 	[key: string]: any;
 	@ViewChild(IonAccordionGroup, { static: true }) accordionGroup!: IonAccordionGroup;
 	@ViewChild('modalFechaSolicitudesInicio') modalFechaSolicitudesInicio!: IonModal;
@@ -126,6 +140,13 @@ export class registroausentismoPage implements OnInit {
 				this.obtenerInformacion('enfermedades', '', { search: term }); // Aquí llamas a la función para obtener los datos
 			}
 		});
+	}
+
+	ngOnDestroy() {
+		this.subject.next(true);
+		this.subject.complete();
+		this.search$.next('');
+		this.search$.complete();
 	}
 
 	ionViewDidEnter() {

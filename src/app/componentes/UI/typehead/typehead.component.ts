@@ -1,4 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { IonicModule } from '@ionic/angular';
+import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import type { OnInit } from '@angular/core';
@@ -8,7 +11,12 @@ import { DatosEmpleadosService } from 'src/app/servicios/datosEmpleados.service'
 @Component({
   selector: 'app-typeahead',
   templateUrl: 'typehead.component.html',
-  standalone: false
+  standalone: true,
+  imports: [
+    CommonModule,
+    IonicModule,
+    FormsModule
+  ]
 })
 export class TypeaheadComponent implements OnInit, OnDestroy {
   @Input() items: Item[] = [];

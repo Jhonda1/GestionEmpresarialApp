@@ -4,18 +4,34 @@
 
 export const environment = {
   production: false,
-  // Configuración para desarrollo - HTTP
+  
+  // 🚀 API Configuration
   urlBack: 'http://192.168.0.224:8016/dev/GestionEmp_Jhonda/',
   
-  // Configuración alternativa para desarrollo con HTTPS (si tienes certificados SSL en tu servidor)
-  // urlBack: 'https://192.168.0.224:8017/dev/GestionEmp_Jhonda/',
-  
-  // Configuración para servidor de pruebas HTTPS
-  // urlBack: 'https://prosof.co:8011/testing/Gestion_Empresarial/',
-  
-  // Configuración adicional para manejo de Mixed Content
+  // 🔒 Security Settings
   allowMixedContent: true,
-  isDevelopment: true
+  isDevelopment: true,
+  
+  // 📱 App Configuration
+  appName: 'GestionEmpresarialApp',
+  version: '2.0.0',
+  
+  // 🎯 Feature Flags
+  features: {
+    enableBiometric: true,
+    enableQRScanner: true,
+    enableOfflineMode: true,
+    enableAnalytics: false
+  },
+  
+  // ⚡ Performance Settings
+  enableServiceWorker: false,
+  enableHttpCache: true,
+  httpTimeout: 30000,
+  
+  // 🎨 UI Settings
+  theme: 'default',
+  language: 'es'
 };
 
 /*

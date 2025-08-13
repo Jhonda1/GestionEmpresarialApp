@@ -1,0 +1,103 @@
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    backdrop-filter: blur(2px);
+  }
+  
+  &:not(.overlay) {
+    padding: 20px;
+    min-height: 100px;
+  }
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  
+  .overlay & {
+    animation: fadeInScale 0.3s ease-out;
+  }
+}
+
+.loading-message {
+  margin-top: 16px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ion-color-dark);
+  text-align: center;
+  line-height: 1.4;
+}
+
+// Tamaños del spinner
+.spinner-small {
+  width: 24px;
+  height: 24px;
+}
+
+.spinner-medium {
+  width: 40px;
+  height: 40px;
+}
+
+.spinner-large {
+  width: 56px;
+  height: 56px;
+}
+
+// Animaciones
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// Spinner inline (sin overlay)
+.loading-container:not(.overlay) {
+  .loading-content {
+    background: transparent;
+    box-shadow: none;
+    padding: 16px;
+    
+    .loading-message {
+      font-size: 14px;
+      margin-top: 12px;
+    }
+  }
+}
+
+// Modo oscuro
+@media (prefers-color-scheme: dark) {
+  .loading-content {
+    background: var(--ion-color-dark);
+    
+    .loading-message {
+      color: var(--ion-color-light);
+    }
+  }
+  
+  .loading-container:not(.overlay) .loading-content {
+    background: transparent;
+  }
+}

@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-inferrable-types */
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { IonicModule } from '@ionic/angular';
+import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { NotificacionesService } from 'src/app/servicios/notificaciones.service';
 import { CambioMenuService } from 'src/app/config/cambio-menu/cambio-menu.service';
@@ -11,6 +14,8 @@ import { AgregarSolicitudVacacionesComponent } from './agregar-solicitud-vacacio
 import { ModalController } from '@ionic/angular';
 import { LoginService } from 'src/app/servicios/login.service';
 import { StorageService } from 'src/app/servicios/storage.service';
+import { HeaderComponent } from 'src/app/componentes/header/header.component';
+import { FiltroListaPipe } from 'src/app/pipes/filtro-lista/filtro-lista.pipe';
 
 interface DatosUsuario {
 	[key: string]: any;
@@ -21,9 +26,16 @@ interface DatosUsuario {
 	selector: 'app-solicitarvacaciones',
 	templateUrl: './solicitarvacaciones.page.html',
 	styleUrls: ['./solicitarvacaciones.page.scss'],
-  standalone: false,
+	standalone: true,
+	imports: [
+		CommonModule,
+		IonicModule,
+		FormsModule,
+		HeaderComponent,
+		FiltroListaPipe
+	]
 })
-export class SolicitarvacacionesPage implements OnInit {
+export class SolicitarvacacionesPage implements OnInit, OnDestroy {
 	[key: string]: any;
 
 	permisoCrear = false;
@@ -50,6 +62,13 @@ export class SolicitarvacacionesPage implements OnInit {
 	) { }
 
 	ngOnInit() { }
+
+	ngOnDestroy() {
+		this.subject.next(true);
+		this.subject.complete();
+		this.subjectMenu.next(true);
+		this.subjectMenu.complete();
+	}
 
 	ionViewDidEnter() {
 		this.searching = true;

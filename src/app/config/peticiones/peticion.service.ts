@@ -1,4 +1,4 @@
-import { Injectable, Injector } from '@angular/core';
+import { Injectable, Injector, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import * as CryptoJS from 'crypto-js';
@@ -16,22 +16,16 @@ export class CustomInjectorService {
 })
 export class PeticionService {
 
-	private storageService: StorageService = CustomInjectorService.injector.get<StorageService>(StorageService);
-	private notificacionesService: NotificacionesService = CustomInjectorService.injector.get<NotificacionesService>(NotificacionesService);
-	private httpClient: HttpClient = CustomInjectorService.injector.get<HttpClient>(HttpClient);
+	// 🚀 DEPENDENCY INJECTION MODERNA
+	private storageService = inject(StorageService);
+	private notificacionesService = inject(NotificacionesService);
+	private httpClient = inject(HttpClient);
+	
 	public url: string = environment.urlBack + 'index.php/API/';
 	public categoria: string = '';
 
 	constructor() {
-		if (!this.httpClient) {
-			this.httpClient = CustomInjectorService.injector.get<HttpClient>(HttpClient);
-		}
-		if (!this.storageService) {
-			this.storageService = CustomInjectorService.injector.get<StorageService>(StorageService);
-		}
-		if (!this.notificacionesService) {
-			this.notificacionesService = CustomInjectorService.injector.get<NotificacionesService>(NotificacionesService);
-		}
+		// Los servicios ya están inyectados mediante inject()
 	}
 
 	async encriptar(datos: any) {

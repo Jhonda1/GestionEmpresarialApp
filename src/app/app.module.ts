@@ -14,12 +14,10 @@ import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontaweso
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { far } from '@fortawesome/free-regular-svg-icons';
 import { fab } from '@fortawesome/free-brands-svg-icons';
-// import { registroausentismoPageModule } from './home/autogestion/registroausentismo/registroausentismo.module';
-// import { elementosproteccionPageModule } from './home/autogestion/elementosproteccion/elementosproteccion.module';
 @NgModule({
 	declarations: [
-		AppComponent, // Declara aquí el componente principal
-	  ],
+		AppComponent // Declaramos AppComponent como componente tradicional
+	],
 	imports: [
 		BrowserModule
 		, IonicModule.forRoot()
@@ -27,8 +25,6 @@ import { fab } from '@fortawesome/free-brands-svg-icons';
 		, HttpClientModule
 		, ReactiveFormsModule
 		, FormsModule
-		// , registroausentismoPageModule
-		// , elementosproteccionPageModule
     	, IonicSelectableComponent
     	, FontAwesomeModule
 		, IonicStorageModule.forRoot({

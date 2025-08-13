@@ -7,6 +7,7 @@ import { LoginService } from '../servicios/login.service';
 import { NotificacionesService } from '../servicios/notificaciones.service';
 import { StorageService } from '../servicios/storage.service';
 import { ThemeService } from '../servicios/theme.service';
+import { CambioMenuService } from '../config/cambio-menu/cambio-menu.service';
 import { RxFormGroup } from '@rxweb/reactive-form-validators';
 import { timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
@@ -39,6 +40,7 @@ export class LoginPage implements OnInit {
 		private loginService: LoginService,
 		private storageService: StorageService,
 		private cargadorService: CargadorService,
+		private cambioMenu: CambioMenuService,
 	) { }
 
 	ngOnInit() {
@@ -127,9 +129,13 @@ export class LoginPage implements OnInit {
 					this.formLogin.formulario.markAsUntouched();
 				}
 				if (respuesta && respuesta.valido) {
+					// Guardar usuario en storage
 					this.storageService.set('usuario', respuesta.usuario);
-					//this.router.navigateByUrl('/modulos/inicio');
+					// Notificar a otros componentes (menú) que el usuario cambió para que recarguen datos/foto
+					this.cambioMenu.cambio('usuarioActualizado');
+					// Navegar al inicio de módulos
 					this.router.navigateByUrl('/modulos/datosbasicos');
+					// Resetear formulario y estados visuales
 					this.formLogin.formulario.reset();
 					this.formLogin.formulario.markAsUntouched();
 					this.retornar();

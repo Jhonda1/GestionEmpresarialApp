@@ -1,5 +1,9 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { ModalController, IonAccordionGroup, Platform } from '@ionic/angular';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { IonicModule, ModalController, IonAccordionGroup, Platform } from '@ionic/angular';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { PdfViewerModule } from 'ng2-pdf-viewer';
 import { IonItemSliding } from '@ionic/angular';
 import { StorageService } from 'src/app/servicios/storage.service';
 import { FuncionesGenerales } from 'src/app/config/funciones/funciones';
@@ -12,14 +16,31 @@ import { FiltrosCertificadosComponent } from './filtros-certificados/filtros-cer
 import { VerPdfComponent } from './ver-pdf/ver-pdf.component';
 import { Browser } from '@capacitor/browser';
 import { DomSanitizer } from '@angular/platform-browser';
+// Importaciones de componentes y pipes necesarios
+import { HeaderComponent } from 'src/app/componentes/header/header.component';
+import { FiltroListaPipe } from 'src/app/pipes/filtro-lista/filtro-lista.pipe';
 
 @Component({
 	selector: 'app-certificados',
 	templateUrl: './certificados.page.html',
 	styleUrls: ['./certificados.page.scss'],
-  standalone: false
+	standalone: true,
+	imports: [
+		CommonModule,
+		FormsModule,
+		ReactiveFormsModule,
+		IonicModule,
+		FontAwesomeModule,
+		PdfViewerModule,
+		// Componentes
+		HeaderComponent,
+		FiltrosCertificadosComponent, // Usado en modal
+		VerPdfComponent, // Usado en modal
+		// Pipes
+		FiltroListaPipe
+	]
 })
-export class CertificadosPage implements OnInit {
+export class CertificadosPage implements OnInit, OnDestroy {
   permisoExtrato      = false;
   permisoCertificado  = false;
   permisoCartaLaboral = false;
@@ -31,7 +52,6 @@ export class CertificadosPage implements OnInit {
 	src: any;
 	@ViewChild(IonAccordionGroup, { static: true }) accordionGroup!: IonAccordionGroup;
 	viwPDF = false;
-	base64Img: any;
 	carataLaboral = '';
 	buscarListaHistorico: string = '';
 	segmento = 'historicoFamilia';
@@ -182,7 +202,7 @@ export class CertificadosPage implements OnInit {
 					this.fechaActual();
 				} else {
           this.formFiltro['anio'] = data.anio;
-					this.formFiltro['meses']    = data.meses;
+					this.formFiltro['meses'] = data.meses;
 					this.formFiltro['quincena'] = data.quincena;
 					this.formFiltro['documento'] = data.documento;
 					this.formFiltro['destino'] = data.destino;
@@ -224,26 +244,29 @@ export class CertificadosPage implements OnInit {
 
 
 	async CartaLaboral(event: any) {
-		console.log(this.datosBasicosService,event);
 		this.datosBasicosService.informacion(this.formFiltro, this.rutaGeneral + 'ImprimirCartaLaboral').then(({
 			base64Img,
 			file_aux
-		}) => {
-			// this.download(base64Img);
+		}) => {			
 			if (event == 1) {
-				this.base64Img = 'data:application/pdf;base64,' + base64Img + '#toolbar=0&navpanes=0';
-				// Usar base64 en lugar de file_aux para evitar problemas de recursos locales
-				this.src = this.sanitizer.bypassSecurityTrustResourceUrl(this.base64Img);
+				// Usar el modal VerPdfComponent para consistencia con otros PDFs
+				this.download(base64Img);
 			} else {
-				// let pdfWindow = window.open();
-				// var pdf = pdfWindow.document.write("<iframe width='100%' height='100%' src='data:application/pdf;base64, " + base64Img + "'></iframe>");
+				// Abrir en el navegador externo
 				this.obtenerArchivo(file_aux);
 			}
 		}).catch(error => console.log("Error ", error))
 	}
 
-	cerrarIframe() {
-		this.src = '';
+	/**
+	 * Limpia recursos y suscripciones al destruir el componente
+	 * Previene memory leaks
+	 */
+	ngOnDestroy() {
+		this.subject.next(true);
+		this.subject.complete();
+		this.subjectMenu.next(true);
+		this.subjectMenu.complete();
 	}
 
 }

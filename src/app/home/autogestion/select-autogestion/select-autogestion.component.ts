@@ -1,12 +1,24 @@
 
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { RxFormGroup } from '@rxweb/reactive-form-validators';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { IonicModule } from '@ionic/angular';
+import { IonicSelectableComponent } from 'ionic-selectable';
+import { RxReactiveFormsModule, RxFormGroup } from '@rxweb/reactive-form-validators';
 
 @Component({
   selector: 'app-select-autogestion',
   templateUrl: './select-autogestion.component.html',
   styleUrls: ['./select-autogestion.component.scss'],
-  standalone: false
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    IonicModule,
+    IonicSelectableComponent,
+    RxReactiveFormsModule
+  ]
 })
 export class SelectAutogestionComponent implements OnInit, OnChanges {
 

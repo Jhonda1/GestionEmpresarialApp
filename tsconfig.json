@@ -1,45 +1,56 @@
-/* To learn more about this file see: https://angular.io/config/tsconfig. */
 {
   "compileOnSave": false,
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
-      "@app/*": [
-        "src/app/*"
-      ],
-      "@env/*": [
-        "src/environments/*"
-      ]
+      "@app/*": ["src/app/*"],
+      "@env/*": ["src/environments/*"],
+      "@assets/*": ["src/assets/*"],
+      "@shared/*": ["src/app/shared/*"],
+      "@core/*": ["src/app/core/*"]
     },
     "outDir": "./dist/out-tsc",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
+    
+    // 🔥 MODO ESTRICTO PROGRESIVO (activar gradualmente)
     "strict": false,
+    "noImplicitAny": false,
+    "noImplicitReturns": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": false,
-    "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": false,
+    
+    // ⚡ OPTIMIZACIONES MODERNAS
     "sourceMap": true,
     "declaration": false,
     "experimentalDecorators": true,
     "moduleResolution": "bundler",
     "importHelpers": true,
+    
+    // 🎯 TARGETS MODERNOS
     "target": "ES2022",
     "module": "ES2022",
-    "lib": [
-      "ES2022",
-      "dom",
-      "dom.iterable"
-    ],
+    "lib": ["ES2022", "dom", "dom.iterable"],
+    
     "useDefineForClassFields": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    
+    // 📊 ANÁLISIS AVANZADO (para futuras mejoras)
+    "noImplicitThis": true
   },
   "exclude": ["node_modules", "dist"],
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,
-    "strictTemplates": true
+    "strictTemplates": true,
+    
+    // 🚀 OPTIMIZACIONES ANGULAR MODERNAS
+    "enableBlockSyntax": true,
+    "preserveWhitespaces": false,
+    "fullTemplateTypeCheck": true
   }
 }

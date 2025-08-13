@@ -16,14 +16,23 @@
 		</ion-text>
 	</ion-header>
 	<ion-content>
-		<ion-list mode="ios" [ngClass]="{'d-none' : men.modulo && !modulos[men.modulo]}" *ngFor="let men of menus;">
-			<ion-item-divider *ngIf="men['hijos'] && men.title != ''" [sticky]="true" color="light">
-				<ion-label color="dark">{{ men.title | titlecase }}</ion-label>
-			</ion-item-divider>
-			<ion-item (click)="toggleMenu(); irPagina(hijo.path)" lines="full" *ngFor="let hijo of men['hijos'];">
-				<ion-icon slot="start" [name]="hijo.icon" color="dark"></ion-icon>
-				<ion-label [ngClass]="size" color="dark" style="cursor: pointer;">{{ hijo.title }}</ion-label>
-			</ion-item>
+
+		<!-- Mostrar menús con permisos -->
+		<ion-list mode="ios" *ngFor="let men of menus;">
+			<!-- Solo mostrar el módulo si tiene permisos -->
+			<div *ngIf="validarModulo(men)">
+				<ion-item-divider *ngIf="men['hijos'] && men.title != ''" [sticky]="true" color="light">
+					<ion-label color="dark">{{ men.title | titlecase }}</ion-label>
+				</ion-item-divider>
+				<!-- Filtrar hijos por permisos -->
+				<ion-item 
+					(click)="toggleMenu(); irPagina(hijo.path)" 
+					lines="full" 
+					*ngFor="let hijo of filtrarHijosPorPermisos(men['hijos']);">
+					<ion-icon slot="start" [name]="hijo.icon" color="dark"></ion-icon>
+					<ion-label [ngClass]="size" color="dark" style="cursor: pointer;">{{ hijo.title }}</ion-label>
+				</ion-item>
+			</div>
 		</ion-list>
 	</ion-content>
 	<ion-footer class="ion-no-border">

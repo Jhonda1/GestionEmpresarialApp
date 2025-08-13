@@ -1,5 +1,8 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { RxFormGroup } from '@rxweb/reactive-form-validators';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { IonicModule, IonAccordionGroup, IonModal, ModalController } from '@ionic/angular';
+import { RxReactiveFormsModule, RxFormGroup } from '@rxweb/reactive-form-validators';
 import moment from 'moment';
 import { Constantes } from 'src/app/config/constantes/constantes';
 import { Camera, CameraResultType, CameraSource, ImageOptions } from '@capacitor/camera';
@@ -12,7 +15,6 @@ import { debounceTime, takeUntil } from 'rxjs/operators';
 import { DatosbasicosService } from 'src/app/servicios/datosbasicos.service';
 import { InformacionEmpleado } from 'src/app/servicios/informacionempleado.service';
 import { LoginService } from 'src/app/servicios/login.service';
-import { IonAccordionGroup, IonModal, ModalController } from '@ionic/angular';
 import { AgregarResidenciaComponent } from './agregar-residencia/agregar-residencia.component';
 import { AgregarTelefonoComponent } from './agregar-telefono/agregar-telefono.component';
 import { AgregarCorreoComponent } from './agregar-correo/agregar-correo.component';
@@ -21,6 +23,12 @@ import { AgregarFamiliarComponent } from './agregar-familiar/agregar-familiar.co
 import { SecureImageService } from 'src/app/servicios/secure-image.service';
 import { PhotoSyncService } from 'src/app/servicios/photo-sync.service';
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
+// Importaciones de componentes y pipes necesarios
+import { HeaderComponent } from 'src/app/componentes/header/header.component';
+import { SelectAutogestionComponent } from 'src/app/home/autogestion/select-autogestion/select-autogestion.component';
+import { FiltroListaPipe } from 'src/app/pipes/filtro-lista/filtro-lista.pipe';
+import { LoadingSpinnerComponent } from 'src/app/componentes/loading-spinner/loading-spinner.component';
+import { LoadingService } from 'src/app/servicios/loading.service';
 
 defineCustomElements(window);
 
@@ -28,9 +36,22 @@ defineCustomElements(window);
 	selector: 'app-datosbasicos',
 	templateUrl: './datosbasicos.page.html',
 	styleUrls: ['./datosbasicos.page.scss'],
-  	standalone: false,
+	standalone: true,
+	imports: [
+		CommonModule,
+		FormsModule,
+		ReactiveFormsModule,
+		IonicModule,
+		RxReactiveFormsModule,
+		// Componentes
+		HeaderComponent,
+		SelectAutogestionComponent,
+		LoadingSpinnerComponent,
+		// Pipes
+		FiltroListaPipe
+	],
 })
-export class DatosbasicosPage implements OnInit {
+export class DatosbasicosPage implements OnInit, OnDestroy {
 
 	@ViewChild(IonAccordionGroup, { static: true }) accordionGroup: IonAccordionGroup | undefined;
 	@ViewChild('modalFecha') fechaNac: IonModal | undefined;
@@ -40,7 +61,7 @@ export class DatosbasicosPage implements OnInit {
 	qResidencia: Array<object> = [];
 	qCorreo: Array<object> = [];
 	qAcademica: Array<object> = [];
-	segur: Array<object> = [];
+	segur: Array<number> = [];
 	buscarLista = '';
 	buscarListaHistorico = '';
 	buscarListaAcademia = '';
@@ -49,10 +70,13 @@ export class DatosbasicosPage implements OnInit {
 	buscarListaCorreo = '';
 	accordions = ['DP', 'DR', 'DC', 'CC', 'IE', 'IC', 'FI'];
 	datosUsuario: { 
-		SEGUR?: Array<object>; 
+		SEGUR?: Array<number>; 
 		validaFoto?: string; 
 		foto?: string; 
 	  } = {};
+	// Validación de permisos
+	tienePermisos = false;
+	permisoModulo = 6001006; // Permiso para datos personales
 	foto: string = FuncionesGenerales.urlGestion();
 	rutaGeneral = 'Autogestion/cDatosBasicos/';
 	datosFormulario!: { formulario: RxFormGroup, propiedades: Array<string> };
@@ -61,6 +85,10 @@ export class DatosbasicosPage implements OnInit {
 	
 	// Propiedad para almacenar la URL de la foto optimizada
 	urlFotoUsuario: string = 'assets/images/nofoto.png';
+	
+	// Estados de carga para imágenes
+	isLoadingPhoto: boolean = false;
+	isLoadingSecureImage: boolean = false;
 
 	generos = Constantes.generos;
 	grupo_sanguineo = Constantes.grupo_sanguineo;
@@ -105,50 +133,69 @@ export class DatosbasicosPage implements OnInit {
 	 * Se ejecuta solo cuando es necesario actualizar la foto
 	 * Maneja el problema de Mixed Content en dispositivos móviles usando SecureImageService
 	 */
-	private actualizarUrlFoto(): void {		
+	private actualizarUrlFoto(): void {
+		// PRIORIDAD 1: Foto recién tomada (fotoDePerfil)
 		if (this.fotoDePerfil) {
 			this.urlFotoUsuario = this.fotoDePerfil;
-			// Notificar cambio al servicio de sincronización
 			this.photoSyncService.notifyPhotoUpdate(this.fotoDePerfil);
-		} else if (this.datosUsuario?.foto) {			
-			// Si es base64, usar directamente
+			// Actualizar storage de sesión para sincronizar con menu component
+			this.storage.set('urlFotoUsuarioSesion', this.fotoDePerfil);
+			return;
+		}
+
+		// PRIORIDAD 2: Foto del storage del usuario (base64)
+		if (this.datosUsuario?.foto && this.datosUsuario?.validaFoto === '1') {
 			if (this.datosUsuario.foto.startsWith('data:image')) {
 				this.urlFotoUsuario = this.datosUsuario.foto;
 				this.photoSyncService.notifyPhotoUpdate(this.datosUsuario.foto);
-			} else {
-				// Es una ruta del servidor
-				let rutaFoto = this.datosUsuario.foto;
-				if (rutaFoto.startsWith('./')) {
-					rutaFoto = rutaFoto.substring(2);
-				}
-				
-				const urlCompleta = this.foto + rutaFoto;
-				
-				// Usar el servicio seguro para obtener la imagen
-				this.secureImageService.getSecureImageUrl(urlCompleta).subscribe(
-					(urlSegura) => {
+				// Actualizar storage de sesión para sincronizar con menu component
+				this.storage.set('urlFotoUsuarioSesion', this.datosUsuario.foto);
+				return;
+			}
+		}
+
+		// PRIORIDAD 3: Foto del servidor (URL)
+		if (this.datosUsuario?.foto && !this.datosUsuario.foto.startsWith('data:image')) {
+			let rutaFoto = this.datosUsuario.foto;
+			if (rutaFoto.startsWith('./')) {
+				rutaFoto = rutaFoto.substring(2);
+			}
+			
+			const urlCompleta = this.foto + rutaFoto;
+			
+			// Mostrar spinner mientras se carga la imagen del servidor
+			this.isLoadingSecureImage = true;
+			
+			// Usar el servicio seguro para obtener la imagen
+			this.secureImageService.getSecureImageUrl(urlCompleta).subscribe(
+				(urlSegura) => {
+					// Solo actualizar si no hay una foto más prioritaria
+					if (!this.fotoDePerfil && (!this.datosUsuario?.validaFoto || this.datosUsuario.validaFoto !== '1')) {
 						this.urlFotoUsuario = urlSegura;
-						
-						// Notificar cambio al servicio de sincronización
 						this.photoSyncService.notifyPhotoUpdate(urlSegura);
 						
-						// Solo guardar en storage si no es base64 (para evitar storage pesado)
-						if (!urlSegura.startsWith('data:image')) {
-							this.storage.set('urlFotoUsuarioSesion', urlSegura);
-						}
-					},
-					(error) => {
-						console.error('Error obteniendo imagen segura:', error);
-						this.urlFotoUsuario = 'assets/images/nofoto.png';
-						this.photoSyncService.notifyPhotoUpdate('assets/images/nofoto.png');
+						// Actualizar storage de sesión para sincronizar con menu component
+						this.storage.set('urlFotoUsuarioSesion', urlSegura);
 					}
-				);
-			}
-		} else {
-			// Foto por defecto
-			this.urlFotoUsuario = 'assets/images/nofoto.png';
-			this.photoSyncService.notifyPhotoUpdate('assets/images/nofoto.png');
+					this.isLoadingSecureImage = false;
+				},
+				(error) => {
+					console.error('Error obteniendo imagen segura:', error);
+					this.urlFotoUsuario = 'assets/images/nofoto.png';
+					this.photoSyncService.notifyPhotoUpdate('assets/images/nofoto.png');
+					// Actualizar storage de sesión para sincronizar con menu component
+					this.storage.set('urlFotoUsuarioSesion', 'assets/images/nofoto.png');
+					this.isLoadingSecureImage = false;
+				}
+			);
+			return;
 		}
+
+		// PRIORIDAD 4: Foto por defecto
+		this.urlFotoUsuario = 'assets/images/nofoto.png';
+		this.photoSyncService.notifyPhotoUpdate('assets/images/nofoto.png');
+		// Actualizar storage de sesión para sincronizar con menu component
+		this.storage.set('urlFotoUsuarioSesion', 'assets/images/nofoto.png');
 	}
 
 	/**
@@ -181,7 +228,8 @@ export class DatosbasicosPage implements OnInit {
 		private storage: StorageService,
 		private modalController: ModalController,
 		private secureImageService: SecureImageService,
-		private photoSyncService: PhotoSyncService
+		private photoSyncService: PhotoSyncService,
+		public loadingService: LoadingService // Público para acceso desde template
 	) { }
 
 	ngOnInit() {
@@ -216,17 +264,31 @@ export class DatosbasicosPage implements OnInit {
 			if (this.datosUsuario) {
 				this.segur = this.datosUsuario['SEGUR'] || [];
 				
+				// Validar permisos para el módulo
+				this.tienePermisos = this.validarPermisoModulo();
+				
 				// Si el usuario tiene id_tercero, establecerlo
 				if (this.datosUsuario['id_tercero']) {
 					this.terceroId = this.datosUsuario['id_tercero'];
-				}								
-				this.irPermisos('datosFormulario', 'DP');
+				}
+								
+				// Solo cargar permisos de formulario si tiene permisos para el módulo
+				if (this.tienePermisos) {
+					this.irPermisos('datosFormulario', 'DP');
+				}
 			}
 			
 		} catch (error) {
 			console.error('Error obteniendo usuario:', error);
 			this.notificacionService.notificacion('Error al obtener información del usuario');
 		}
+	}
+
+	/**
+	 * Valida si el usuario tiene permisos para acceder al módulo de datos básicos
+	 */
+	validarPermisoModulo(): boolean {
+		return FuncionesGenerales.validarPermiso(this.permisoModulo, this.segur);
 	}
 
 	async ionViewDidEnter() {
@@ -367,14 +429,21 @@ export class DatosbasicosPage implements OnInit {
 		this.notificacionService.alerta('Seleccionemos tu foto empleado', undefined, [], botones).then(async ({ role }) => {
 			if (role === 'camara' || role === 'galeria') {
 				try {
+					// Mostrar spinner específico para captura de foto
+					this.isLoadingPhoto = true;
+					
 					const image = await Camera.getPhoto({
 						quality: 100,
 						resultType: CameraResultType.DataUrl,
 						source: role === 'camara' ? CameraSource.Camera : CameraSource.Photos
 					});
+					
+					// La captura fue exitosa, ahora actualizar la foto
 					this.actualizarFotoPerfil(image.dataUrl || '');
 					this.extBase64 = `data:image/${image.format};base64,`;
+					
 				} catch (err) {
+					this.isLoadingPhoto = false;
 					if (err !== 'No Image Selected') {
 						this.fotoDePerfil = undefined;
 						this.notificacionService.notificacion('Error al tomar imagen');
@@ -389,112 +458,176 @@ export class DatosbasicosPage implements OnInit {
 			// Verificar que terceroId esté disponible
 			if (!this.terceroId) {
 				this.notificacionService.notificacion('Error: No se puede identificar el usuario');
+				this.isLoadingPhoto = false;
 				return;
 			}
 
-			const datos = { id_tercero: this.terceroId, foto };
-			
-			const response = await this.datosBasicosService.informacion(datos, this.rutaGeneral + 'fotoPerfil');
-			const { mensaje, success, archivo } = response;
-			
-			this.notificacionService.notificacion(mensaje);
-			
-			if (success) {				
-				// Actualizar fotoDePerfil para visualización inmediata
-				this.fotoDePerfil = foto;
+			// Usar el servicio de loading para mostrar el spinner con mensaje específico
+			await this.loadingService.withLoading(async () => {
+				const datos = { id_tercero: this.terceroId, foto };
+				const response = await this.datosBasicosService.informacion(datos, this.rutaGeneral + 'fotoPerfil');
+				const { mensaje, success, archivo } = response;
 				
-				// Actualizar datosUsuario (puede ser sobrescrito por obtenerDatosEmpleado)
-				if (!this.datosUsuario) {
-					this.datosUsuario = {};
-				}
-				this.datosUsuario.foto = foto;
-				this.datosUsuario.validaFoto = '1';
+				this.notificacionService.notificacion(mensaje);
 				
-				try {
-					// Obtener datos del storage de forma correcta
-					const userStorage = await this.storage.get('usuario');
+				if (success) {								
+					// IMPORTANTE: Establecer fotoDePerfil PRIMERO para mantener prioridad
+					this.fotoDePerfil = foto;
 					
-					if (!userStorage) {
-						this.notificacionService.notificacion('Error: No se encontró información del usuario en storage');
-						return;
+					// Actualizar datosUsuario con la nueva foto
+					if (!this.datosUsuario) {
+						this.datosUsuario = {};
 					}
-
-					// Parsear y desencriptar correctamente
-					const userParsed = JSON.parse(userStorage);
-					let userDecrypted = await this.loginService.desencriptar(userParsed);
+					this.datosUsuario.foto = foto;
+					this.datosUsuario.validaFoto = '1'; // Marcar como foto de usuario (base64)
 					
-					if (!userDecrypted) {
-						this.notificacionService.notificacion('Error: No se pudo desencriptar la información del usuario');
-						return;
+					try {
+						// Obtener datos del storage de forma correcta
+						const userStorage = await this.storage.get('usuario');
+						
+						if (!userStorage) {
+							this.notificacionService.notificacion('Error: No se encontró información del usuario en storage');
+							return;
+						}
+
+						// Parsear y desencriptar correctamente
+						const userParsed = JSON.parse(userStorage);
+						let userDecrypted = await this.loginService.desencriptar(userParsed);
+						
+						if (!userDecrypted) {
+							this.notificacionService.notificacion('Error: No se pudo desencriptar la información del usuario');
+							return;
+						}
+
+						// Actualizar la foto en el storage con base64 para funcionar offline
+						userDecrypted.foto = foto; // Mantener base64 en storage
+						userDecrypted.validaFoto = '1'; // '1' para indicar que es base64 de usuario
+
+						// Encriptar y guardar correctamente
+						const userEncrypted = await this.loginService.encriptar(userDecrypted);					
+						await this.storage.set('usuario', JSON.stringify(userEncrypted));
+						
+						// CLAVE: También actualizar el storage de sesión para que el menu component se entere inmediatamente
+						await this.storage.set('urlFotoUsuarioSesion', foto);
+						
+					} catch (storageError) {
+						console.error('Error manejando storage:', storageError);
+						this.notificacionService.notificacion('Error al actualizar la información del usuario');
 					}
-
-					// Actualizar la foto en el storage con base64 para funcionar offline
-					userDecrypted.foto = foto; // Mantener base64 en storage
-					userDecrypted.validaFoto = '1'; // '1' para indicar que es base64
-
-					// Encriptar y guardar correctamente
-					const userEncrypted = await this.loginService.encriptar(userDecrypted);					
-					await this.storage.set('usuario', JSON.stringify(userEncrypted));
-					
-				// Actualizar datosUsuario local también con base64
-				this.datosUsuario.foto = foto;
-				this.datosUsuario.validaFoto = '1';
-								
-				// Actualizar la URL de la foto
-				this.actualizarUrlFoto();
 									
-				// Forzar actualización de la vista
-				this.cambiovalor = !this.cambiovalor;
-				
-				// Notificar cambio inmediatamente
-				this.photoSyncService.notifyPhotoUpdate(foto);				} catch (storageError) {
-					console.error('Error manejando storage:', storageError);
-					this.notificacionService.notificacion('Error al actualizar la información del usuario');
+					// Actualizar la URL de la foto (respetará la prioridad de fotoDePerfil)
+					this.actualizarUrlFoto();
+										
+					// Forzar actualización de la vista
+					this.cambiovalor = !this.cambiovalor;				
 				}
-			}
+			}, 'Guardando foto de perfil...', 'uploadPhoto');
 			
 		} catch (error) {
 			console.error('Error actualizando foto:', error);
 			this.notificacionService.notificacion('Error al actualizar la foto de perfil');
+		} finally {
+			// Asegurar que se oculte el spinner de captura de foto
+			this.isLoadingPhoto = false;
 		}
 	}
 
 	obtenerDatosEmpleado(event?: any) {
-		this.datosBasicosService.informacion({}, this.rutaGeneral + 'getData').then((resp: any) => {
-			Object.entries(resp).forEach(([key, value]) => {
-				if (key !== 'datos') {
-					if (key === 'qFamiliar' || key === 'qAcademica'
-					|| key === 'qTelefono' || key === 'qResidencia' || key === 'qCorreo') {
-						(this as any)[key] = this.getColor(value as any[]);
-					} else {
-						(this as any)[key] = value;
-					}
-				}
-			});
-			const { datos } = resp;
-			this.terceroId = datos.id_tercero;
-			
-			// Solo actualizar foto del servidor si no hay una foto recién tomada
-			if (datos.foto && !this.fotoDePerfil) {
-				if (!this.datosUsuario) {
-					this.datosUsuario = {};
-				}
-				this.datosUsuario.foto = datos.foto;
-				this.datosUsuario.validaFoto = '1';
-			}
-			
-			this.datosFormulario.formulario.patchModelValue(datos);
-			this.datosAdicionales.formulario.patchModelValue(datos);
-
-			// Actualizar la URL de la foto después de cargar los datos del empleado
-			this.actualizarUrlFoto();
-			
-			this.suscripcionCambios();
+		// Verificar permisos antes de cargar datos
+		if (!this.tienePermisos) {
 			this.searching = false;
 			if (event) {
 				event.target.complete();
-			};
-		}).catch((error: any) => console.log('Error ', error));
+			}
+			return;
+		}
+
+		// Usar el servicio de loading para mostrar spinner durante la carga de datos
+		this.loadingService.withLoading(async () => {
+			return new Promise((resolve, reject) => {
+				this.datosBasicosService.informacion({}, this.rutaGeneral + 'getData').then((resp: any) => {
+					Object.entries(resp).forEach(([key, value]) => {
+						if (key !== 'datos') {
+							if (key === 'qFamiliar' || key === 'qAcademica'
+							|| key === 'qTelefono' || key === 'qResidencia' || key === 'qCorreo') {
+								(this as any)[key] = this.getColor(value as any[]);
+							} else {
+								(this as any)[key] = value;
+							}
+						}
+					});
+					const { datos } = resp;
+					this.terceroId = datos.id_tercero;
+					
+					// Solo actualizar foto del servidor si no hay una foto recién tomada
+					// Y si no hay una foto en el storage del usuario con validaFoto = '1'
+					if (datos.foto && !this.fotoDePerfil && 
+						(!this.datosUsuario?.validaFoto || this.datosUsuario.validaFoto !== '1')) {
+						if (!this.datosUsuario) {
+							this.datosUsuario = {};
+						}
+						this.datosUsuario.foto = datos.foto;
+						// No marcar como validaFoto = '1' porque viene del servidor, no es base64
+						
+						// CLAVE: Actualizar storage de sesión para sincronizar con menu component
+						// cuando la foto viene del servidor
+						if (!datos.foto.startsWith('data:image')) {
+							// Convertir URL relativa del servidor a URL completa
+							let rutaFoto = datos.foto;
+							if (rutaFoto.startsWith('./')) {
+								rutaFoto = rutaFoto.substring(2);
+							}
+							const urlCompleta = this.foto + rutaFoto;
+							
+							// Mostrar spinner mientras se carga la imagen del servidor
+							this.isLoadingSecureImage = true;
+							
+							// Usar servicio seguro para obtener URL y actualizar storage
+							this.secureImageService.getSecureImageUrl(urlCompleta).subscribe(
+								(urlSegura) => {
+									this.storage.set('urlFotoUsuarioSesion', urlSegura);
+									this.isLoadingSecureImage = false;
+								},
+								(error) => {
+									console.error('Error obteniendo imagen segura en obtenerDatosEmpleado:', error);
+									this.storage.set('urlFotoUsuarioSesion', 'assets/images/nofoto.png');
+									this.isLoadingSecureImage = false;
+								}
+							);
+						} else {
+							// Si viene como base64 del servidor, guardarlo directamente
+							this.storage.set('urlFotoUsuarioSesion', datos.foto);
+						}
+					}
+					
+					this.datosFormulario.formulario.patchModelValue(datos);
+					this.datosAdicionales.formulario.patchModelValue(datos);
+
+					// Actualizar la URL de la foto después de cargar los datos del empleado
+					this.actualizarUrlFoto();
+					
+					this.suscripcionCambios();
+					this.searching = false;
+					if (event) {
+						event.target.complete();
+					}
+					resolve(resp);
+				}).catch((error: any) => {
+					console.log('Error ', error);
+					this.searching = false;
+					if (event) {
+						event.target.complete();
+					}
+					reject(error);
+				});
+			});
+		}, 'Cargando datos del empleado...', 'employeeData').catch((error) => {
+			console.error('Error en obtenerDatosEmpleado:', error);
+			this.searching = false;
+			if (event) {
+				event.target.complete();
+			}
+		});
 	}
 
 	cambiosComponenteSelect(evento: any, tabs: string, tabla: string) {
@@ -531,6 +664,11 @@ export class DatosbasicosPage implements OnInit {
 	}
 
 	async irModal() {
+		// Verificar permisos antes de abrir modal usando el método optimizado
+		if (!this.validarPermisosAcceso()) {
+			return;
+		}
+
 		const valor = this.accordionGroup ? this.accordionGroup.value : null;
 		const datos: { component: any, componentProps: any } = { component: null, componentProps: {} };
 
@@ -578,6 +716,28 @@ export class DatosbasicosPage implements OnInit {
 	refresh(evento: any) {
 		this.subject.next(true);
 		this.obtenerDatosEmpleado(evento);
+	}
+
+	/**
+	 * Limpia recursos y suscripciones al destruir el componente
+	 * Previene memory leaks
+	 */
+	ngOnDestroy() {
+		this.subject.next(true);
+		this.subject.complete();
+		this.subjectMenu.next(true);
+		this.subjectMenu.complete();
+	}
+
+	/**
+	 * Optimización: Validación centralizada de permisos
+	 */
+	private validarPermisosAcceso(): boolean {
+		if (!this.tienePermisos) {
+			this.notificacionService.notificacion('No tiene permisos para acceder a esta función');
+			return false;
+		}
+		return true;
 	}
 
 	cerrarModalFecha(){

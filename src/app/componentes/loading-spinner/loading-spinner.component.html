@@ -1,0 +1,12 @@
+<div class="loading-container" *ngIf="isLoading" [class.overlay]="overlay">
+  <div class="loading-content">
+    <ion-spinner 
+      [name]="'dots'" 
+      [class]="'spinner-' + size"
+      color="primary">
+    </ion-spinner>
+    <div class="loading-message" *ngIf="showMessage">
+      {{ message }}
+    </div>
+  </div>
+</div>

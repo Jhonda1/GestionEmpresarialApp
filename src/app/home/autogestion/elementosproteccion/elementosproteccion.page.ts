@@ -2,6 +2,9 @@
 /* eslint-disable @typescript-eslint/quotes */
 /* eslint-disable @typescript-eslint/dot-notation */
 import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef, ElementRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { IonicModule } from '@ionic/angular';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DatosEmpleadosService } from 'src/app/servicios/datosEmpleados.service';
 import { LoginService } from 'src/app/servicios/login.service';
 import { StorageService } from 'src/app/servicios/storage.service';
@@ -11,13 +14,23 @@ import QrScanner from 'qr-scanner';
 import { NotificacionesService } from 'src/app/servicios/notificaciones.service';
 import { Camera } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
+import { HeaderComponent } from 'src/app/componentes/header/header.component';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 
 @Component({
   selector: 'app-elementosproteccion',
   templateUrl: './elementosproteccion.page.html',
   styleUrls: ['./elementosproteccion.page.scss'],
-  standalone: false
+  standalone: true,
+  imports: [
+    CommonModule,
+    IonicModule,
+    FormsModule,
+    ReactiveFormsModule,
+    HeaderComponent,
+    FontAwesomeModule
+  ]
 })
 export class ElementosproteccionPage implements OnInit, OnDestroy {
   @ViewChild('modal', { static: true }) modal!: IonModal;

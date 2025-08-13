@@ -9,15 +9,28 @@
 </ion-header>
 
 <ion-content>
-	<!-- <iframe [src]="url" frameborder=0 style="width: 100%; height: 100vh;"></iframe> -->
-	<pdf-viewer [src]="'data:application/pdf; base64, ' + url" [rotation]="0" [show-all]="true" [fit-to-page]="false"
-		[zoom]="valorZoom" [zoom-scale]="'page-width'" [stick-to-page]="false" [external-link-target]="'blank'"
-		[autoresize]="true" [show-borders]="true"  [render-text]="true" [original-size]="false"
-		style="    width: 99vw;">
-	</pdf-viewer>
+	<!-- Para URLs HTTP normales -->
+	<div *ngIf="!isBase64 && safeUrl" style="width: 100%; height: 100%;">
+		<iframe [src]="safeUrl" frameborder="0" style="width: 100%; height: 100vh;"></iframe>
+	</div>
+	
+	<!-- Para base64 -->
+	<div *ngIf="isBase64 && safeUrl" style="width: 100%; height: 100%;">
+		<pdf-viewer [src]="safeUrl" [rotation]="0" [show-all]="true" [fit-to-page]="false"
+			[zoom]="valorZoom" [zoom-scale]="'page-width'" [stick-to-page]="false" [external-link-target]="'blank'"
+			[autoresize]="true" [show-borders]="true" [render-text]="true" [original-size]="false"
+			style="width: 99vw; height: 100%;">
+		</pdf-viewer>
+	</div>
+	
+	<!-- Mensaje de carga o error -->
+	<div *ngIf="!safeUrl" style="display: flex; align-items: center; justify-content: center; height: 100%;">
+		<ion-spinner></ion-spinner>
+		<ion-label style="margin-left: 10px;">Cargando PDF...</ion-label>
+	</div>
 </ion-content>
 
-<ion-footer class="ion-no-border">
+<ion-footer class="ion-no-border" *ngIf="isBase64">
 	<ion-toolbar>
 		<ion-fab vertical="center" horizontal="start">
 			<ion-grid class="ion-no-padding">

@@ -30,13 +30,15 @@ export class StorageService {
 
 	async limpiarTodo(logout?: boolean) {
 		try {
-			let tema = await this.get('theme');
-			//let version = await this.get('version');
+			const tema = await this.get('theme');
+			const nit = await this.get('nit');
+			// const version = await this.get('version');
 			await this.storage.clear();
 			if (!logout) this.notifcaciones.alerta("Error de conexión", '', [], [{ text: 'Cerrar', role: 'aceptar' }]);
 			if (this.modalController) this.modalController.dismiss();
-			if (tema) this.set('theme', tema);
-			//if (version) this.set('version', version);
+			if (tema) await this.set('theme', tema);
+			if (nit) await this.set('nit', nit);
+			// if (version) this.set('version', version);
 			this.router.navigateByUrl('login');
 		} catch (error) {
 			console.error('Error al limpiar storage:', error);

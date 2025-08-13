@@ -1,5 +1,8 @@
 
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { IonicModule } from '@ionic/angular';
+import { FormsModule } from '@angular/forms';
 import { MenuController } from '@ionic/angular';
 import { NotificacionesService } from 'src/app/servicios/notificaciones.service';
 import { Observable } from 'rxjs';
@@ -7,13 +10,20 @@ import { IonInfiniteScroll } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { StorageService } from 'src/app/servicios/storage.service';
 import { GastosService } from 'src/app/servicios/gastos.service';
+import { HeaderComponent } from 'src/app/componentes/header/header.component';
 @Component({
 	selector: 'app-gastos',
 	templateUrl: './gastos.page.html',
 	styleUrls: ['./gastos.page.scss'],
-  standalone: false
+	standalone: true,
+	imports: [
+		CommonModule,
+		IonicModule,
+		FormsModule,
+		HeaderComponent
+	]
 })
-export class GastosPage implements OnInit {
+export class GastosPage implements OnInit, OnDestroy {
 
 	infiniteScroll!: IonInfiniteScroll;
 	isConnected = true;
@@ -35,6 +45,10 @@ export class GastosPage implements OnInit {
 	) { }
 
 	ngOnInit() {
+	}
+
+	ngOnDestroy() {
+		// Limpiar recursos si es necesario
 	}
 
 	async ionViewWillEnter() {

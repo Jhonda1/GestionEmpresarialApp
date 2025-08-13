@@ -1,6 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ModalController } from '@ionic/angular';
-import { RxFormGroup } from '@rxweb/reactive-form-validators';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { IonicModule, ModalController } from '@ionic/angular';
+import { RxReactiveFormsModule, RxFormGroup } from '@rxweb/reactive-form-validators';
 import { Constantes } from 'src/app/config/constantes/constantes';
 import { FuncionesGenerales } from 'src/app/config/funciones/funciones';
 import { InformacionCorreo } from 'src/app/servicios/informacioncorreo.service';
@@ -9,7 +11,14 @@ import { InformacionCorreo } from 'src/app/servicios/informacioncorreo.service';
 	selector: 'app-agregar-correo',
 	templateUrl: './agregar-correo.component.html',
 	styleUrls: ['./agregar-correo.component.scss'],
-  standalone: false
+	standalone: true,
+	imports: [
+		CommonModule,
+		FormsModule,
+		ReactiveFormsModule,
+		IonicModule,
+		RxReactiveFormsModule
+	]
 })
 export class AgregarCorreoComponent implements OnInit {
 

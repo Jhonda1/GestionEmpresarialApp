@@ -5,7 +5,7 @@ import { Storage } from '@ionic/storage-angular';
 	selector: 'app-root',
 	templateUrl: 'app.component.html',
 	styleUrls: ['app.component.scss'],
-	standalone: false, // Marca el componente como standalone
+	standalone: false
 })
 export class AppComponent {
 	constructor(private storage: Storage) { }

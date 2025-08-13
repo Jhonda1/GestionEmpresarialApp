@@ -1,6 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ModalController } from '@ionic/angular';
-import { RxFormGroup } from '@rxweb/reactive-form-validators';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { IonicModule, ModalController } from '@ionic/angular';
+import { RxReactiveFormsModule, RxFormGroup } from '@rxweb/reactive-form-validators';
 import { Constantes } from 'src/app/config/constantes/constantes';
 import { FuncionesGenerales } from 'src/app/config/funciones/funciones';
 import { InformacionTelefono } from 'src/app/servicios/informaciontelefono.service';
@@ -9,7 +11,14 @@ import { InformacionTelefono } from 'src/app/servicios/informaciontelefono.servi
 	selector: 'app-agregar-telefono',
 	templateUrl: './agregar-telefono.component.html',
 	styleUrls: ['./agregar-telefono.component.scss'],
-  standalone: false
+	standalone: true,
+	imports: [
+		CommonModule,
+		FormsModule,
+		ReactiveFormsModule,
+		IonicModule,
+		RxReactiveFormsModule
+	]
 })
 export class AgregarTelefonoComponent implements OnInit {
 

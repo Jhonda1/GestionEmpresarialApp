@@ -1,4 +1,7 @@
 import { Component, Input, OnInit, ViewChild} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { IonicModule } from '@ionic/angular';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { ModalController, IonModal } from '@ionic/angular';
@@ -8,13 +11,22 @@ import { Constantes } from 'src/app/config/constantes/constantes';
 import { NotificacionesService } from 'src/app/servicios/notificaciones.service';
 import { DatosEmpleadosService } from 'src/app/servicios/datosEmpleados.service';
 import { Item } from '../../../../componentes/UI/types';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { RxReactiveFormsModule } from '@rxweb/reactive-form-validators';
+import { TypeaheadModule } from 'src/app/componentes/UI/typehead/typehead.module';
 
 @Component({
 	selector: 'app-agregar-solicitar-permisos',
 	templateUrl: './agregar-solicitar-permisos.component.html',
 	styleUrls: ['./agregar-solicitar-permisos.component.scss'],
-  standalone: false
+	standalone: true,
+	imports: [
+		CommonModule,
+		IonicModule,
+		FormsModule,
+		ReactiveFormsModule,
+		RxReactiveFormsModule,
+		TypeaheadModule
+	]
 })
 
 export class AgregarSolicitarPermisosComponent implements OnInit {

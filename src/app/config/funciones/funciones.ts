@@ -62,9 +62,9 @@ export class FuncionesGenerales {
 
 	static permisos(tipo = '') {
 		const datos = [
-			{ id: 600100, tipo: 'menu' },
-
-			//{ id: 6001006, tipo: 'Datos Personales' },
+			{ id: 600100, tipo: 'menu' }, // Permiso base para mostrar el menú
+			// Datos Personales
+			{ id: 6001006, tipo: 'Datos Personales' },
 			{ id: 60010061, tipo: 'DP', campo: 'nombruno' },
 			{ id: 60010062, tipo: 'DP', campo: 'nombrdos' },
 			{ id: 60010063, tipo: 'DP', campo: 'apelluno' },
@@ -116,11 +116,14 @@ export class FuncionesGenerales {
 			{ id: 60010071, tipo: 'CL', campo: 'Carta Laboral' },
 			{ id: 60010072, tipo: 'CL', campo: 'Extratos' },
 			{ id: 60010073, tipo: 'CL', campo: 'Certificados' },
-			{ id: 6001008, 	tipo: 'CL', campo: 'Solicitar Vacaciones' },
-			{ id: 60010081, tipo: 'CL', campo: 'Periodos vacacionales pendientes' },
-			{ id: 60010082, tipo: 'CL', campo: 'Periodos vacacionales disfrutados o pagados' },
-			{ id: 60010083, tipo: 'CL', campo: 'Crear' },
-			{ id: 6001009, 	tipo: 'RC', campo: 'Ausentismo' }
+			{ id: 6001008, 	tipo: 'SV', campo: 'Solicitar Vacaciones' },
+			{ id: 60010081, tipo: 'SV', campo: 'Periodos vacacionales pendientes' },
+			{ id: 60010082, tipo: 'SV', campo: 'Periodos vacacionales disfrutados o pagados' },
+			{ id: 60010083, tipo: 'SV', campo: 'Crear' },
+			{ id: 6001009, 	tipo: 'RC', campo: 'Ausentismo' },
+			// Gastos
+			{ id: 500100, tipo: 'GASTOS', campo: 'modulo_gastos' },
+
 		];
 
 		if (tipo === '') {
@@ -128,6 +131,81 @@ export class FuncionesGenerales {
 		} else {
 			return datos.filter(op => op.tipo === tipo);
 		}
+	}
+
+	/**
+	 * Valida si un usuario tiene un permiso específico
+	 * @param permisoId - ID del permiso a validar
+	 * @param segurArray - Array de permisos del usuario (SEGUR)
+	 * @returns boolean - true si tiene el permiso, false en caso contrario
+	 */
+	static validarPermiso(permisoId: number, segurArray: number[]): boolean {
+		if (!permisoId || !segurArray || segurArray.length === 0) {
+			return false;
+		}
+		return segurArray.includes(permisoId);
+	}
+
+	/**
+	 * Obtiene la información de un permiso específico
+	 * @param permisoId - ID del permiso
+	 * @returns Objeto con información del permiso o null si no existe
+	 */
+	static obtenerInfoPermiso(permisoId: number) {
+		const permisos = FuncionesGenerales.permisos('');
+		const permisosCompletos = [
+			{ id: 600100, tipo: 'menu', descripcion: 'Acceso al menú principal' },
+			{ id: 6001006, tipo: 'Datos Personales', descripcion: 'Ver y editar datos personales' },
+			{ id: 6001007, tipo: 'CL', descripcion: 'Certificados Laborales' },
+			{ id: 6001008, tipo: 'SV', descripcion: 'Solicitar Vacaciones' },
+			{ id: 6001009, tipo: 'RC', descripcion: 'Registro de Ausentismo' },
+			{ id: 500100, tipo: 'GASTOS', descripcion: 'Módulo de Gastos' },
+		];
+		
+		return permisosCompletos.find(p => p.id === permisoId) || null;
+	}
+
+	/**
+	 * Verifica permisos y retorna el estado del acceso
+	 * @param permisoId - ID del permiso a verificar
+	 * @param segurArray - Array de permisos del usuario (SEGUR)
+	 * @param nombreModulo - Nombre del módulo para el mensaje
+	 * @returns Objeto con el estado del permiso y mensaje
+	 */
+	static verificarPermisoConMensaje(permisoId: number, segurArray: number[], nombreModulo: string = 'este módulo') {
+		const tienePermiso = FuncionesGenerales.validarPermiso(permisoId, segurArray);
+		
+		return {
+			tienePermiso,
+			mensaje: tienePermiso 
+				? '' 
+				: `No tiene permisos para acceder a ${nombreModulo}. Contacte al administrador del sistema.`,
+			codigoPermiso: permisoId,
+			infoPermiso: FuncionesGenerales.obtenerInfoPermiso(permisoId)
+		};
+	}
+
+	/**
+	 * Genera un mensaje HTML para mostrar cuando no se tienen permisos
+	 * @param nombreModulo - Nombre del módulo
+	 * @param permisoId - ID del permiso requerido
+	 * @returns String con HTML del mensaje de sin permisos
+	 */
+	static generarMensajeSinPermisos(nombreModulo: string, permisoId?: number): string {
+		const permisoTexto = permisoId ? ` (Permiso requerido: ${permisoId})` : '';
+		
+		return `
+			<div style="text-align: center; padding: 40px 20px; color: #666;">
+				<ion-icon name="lock-closed-outline" style="font-size: 64px; color: #ff6b6b; margin-bottom: 20px;"></ion-icon>
+				<h2 style="color: #333; margin-bottom: 10px;">Acceso Restringido</h2>
+				<p style="font-size: 16px; line-height: 1.5; margin-bottom: 20px;">
+					No tiene permisos para acceder a <strong>${nombreModulo}</strong>.
+				</p>
+				<p style="font-size: 14px; color: #999;">
+					Contacte al administrador del sistema para solicitar acceso.${permisoTexto}
+				</p>
+			</div>
+		`;
 	}
 
 }

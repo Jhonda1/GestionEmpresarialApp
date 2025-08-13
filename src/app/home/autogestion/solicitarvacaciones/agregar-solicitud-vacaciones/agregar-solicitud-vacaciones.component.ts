@@ -1,6 +1,9 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { IonicModule } from '@ionic/angular';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ModalController } from '@ionic/angular';
-import { RxFormGroup } from '@rxweb/reactive-form-validators';
+import { RxFormGroup, RxReactiveFormsModule } from '@rxweb/reactive-form-validators';
 import { FuncionesGenerales } from 'src/app/config/funciones/funciones';
 import { InformacionSolicitud } from 'src/app/servicios/informacionsolicitud.service';
 
@@ -8,7 +11,14 @@ import { InformacionSolicitud } from 'src/app/servicios/informacionsolicitud.ser
 	selector: 'app-agregar-solicitud-vacaciones',
 	templateUrl: './agregar-solicitud-vacaciones.component.html',
 	styleUrls: ['./agregar-solicitud-vacaciones.component.scss'],
-  standalone: false,
+	standalone: true,
+	imports: [
+		CommonModule,
+		IonicModule,
+		FormsModule,
+		ReactiveFormsModule,
+		RxReactiveFormsModule
+	]
 })
 export class AgregarSolicitudVacacionesComponent implements OnInit {
 

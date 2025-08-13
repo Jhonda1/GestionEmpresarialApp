@@ -1,5 +1,8 @@
 /* eslint-disable @typescript-eslint/dot-notation */
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { IonicModule } from '@ionic/angular';
+import { FormsModule } from '@angular/forms';
 import { ModalController } from '@ionic/angular';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -8,14 +11,24 @@ import { DatosbasicosService } from 'src/app/servicios/datosbasicos.service';
 import { StorageService } from 'src/app/servicios/storage.service';
 import { NotificacionesService } from '../../../servicios/notificaciones.service';
 import { AgregarSolicitarPermisosComponent } from './agregar-solicitar-permisos/agregar-solicitar-permisos.component';
+import { HeaderComponent } from 'src/app/componentes/header/header.component';
+import { FiltroListaPipe } from 'src/app/pipes/filtro-lista/filtro-lista.pipe';
 
 @Component({
 	selector: 'app-solicitarpermisos',
 	templateUrl: './solicitarpermisos.page.html',
 	styleUrls: ['./solicitarpermisos.page.scss'],
-  standalone: false
+	standalone: true,
+	imports: [
+		CommonModule,
+		IonicModule,
+		FormsModule,
+		HeaderComponent,
+		FiltroListaPipe,
+		AgregarSolicitarPermisosComponent // Usado en modal
+	]
 })
-export class SolicitarpermisosPage implements OnInit {
+export class SolicitarpermisosPage implements OnInit, OnDestroy {
 
 	searching= false;
 	permisoPendientes= false;
@@ -40,6 +53,13 @@ export class SolicitarpermisosPage implements OnInit {
 	) { }
 
 	ngOnInit() { }
+
+	ngOnDestroy() {
+		this.subject.next(true);
+		this.subject.complete();
+		this.subjectMenu.next(true);
+		this.subjectMenu.complete();
+	}
 
 	ionViewDidEnter() {
 		this.searching = true;
