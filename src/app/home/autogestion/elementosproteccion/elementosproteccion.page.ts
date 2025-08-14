@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable @typescript-eslint/quotes */
 /* eslint-disable @typescript-eslint/dot-notation */
-import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -16,7 +16,6 @@ import { Camera } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
 import { HeaderComponent } from 'src/app/componentes/header/header.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-
 
 @Component({
   selector: 'app-elementosproteccion',
@@ -69,7 +68,7 @@ export class ElementosproteccionPage implements OnInit, OnDestroy {
     });
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     this.obtenerUsuario();
   }
 
@@ -375,9 +374,6 @@ export class ElementosproteccionPage implements OnInit, OnDestroy {
     return resp;
   }
   
-  
-  
-
   async openModalClave() {
     const alert = await this.alertController.create({
       header: '¡Advertencia!',

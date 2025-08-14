@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule, ModalController, IonAccordionGroup, Platform } from '@ionic/angular';
@@ -16,9 +16,15 @@ import { FiltrosCertificadosComponent } from './filtros-certificados/filtros-cer
 import { VerPdfComponent } from './ver-pdf/ver-pdf.component';
 import { Browser } from '@capacitor/browser';
 import { DomSanitizer } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 // Importaciones de componentes y pipes necesarios
 import { HeaderComponent } from 'src/app/componentes/header/header.component';
 import { FiltroListaPipe } from 'src/app/pipes/filtro-lista/filtro-lista.pipe';
+
+// IMPORTACIONES PARA VALIDACIÓN DE PERMISOS
+import { ValidacionPermisosService } from 'src/app/servicios/validacion-permisos.service';
+import { NotificacionesService } from 'src/app/servicios/notificaciones.service';
+import { ValidarPermiso, LogAccion, PermisosUtils } from 'src/app/utils/permisos.decorators';
 
 @Component({
 	selector: 'app-certificados',
@@ -34,8 +40,8 @@ import { FiltroListaPipe } from 'src/app/pipes/filtro-lista/filtro-lista.pipe';
 		PdfViewerModule,
 		// Componentes
 		HeaderComponent,
-		FiltrosCertificadosComponent, // Usado en modal
-		VerPdfComponent, // Usado en modal
+		FiltrosCertificadosComponent,
+		VerPdfComponent,
 		// Pipes
 		FiltroListaPipe
 	]
@@ -44,6 +50,8 @@ export class CertificadosPage implements OnInit, OnDestroy {
   permisoExtrato      = false;
   permisoCertificado  = false;
   permisoCartaLaboral = false;
+  permisoAccesoModulo = false;
+  
   hoy = new Date();
   Month = ("0" + (this.hoy.getMonth() + 1)).slice(-2);
   anio = this.hoy.getFullYear();
@@ -77,6 +85,11 @@ export class CertificadosPage implements OnInit, OnDestroy {
 	} = {};
 	qCartaLaboral: any[] = [];
 	accordions = ["CL", "EX", "CI"];
+
+  private validacionPermisosService = inject(ValidacionPermisosService);
+  private notificacionService = inject(NotificacionesService);
+  private router = inject(Router);
+
 	constructor(
 		private loginService: LoginService,
 		private storage: StorageService,
@@ -88,7 +101,10 @@ export class CertificadosPage implements OnInit, OnDestroy {
 
 	) { }
 
-	ngOnInit() {
+	async ngOnInit() {
+    //  VALIDAR PERMISOS AL INICIALIZAR
+    await this.validarPermisosIniciales();
+    
 		if (this.accordionGroup) {
 			this.accordionGroup.ionChange.subscribe(({ detail }) => {
 				if (this.accordions.includes(detail.value)) {
@@ -97,6 +113,50 @@ export class CertificadosPage implements OnInit, OnDestroy {
 			});
 		}
 	}
+
+  //  VALIDACIÓN DE PERMISOS INICIALES
+  private async validarPermisosIniciales() {
+    try {
+      // Validar permiso general del módulo
+      const resultado = await this.validacionPermisosService.validarPermisoParaAccion(
+        6001007, // Permiso general para certificados laborales
+        'acceder al módulo de certificados laborales'
+      );
+
+      if (!resultado.valido) {
+        this.notificacionService.notificacion(resultado.mensaje);
+        this.router.navigateByUrl('/modulos/datosbasicos');
+        return;
+      }
+
+      this.permisoAccesoModulo = true;
+
+      // Validar permisos específicos
+      await this.validarPermisosEspecificos();
+
+    } catch (error) {
+      console.error('Error al validar permisos iniciales:', error);
+      this.notificacionService.notificacion('Error al validar permisos.');
+      
+      // En caso de error, activar redirección
+      setTimeout(() => {
+        this.validacionPermisosService.manejarFaltaDePermisos('Error al validar permisos');
+      }, 1500);
+    }
+  }
+
+  // VALIDACIÓN DE PERMISOS ESPECÍFICOS
+  private async validarPermisosEspecificos() {
+    const resultados = await this.validacionPermisosService.validarMultiplesPermisos([
+      60010071, // Carta laboral
+      60010072, // Extracto
+      60010073  // Certificado
+    ]);
+
+    this.permisoCartaLaboral = resultados[60010071] || false;
+    this.permisoExtrato = resultados[60010072] || false;
+    this.permisoCertificado = resultados[60010073] || false;
+  }
 
 	fechaActual() {
 
@@ -116,17 +176,14 @@ export class CertificadosPage implements OnInit, OnDestroy {
 			JSON.parse(await this.storage.get('usuario').then(resp => resp))
 		);
 		this.SEGUR = this.datosUsuario['SEGUR'] || [];
-    this.permisoExtrato      = this.validarPermiso(60010072);
-    this.permisoCertificado  = this.validarPermiso(60010073);
-    this.permisoCartaLaboral = this.validarPermiso(60010071);
+    
+    this.permisoExtrato = this.validacionPermisosService.validarPermisoLocal(60010072);
+    this.permisoCertificado = this.validacionPermisosService.validarPermisoLocal(60010073);
+    this.permisoCartaLaboral = this.validacionPermisosService.validarPermisoLocal(60010071);
 	}
 
-  validarPermiso(permiso: number) {
-		if (this.SEGUR.length > 0 && this.SEGUR.includes(permiso)) {
-			return true;
-		} else {
-			return false;
-		}
+  validarPermiso(permiso: number): boolean {
+    return this.validacionPermisosService.validarPermisoLocal(permiso);
 	}
 
 	ionViewDidEnter() {
@@ -164,20 +221,35 @@ export class CertificadosPage implements OnInit, OnDestroy {
 	}
 
 	async download(url: string) {
-		//url = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-		const modal = await this.modalController.create({
-			component: VerPdfComponent,
-			backdropDismiss: true,
-			cssClass: 'animate__animated animate__slideInRight animate__faster',
-			componentProps: { url }
-		});
+    // Validar permiso antes de mostrar el PDF
+    const tienePermiso = await PermisosUtils.validarPermisoImperativo(
+      this.validacionPermisosService,
+      this.notificacionService,
+      60010073, // Permiso para ver certificados
+      'ver certificados'
+    );
 
-		await modal.present();
-		modal.onWillDismiss().then(() => { }).catch(console.log);
+    if (!tienePermiso) {
+      return;
+    }
+
+    try {
+      const modal = await this.modalController.create({
+        component: VerPdfComponent,
+        backdropDismiss: true,
+        cssClass: 'animate__animated animate__slideInRight animate__faster',
+        componentProps: { url }
+      });
+
+      await modal.present();
+      modal.onWillDismiss().then(() => { }).catch(console.log);
+    } catch (error) {
+      console.error('Error al abrir PDF:', error);
+      this.notificacionService.notificacion('Error al abrir el documento');
+    }
 	}
 
 	async filtros(param: number | null | undefined) {
-		console.log(param);
 		this.formFiltro['salario'] = param == null ? null : 'S';
 		this.formFiltro['destino'] = '';
 		let componentProps = {
@@ -238,24 +310,49 @@ export class CertificadosPage implements OnInit, OnDestroy {
 		});
 	}
 
-	obtenerArchivo(url: string) {
-		Browser.open({ url });
+	async obtenerArchivo(url: string) {
+    const tienePermiso = await PermisosUtils.validarPermisoImperativo(
+      this.validacionPermisosService,
+      this.notificacionService,
+      60010073, // Permiso para descargar certificados
+      'descargar certificados'
+    );
+
+    if (!tienePermiso) {
+      return;
+    }
+
+    try {
+      await Browser.open({ url });
+    } catch (error) {
+      console.error('Error al abrir archivo:', error);
+      this.notificacionService.notificacion('Error al abrir el archivo');
+    }
 	}
 
 
+  @ValidarPermiso(60010071, 'generar carta laboral')
+  @LogAccion('Generación de carta laboral')
 	async CartaLaboral(event: any) {
-		this.datosBasicosService.informacion(this.formFiltro, this.rutaGeneral + 'ImprimirCartaLaboral').then(({
-			base64Img,
-			file_aux
-		}) => {			
-			if (event == 1) {
-				// Usar el modal VerPdfComponent para consistencia con otros PDFs
-				this.download(base64Img);
-			} else {
-				// Abrir en el navegador externo
-				this.obtenerArchivo(file_aux);
-			}
-		}).catch(error => console.log("Error ", error))
+    try {
+      const resultado = await this.datosBasicosService.informacion(
+        this.formFiltro, 
+        this.rutaGeneral + 'ImprimirCartaLaboral'
+      );
+
+      const { base64Img, file_aux } = resultado;
+
+      if (event == 1) {
+        // Usar el modal VerPdfComponent para consistencia con otros PDFs
+        this.download(base64Img);
+      } else {
+        // Abrir en el navegador externo
+        this.obtenerArchivo(file_aux);
+      }
+    } catch (error) {
+      console.error('Error al generar carta laboral:', error);
+      this.notificacionService.notificacion('Error al generar la carta laboral');
+    }
 	}
 
 	/**

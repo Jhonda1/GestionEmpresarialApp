@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild} from '@angular/core';
+import { Component, Input, OnInit, ViewChild, inject} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -10,9 +10,11 @@ import { InformacionPermiso } from 'src/app/servicios/informacionpermiso.service
 import { Constantes } from 'src/app/config/constantes/constantes';
 import { NotificacionesService } from 'src/app/servicios/notificaciones.service';
 import { DatosEmpleadosService } from 'src/app/servicios/datosEmpleados.service';
+import { ValidacionPermisosService } from 'src/app/servicios/validacion-permisos.service';
 import { Item } from '../../../../componentes/UI/types';
 import { RxReactiveFormsModule } from '@rxweb/reactive-form-validators';
 import { TypeaheadModule } from 'src/app/componentes/UI/typehead/typehead.module';
+import { ValidarPermiso, LogAccion } from 'src/app/utils/permisos.decorators';
 
 @Component({
 	selector: 'app-agregar-solicitar-permisos',
@@ -49,7 +51,10 @@ export class AgregarSolicitarPermisosComponent implements OnInit {
 	search$ = new Subject<string>();
 	selectedEnfermedadesText = '0 Items';
   	selectedEnfermedades: string[] = [];
-	diasAusentismo: string = ''; 
+	diasAusentismo: string = '';
+
+	// Inyección del nuevo servicio de validación
+	private validacionPermisosService = inject(ValidacionPermisosService);
 
 	constructor(
 		private modalController: ModalController,
@@ -88,9 +93,16 @@ export class AgregarSolicitarPermisosComponent implements OnInit {
 		this.modalController.dismiss(datos);
 	}
 
-	submitData() {
+	/**
+	 * Valida y envía los datos del formulario de solicitud de permisos
+	 * Requiere permiso 60010083 (Crear solicitudes de permiso)
+	 */
+	@ValidarPermiso(60010083, 'crear solicitudes de permiso')
+	@LogAccion('Creación de solicitud de permiso')
+	async submitData() {
 		const camposObligatorios = ['TipoAusentismoId', 'FechaInicio', 'FechaFin', 'TipoCalculo'];
 		let formularioValido = true;
+		
 		// Validar campos obligatorios
 		camposObligatorios.forEach((campo) => {
 			const control = this.datosSolicitudPermisos.formulario.get(campo);
@@ -102,23 +114,55 @@ export class AgregarSolicitarPermisosComponent implements OnInit {
 	
 		if (!formularioValido) {
 			this.notificacionService.notificacion('Por favor, complete todos los campos obligatorios marcados con *.');
-			return;
+			return false;
 		}
+
+		try {
+			// Validación adicional de permisos antes de procesar
+			const validacion = await this.validacionPermisosService.validarPermisoParaAccion(
+				60010083, 
+				'crear esta solicitud de permiso'
+			);
+
+			if (!validacion.valido) {
+				this.notificacionService.notificacion(validacion.mensaje);
+				
+				// Activar redirección automática
+				setTimeout(() => {
+					this.validacionPermisosService.manejarFaltaDePermisos(validacion.mensaje);
+				}, 1500);
+				
+				return false;
+			}
 	
-		// Procesar datos si todo es válido
-		this.datosForm = { ...this.datosSolicitudPermisos.formulario.value };
+			// Procesar datos si todo es válido
+			this.datosForm = { ...this.datosSolicitudPermisos.formulario.value };
 	
-		// Agregar códigos CIE10 seleccionados
-		this.datosForm['cie10'] = this.selectedEnfermedades;
+			// Agregar códigos CIE10 seleccionados
+			this.datosForm['cie10'] = this.selectedEnfermedades;
 	
-		Object.keys(this.datosSeleccionados).forEach((key) => {
-			this.datosForm[key] = this.datosSeleccionados[key];
-		});
+			Object.keys(this.datosSeleccionados).forEach((key) => {
+				this.datosForm[key] = this.datosSeleccionados[key];
+			});
 	
-		// Enviar los datos y cerrar el modal
-		this.cerrarModal(this.datosForm);
-		this.datosSolicitudPermisos.formulario.reset();
-		this.datosSolicitudPermisos.formulario.markAsUntouched();
+			// Enviar los datos y cerrar el modal
+			this.cerrarModal(this.datosForm);
+			this.datosSolicitudPermisos.formulario.reset();
+			this.datosSolicitudPermisos.formulario.markAsUntouched();
+
+			return true;
+
+		} catch (error) {
+			console.error('Error al procesar solicitud de permiso:', error);
+			this.notificacionService.notificacion('Error al procesar la solicitud.');
+
+			// En caso de error, también activar redirección
+			setTimeout(() => {
+				this.validacionPermisosService.manejarFaltaDePermisos('Error al procesar la solicitud');
+			}, 1500);
+			
+			return false;
+		}
 	}
 	
 

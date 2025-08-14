@@ -1,0 +1,31 @@
+<div *ngIf="mostrar" class="permisos-notification" [ngClass]="'notification-' + tipo">
+  <ion-card class="notification-card">
+    <ion-card-content>
+      <div class="notification-content">
+        <ion-icon 
+          [name]="iconoTipo" 
+          [color]="colorIcon" 
+          class="notification-icon">
+        </ion-icon>
+        
+        <div class="notification-text">
+          <h4 class="notification-title">
+            {{ tipo === 'warning' ? 'Permisos Insuficientes' : 
+               tipo === 'error' ? 'Acceso Denegado' : 
+               'Información de Permisos' }}
+          </h4>
+          
+          <p class="notification-message">
+            <span *ngIf="!mensaje">
+              No tiene permisos para realizar la acción 
+              <strong *ngIf="accion">"{{ accion }}"</strong>
+              <span *ngIf="modulo"> en el módulo <strong>{{ modulo }}</strong></span>.
+            </span>
+            <span *ngIf="mensaje">{{ mensaje }}</span>
+          </p>
+          
+        </div>
+      </div>
+    </ion-card-content>
+  </ion-card>
+</div>

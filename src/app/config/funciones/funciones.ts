@@ -179,7 +179,7 @@ export class FuncionesGenerales {
 			tienePermiso,
 			mensaje: tienePermiso 
 				? '' 
-				: `No tiene permisos para acceder a ${nombreModulo}. Contacte al administrador del sistema.`,
+				: `No tiene permisos para acceder a ${nombreModulo}.`,
 			codigoPermiso: permisoId,
 			infoPermiso: FuncionesGenerales.obtenerInfoPermiso(permisoId)
 		};
@@ -200,9 +200,6 @@ export class FuncionesGenerales {
 				<h2 style="color: #333; margin-bottom: 10px;">Acceso Restringido</h2>
 				<p style="font-size: 16px; line-height: 1.5; margin-bottom: 20px;">
 					No tiene permisos para acceder a <strong>${nombreModulo}</strong>.
-				</p>
-				<p style="font-size: 14px; color: #999;">
-					Contacte al administrador del sistema para solicitar acceso.${permisoTexto}
 				</p>
 			</div>
 		`;

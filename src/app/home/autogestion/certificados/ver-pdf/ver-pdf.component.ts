@@ -28,7 +28,6 @@ export class VerPdfComponent implements OnInit {
 	constructor(private modalController: ModalController, private sanitizer: DomSanitizer) { }
 
 	ngOnInit() {
-		console.log('URL recibida:', this.url);
 		this.processUrl();
 	}
 
@@ -42,19 +41,16 @@ export class VerPdfComponent implements OnInit {
 		if (this.url.startsWith('http://') || this.url.startsWith('https://')) {
 			this.isBase64 = false;
 			this.safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.url);
-			console.log('Procesando como URL HTTP:', this.url);
 		} 
 		// Verificar si ya es un data URI base64
 		else if (this.url.startsWith('data:application/pdf;base64,')) {
 			this.isBase64 = true;
 			this.safeUrl = this.url;
-			console.log('Procesando como data URI base64');
 		}
 		// Si es solo el string base64 sin el prefijo
 		else {
 			this.isBase64 = true;
 			this.safeUrl = `data:application/pdf;base64,${this.url}`;
-			console.log('Procesando como base64 puro');
 		}
 	}
 

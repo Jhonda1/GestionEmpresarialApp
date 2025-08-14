@@ -8,11 +8,16 @@
 					<ion-icon slot="icon-only" name='close'></ion-icon>
 				</ion-button>
 			</ion-buttons>
+			<ion-buttons slot="end">
+				<ion-button>
+					<img src="assets/images/logo.png" alt="Logo Prosof S.A.S" class="menu-logo">
+				</ion-button>
+			</ion-buttons>
 		</ion-toolbar>
 		<ion-img  [src]="urlFotoUsuario" (error)="onImageError($event)" ></ion-img>
 		<ion-text class="w-100" color="dark">
-			<h4 class="ion-margin text-truncate ion-text-center">{{ datosUsuario['nombre'] }}</h4>
-			<p class="ion-no-margin  ion-text-center">{{ datosUsuario['email'] }}</p>
+			<h4 class="ion-margin text-truncate ion-text-center">{{ datosUsuario?.nombre || 'Usuario' }}</h4>
+			<p class="ion-no-margin  ion-text-center">{{ datosUsuario?.email || '' }}</p>
 		</ion-text>
 	</ion-header>
 	<ion-content>
@@ -62,5 +67,6 @@
 			</ion-buttons>
 			<ion-title class="ion-no-padding" [ngClass]="size" style="cursor: pointer;">Cerrar sesión</ion-title>
 		</ion-toolbar>
+
 	</ion-footer>
 </ion-menu>

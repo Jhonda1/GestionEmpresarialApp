@@ -115,7 +115,9 @@
 	</ion-accordion-group>
 
 	<ion-fab vertical="bottom" *ngIf="permisoCrear" horizontal="end" slot="fixed">
-		<ion-fab-button (click)="irModal()">
+		<ion-fab-button (click)="irModal()" 
+						color="primary"
+						title="Solicitar vacaciones">
 			<ion-icon name="add"></ion-icon>
 		</ion-fab-button>
 	</ion-fab>

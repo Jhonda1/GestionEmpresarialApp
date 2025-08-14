@@ -1,13 +1,14 @@
 import { Injector, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouteReuseStrategy } from '@angular/router';
-import { FormsModule,ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule, IonicRouteStrategy } from '@ionic/angular';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { CustomInjectorService } from './config/peticiones/peticion.service';
+import { PermisosInterceptor } from './interceptors/permisos.interceptor';
 import { IonicStorageModule } from '@ionic/storage-angular';
-import { HttpClientModule } from '@angular/common/http';
 import { Drivers } from '@ionic/storage';
 import { IonicSelectableComponent } from 'ionic-selectable';
 import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
@@ -36,6 +37,11 @@ import { fab } from '@fortawesome/free-brands-svg-icons';
 	],
 	providers: [
 		{ provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: PermisosInterceptor,
+			multi: true
+		}
 	],
 	bootstrap: [AppComponent],
 })

@@ -13,6 +13,9 @@ import { NotificacionesService } from '../../../servicios/notificaciones.service
 import { AgregarSolicitarPermisosComponent } from './agregar-solicitar-permisos/agregar-solicitar-permisos.component';
 import { HeaderComponent } from 'src/app/componentes/header/header.component';
 import { FiltroListaPipe } from 'src/app/pipes/filtro-lista/filtro-lista.pipe';
+import { ValidacionPermisosService } from 'src/app/servicios/validacion-permisos.service';
+import { PermisosHelperService } from 'src/app/servicios/permisos-helper.service';
+import { ValidarPermiso, PermisosUtils } from 'src/app/utils/permisos.decorators';
 
 @Component({
 	selector: 'app-solicitarpermisos',
@@ -25,7 +28,7 @@ import { FiltroListaPipe } from 'src/app/pipes/filtro-lista/filtro-lista.pipe';
 		FormsModule,
 		HeaderComponent,
 		FiltroListaPipe,
-		AgregarSolicitarPermisosComponent // Usado en modal
+		AgregarSolicitarPermisosComponent // Usado en modal dinámico con ModalController
 	]
 })
 export class SolicitarpermisosPage implements OnInit, OnDestroy {
@@ -49,10 +52,30 @@ export class SolicitarpermisosPage implements OnInit, OnDestroy {
 		private modalController: ModalController,
 		private notificacionService: NotificacionesService,
 		private menu: CambioMenuService,
-		private storage: StorageService
+		private storage: StorageService,
+		private validacionPermisosService: ValidacionPermisosService,
+		private permisosHelper: PermisosHelperService
 	) { }
 
-	ngOnInit() { }
+	ngOnInit() {
+		this.validarPermisosIniciales();
+	}
+
+	private validarPermisosIniciales() {
+		// Validar múltiples permisos para solicitudes de permisos/ausentismo
+		const permisos = [60010081, 60010082, 60010083];
+		const promesasValidacion = permisos.map(permiso => 
+			this.validacionPermisosService.validarPermisoLocal(permiso)
+		);
+
+		Promise.all(promesasValidacion).then(resultados => {
+			this.permisoPendientes = resultados[0];
+			this.permisoDisfrutados = resultados[1]; 
+			this.permisoCrear = resultados[2];
+		}).catch(error => {
+			console.error('Error validando permisos:', error);
+		});
+	}
 
 	ngOnDestroy() {
 		this.subject.next(true);
@@ -100,6 +123,7 @@ export class SolicitarpermisosPage implements OnInit, OnDestroy {
 		this.qPendientes = qPendientes;
 	}
 
+	@ValidarPermiso(60010083, 'crear solicitud de permiso')
 	async irModal() {
 		const datos = {
 			component: AgregarSolicitarPermisosComponent,
@@ -118,6 +142,12 @@ export class SolicitarpermisosPage implements OnInit, OnDestroy {
 	}
 
 	obtenerInformacion(metodo: string, funcion: keyof SolicitarpermisosPage, datos: object = {}, event?: any) {
+		// Validación imperativa para creación de solicitudes
+		if (metodo === 'crearSolicitud' && !PermisosUtils.validarPermisoImperativo(this.validacionPermisosService, this.notificacionService, 60010083)) {
+			if (event) { event.target.complete(); }
+			return;
+		}
+
 		this.searching = true;
 		this.datosBasicosService.informacion(datos, this.rutaGeneral + metodo).then(resp => {
 			if (resp.success) {

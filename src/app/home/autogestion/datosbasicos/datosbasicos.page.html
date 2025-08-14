@@ -9,7 +9,7 @@
 	</ion-refresher>
 
 	<!-- Mensaje de sin permisos -->
-	<div *ngIf="!tienePermisos && !searching" class="sin-permisos-container">
+	<div *ngIf="!tienePermisos" class="sin-permisos-container">
 		<div class="sin-permisos-content">
 			<div style="display: flex; justify-content: center; align-items: center;">
 				<ion-icon name="lock-closed-outline" class="sin-permisos-icon"></ion-icon>
@@ -56,7 +56,7 @@
 		</app-loading-spinner>
 	</div>
 
-	<ion-accordion-group value="DP">
+	<ion-accordion-group value="DP" (ionChange)="onAccordionChange($event)">
 
 		<ion-accordion value="DP" toggle-icon="chevron-down-outline">
 			<ion-item class="b-item" slot="header">
@@ -64,7 +64,7 @@
 			</ion-item>
 
 			<ion-list class="formularios" lines="full" slot="content" [ngStyle]="{'padding-bottom': '0px;'}"
-				[formGroup]="datosFormulario.formulario">
+				[formGroup]="datosFormulario?.formulario" *ngIf="datosFormulario?.formulario">
 				<ion-item>
 					<ion-label position="floating" color="dark">* Nombre Completo</ion-label>
 					<ion-input formControlName="nombre" color="dark" type="text" required></ion-input>
@@ -173,22 +173,22 @@
 			</ion-item>
 
 			<ion-list lines="full" class="formularios" slot="content" [ngStyle]="{'padding-bottom': '0px;'}"
-				[formGroup]="datosAdicionales.formulario">
+				[formGroup]="datosAdicionales?.formulario" *ngIf="datosAdicionales?.formulario">
 				<app-select-autogestion
 					(valorSelect)="cambiosComponenteSelect($event,'informacionempleado', 'Empleados')"
-					[cambiovalor]="cambiovalor" [lista]="paisnacido" [formulario]="datosAdicionales.formulario"
+					[cambiovalor]="cambiovalor" [lista]="paisnacido" [formulario]="datosAdicionales?.formulario"
 					valueField="paisid" formControlSelect="paisid" textField="nombre" title="* Pais de nacimiento">
 				</app-select-autogestion>
 
 				<app-select-autogestion
 					(valorSelect)="cambiosComponenteSelect($event,'informacionempleado', 'Empleados')"
-					[cambiovalor]="cambiovalor" [lista]="dptonacido" [formulario]="datosAdicionales.formulario"
+					[cambiovalor]="cambiovalor" [lista]="dptonacido" [formulario]="datosAdicionales?.formulario"
 					valueField="dptoid" formControlSelect="dptoid" textField="nombre" title="* Dpto de nacimiento">
 				</app-select-autogestion>
 
 				<app-select-autogestion
 					(valorSelect)="cambiosComponenteSelect($event,'informacionempleado', 'Empleados')"
-					[cambiovalor]="cambiovalor" [lista]="ciudadnacido" [formulario]="datosAdicionales.formulario"
+					[cambiovalor]="cambiovalor" [lista]="ciudadnacido" [formulario]="datosAdicionales?.formulario"
 					valueField="ciudadid" formControlSelect="ciudadid" textField="nombre" title="* Ciudad de nacimiento">
 				</app-select-autogestion>
 
@@ -423,10 +423,14 @@
 	</ion-accordion-group>
 
 	<ion-fab
-		*ngIf="tienePermisos && accordionGroup && (accordionGroup.value === 'DR' || accordionGroup.value === 'DC' || accordionGroup.value === 'CC' || accordionGroup.value === 'IC' || accordionGroup.value === 'FI')"
+		*ngIf="shouldShowFab()"
 		vertical="bottom" horizontal="end" slot="fixed">
-		<ion-fab-button (click)="irModal()">
+		<ion-fab-button (click)="irModal()" 
+						[disabled]="!permisoGuardar"
+						[color]="permisoGuardar ? 'primary' : 'medium'"
+						[title]="!permisoGuardar ? 'No tiene permisos para agregar información' : 'Agregar información'">
 			<ion-icon name="add"></ion-icon>
+			<ion-icon *ngIf="!permisoGuardar" name="lock-closed" slot="end" size="small" color="warning"></ion-icon>
 		</ion-fab-button>
 	</ion-fab>
 

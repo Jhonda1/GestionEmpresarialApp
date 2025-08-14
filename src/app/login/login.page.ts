@@ -31,7 +31,6 @@ export class LoginPage implements OnInit {
 	urlFondoImagen = '/assets/images/fondoLogin.jpg';
     mostrarBotonesSesion: boolean = false;
 
-
 	constructor(
 		private sanitizer: DomSanitizer,
 		private theme: ThemeService,
@@ -78,7 +77,6 @@ export class LoginPage implements OnInit {
 		if (this.formLogin.formulario.get('nit')?.valid) {
 			const nit = this.formLogin.formulario.get('nit')?.value;
 			this.loginService.validarNit(nit).then(respuesta => {
-				// console.log('nit', respuesta, (respuesta && respuesta.success));
 				if (respuesta && respuesta.success) {
 					this.storageService.set('nit', nit);
 					this.storageService.set('crypt', respuesta.crypt);
@@ -138,7 +136,7 @@ export class LoginPage implements OnInit {
 					// Resetear formulario y estados visuales
 					this.formLogin.formulario.reset();
 					this.formLogin.formulario.markAsUntouched();
-					this.retornar();
+					// this.retornar(); // Comentado para evitar regresar al formulario de NIT después del login exitoso
 				} else {
 					this.notificaciones.notificacion(respuesta.mensaje);
 				}
@@ -153,7 +151,6 @@ export class LoginPage implements OnInit {
 	}  
 
 	olvidoPass(extra = 0) {
-		// console.log(this.formLogin.formulario.value);
 		this.router.navigateByUrl(`forget-password/${this.formLogin.formulario.get('num_docu')?.value || '0'}/${extra}`);
 	}
 }

@@ -33,10 +33,18 @@
               </ion-text>
             </ion-item>
             <ion-item-options side="end">
-              <ion-item-option slot="end" color="danger" (click)="download(item['base'])">
+              <ion-item-option slot="end" 
+                              color="danger" 
+                              (click)="download(item['base'])"
+                              [disabled]="!permisoExtrato"
+                              [title]="!permisoExtrato ? 'No tiene permisos para descargar extractos' : 'Descargar PDF'">
                 <fa-icon slot="icon-only" icon="file-pdf"></fa-icon>
               </ion-item-option>
-              <ion-item-option slot="end" color="warning" (click)="obtenerArchivo(item['file_aux'])">
+              <ion-item-option slot="end" 
+                              color="warning" 
+                              (click)="obtenerArchivo(item['file_aux'])"
+                              [disabled]="!permisoExtrato"
+                              [title]="!permisoExtrato ? 'No tiene permisos para obtener archivo' : 'Obtener archivo'">
                 <fa-icon slot="icon-only" icon="download"></fa-icon>
               </ion-item-option>
             </ion-item-options>
@@ -67,10 +75,18 @@
               </ion-text>
             </ion-item>
             <ion-item-options side="end">
-              <ion-item-option slot="end" color="danger" (click)="download(item['base'])">
+              <ion-item-option slot="end" 
+                              color="danger" 
+                              (click)="download(item['base'])"
+                              [disabled]="!permisoCertificado"
+                              [title]="!permisoCertificado ? 'No tiene permisos para descargar certificados' : 'Descargar PDF'">
                 <fa-icon slot="icon-only" icon="file-pdf"></fa-icon>
               </ion-item-option>
-              <ion-item-option slot="end" color="warning" (click)="obtenerArchivo(item['file_aux'])">
+              <ion-item-option slot="end" 
+                              color="warning" 
+                              (click)="obtenerArchivo(item['file_aux'])"
+                              [disabled]="!permisoCertificado"
+                              [title]="!permisoCertificado ? 'No tiene permisos para obtener archivo' : 'Obtener archivo'">
                 <fa-icon slot="icon-only" icon="download"></fa-icon>
               </ion-item-option>
             </ion-item-options>
@@ -101,10 +117,18 @@
               </ion-text>
             </ion-item>
             <ion-item-options side="end">
-              <ion-item-option slot="end" color="danger" (click)="filtros(1)">
+              <ion-item-option slot="end" 
+                              color="danger" 
+                              (click)="filtros(1)"
+                              [disabled]="!permisoCartaLaboral"
+                              [title]="!permisoCartaLaboral ? 'No tiene permisos para generar carta laboral' : 'Generar PDF'">
                 <fa-icon slot="icon-only" icon="file-pdf"></fa-icon>
               </ion-item-option>
-              <ion-item-option slot="end" color="warning" (click)="filtros(0)">
+              <ion-item-option slot="end" 
+                              color="warning" 
+                              (click)="filtros(0)"
+                              [disabled]="!permisoCartaLaboral"
+                              [title]="!permisoCartaLaboral ? 'No tiene permisos para descargar carta laboral' : 'Descargar'">
                 <fa-icon slot="icon-only" icon="download"></fa-icon>
               </ion-item-option>
             </ion-item-options>

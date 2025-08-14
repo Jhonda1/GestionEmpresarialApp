@@ -22,7 +22,6 @@ export class CambioMenuService {
 
 	/* Notificar que la foto se actualizó */
 	notificarCambioFoto(nuevaFotoUrl: string) {
-		console.log('🔔 Notificando cambio de foto:', nuevaFotoUrl.substring(0, 50));
 		this.fotoActualizada$.next(nuevaFotoUrl);
 	}
 

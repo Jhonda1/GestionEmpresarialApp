@@ -162,10 +162,16 @@
 					</ion-list>
 				</div>
 			</ion-accordion>
-			<ion-button  type="submit" class="ion-no-margin" [disabled]="guardarAusentismoPermiso" shape="round"
-				expand="full">
+			<ion-button type="submit" 
+						class="ion-no-margin" 
+						[disabled]="guardarAusentismoPermiso || !permisoRegistrar" 
+						[color]="permisoRegistrar ? 'primary' : 'medium'"
+						[title]="!permisoRegistrar ? 'No tiene permisos para guardar registro de ausentismo' : 'Guardar ausentismo'"
+						shape="round"
+						expand="full">
 				Guardar
 				<ion-icon slot="start" name="save-outline"></ion-icon>
+				<ion-icon *ngIf="!permisoRegistrar" slot="end" name="lock-closed" size="small" color="warning"></ion-icon>
 			</ion-button>
 		</form>
 

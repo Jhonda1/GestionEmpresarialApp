@@ -16,6 +16,9 @@ import { LoginService } from 'src/app/servicios/login.service';
 import { StorageService } from 'src/app/servicios/storage.service';
 import { HeaderComponent } from 'src/app/componentes/header/header.component';
 import { FiltroListaPipe } from 'src/app/pipes/filtro-lista/filtro-lista.pipe';
+import { ValidacionPermisosService } from 'src/app/servicios/validacion-permisos.service';
+import { PermisosHelperService } from 'src/app/servicios/permisos-helper.service';
+import { ValidarPermiso, PermisosUtils } from 'src/app/utils/permisos.decorators';
 
 interface DatosUsuario {
 	[key: string]: any;
@@ -58,10 +61,30 @@ export class SolicitarvacacionesPage implements OnInit, OnDestroy {
 		private notificacionService: NotificacionesService,
 		private datosBasicosService: DatosbasicosService,
 		private menu: CambioMenuService,
-		private modalController: ModalController
+		private modalController: ModalController,
+		private validacionPermisosService: ValidacionPermisosService,
+		private permisosHelper: PermisosHelperService
 	) { }
 
-	ngOnInit() { }
+	ngOnInit() {
+		this.validarPermisosIniciales();
+	}
+
+	private validarPermisosIniciales() {
+		// Validar múltiples permisos de forma asíncrona
+		const permisos = [60010081, 60010082, 60010083];
+		const promesasValidacion = permisos.map(permiso => 
+			this.validacionPermisosService.validarPermisoLocal(permiso)
+		);
+
+		Promise.all(promesasValidacion).then(resultados => {
+			this.permisoPendientes = resultados[0];
+			this.permisoDisfrutados = resultados[1]; 
+			this.permisoCrear = resultados[2];
+		}).catch(error => {
+			console.error('Error validando permisos:', error);
+		});
+	}
 
 	ngOnDestroy() {
 		this.subject.next(true);
@@ -102,7 +125,42 @@ export class SolicitarvacacionesPage implements OnInit, OnDestroy {
 		}
 	}
 
-	obtenerInformacion(metodo: string, funcion: string, datos: object = {}, event?: any) {
+	async obtenerInformacion(metodo: string, funcion: string, datos: object = {}, event?: any) {
+		// Validación imperativa para guardado de datos con sincronización forzada
+		if (metodo === 'guardarValores') {
+			try {
+				// Forzar sincronización de permisos antes de validar operaciones críticas
+				const resultadoValidacion = await this.validacionPermisosService.validarPermisoParaAccion(
+					60010083, 
+					'crear solicitud de vacaciones',
+					true // forzar sincronización
+				);
+				
+				if (!resultadoValidacion.valido) {
+					this.notificacionService.notificacion(resultadoValidacion.mensaje);
+					
+					// Activar redirección automática después de mostrar el mensaje
+					setTimeout(() => {
+						this.validacionPermisosService.manejarFaltaDePermisos(resultadoValidacion.mensaje);
+					}, 1500);
+					
+					if (event) { event.target.complete(); }
+					return;
+				}
+			} catch (error) {
+				console.error('Error al validar permisos antes de guardar:', error);
+				this.notificacionService.notificacion('Error al validar permisos.');
+				
+				// En caso de error, también activar redirección
+				setTimeout(() => {
+					this.validacionPermisosService.manejarFaltaDePermisos('Error al validar permisos');
+				}, 1500);
+				
+				if (event) { event.target.complete(); }
+				return;
+			}
+		}
+
 		this.searching = true;
 		this.datosBasicosService.informacion(datos, this.rutaGeneral + metodo).then(resp => {
 			if (resp.success) {
@@ -146,6 +204,7 @@ export class SolicitarvacacionesPage implements OnInit, OnDestroy {
 		this.obtenerDatosEmpleado(evento);
 	}
 
+	@ValidarPermiso(60010083, 'crear solicitud de vacaciones')
 	async irModal() {
 		const datos = { component: AgregarSolicitudVacacionesComponent, componentProps: {} };
 		const modal = await this.modalController.create(datos);

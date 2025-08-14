@@ -17,6 +17,8 @@ import { DatosAusentismosService } from 'src/app/servicios/datosAusentismo.servi
 import { Item } from '@app/componentes/UI/types';
 import { HeaderComponent } from 'src/app/componentes/header/header.component';
 import { TypeaheadModule } from 'src/app/componentes/UI/typehead/typehead.module';
+import { ValidacionPermisosService } from 'src/app/servicios/validacion-permisos.service';
+import { ValidarPermiso, PermisosUtils } from 'src/app/utils/permisos.decorators';
 
 interface Empleado {
   id: number;
@@ -110,6 +112,7 @@ export class registroausentismoPage implements OnInit, OnDestroy {
 	});
 	cambiovalor: boolean = false;
 	guardarAusentismoPermiso = false;
+	permisoRegistrar = false; // 6001009 - Registro de Ausentismo
 	divCie10 = {};
 	selectedEnfermedadesText = '0 Items';
   	selectedEnfermedades: string[] = [];
@@ -125,11 +128,13 @@ export class registroausentismoPage implements OnInit, OnDestroy {
 		private loginService: LoginService,
 		private storage: StorageService,
 		private datosAusentismo: DatosAusentismosService,
+		private validacionPermisosService: ValidacionPermisosService,
 	) { }
 	ngOnInit() {
 		this.datosFormulario = FuncionesGenerales.crearFormulario(this.datosEmpleadosService);
 		this.datosFormularioEnvio = FuncionesGenerales.crearFormulario(this.datosAusentismo);
 		this.obtenerUsuario();
+		this.validarPermisosIniciales();
 
 		//funcionalidad para que cuando se busque algo en el CIE10 espera y no haga la busqueda
 		// de una y de tiempo de escribir lo que se desea buscar
@@ -140,6 +145,11 @@ export class registroausentismoPage implements OnInit, OnDestroy {
 				this.obtenerInformacion('enfermedades', '', { search: term }); // Aquí llamas a la función para obtener los datos
 			}
 		});
+	}
+
+	private validarPermisosIniciales() {
+		// Validar permiso para registro de ausentismo (6001009)
+		this.permisoRegistrar = this.validacionPermisosService.validarPermisoLocal(6001009);
 	}
 
 	ngOnDestroy() {
@@ -187,6 +197,12 @@ export class registroausentismoPage implements OnInit, OnDestroy {
 	}
 
 	obtenerInformacion(metodo: string, funcion: string, datos: any = {}, event?: any) {
+		// Validación imperativa para guardado de ausentismo
+		if (metodo === 'guardarAnexo' && !PermisosUtils.validarPermisoImperativo(this.validacionPermisosService, this.notificacionService, 6001009)) {
+			if (event) { event.target.complete(); }
+			return;
+		}
+
 		this.searching = true;
 		this.datosEmpleadosService.informacion(datos, this.rutaGeneral + metodo).then(resp => {
 			this.areas = resp.areas;
@@ -330,6 +346,7 @@ export class registroausentismoPage implements OnInit, OnDestroy {
 		}
 	}
 
+	@ValidarPermiso(6001009, 'guardar registro de ausentismo')
 	async guardarDatos() {
 		const camposObligatorios = ['areaId', 'fechainicio', 'fechafin', 'tiposausentismoid', 'observacion', 'TipoCalculo', 'horas_dia_laboradas'];
 		let formularioValido = true;

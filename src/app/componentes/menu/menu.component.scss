@@ -6,6 +6,14 @@
 			ion-icon {
 				color: var(--ion-color-dark);
 			}
+			
+			// Estilos para el logo del menú
+			.menu-logo {
+				height: 32px;
+				width: auto;
+				max-width: 100px;
+				object-fit: contain;
+			}
 		}
 		ion-header {
 			display: flex;

@@ -1,5 +1,5 @@
 
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
@@ -11,6 +11,10 @@ import { Router } from '@angular/router';
 import { StorageService } from 'src/app/servicios/storage.service';
 import { GastosService } from 'src/app/servicios/gastos.service';
 import { HeaderComponent } from 'src/app/componentes/header/header.component';
+
+// IMPORTACIONES PARA VALIDACIÓN DE PERMISOS
+import { ValidacionPermisosService } from 'src/app/servicios/validacion-permisos.service';
+import { ValidarPermiso, LogAccion, PermisosUtils } from 'src/app/utils/permisos.decorators';
 @Component({
 	selector: 'app-gastos',
 	templateUrl: './gastos.page.html',
@@ -36,6 +40,11 @@ export class GastosPage implements OnInit, OnDestroy {
 	listImagesDelete: any = [];
 	detallesDeletes: any = [];
 
+	permisoAccesoModulo = false; // Permiso general para el módulo
+	permisoGuardarGastos = false; // Permiso para guardar gastos
+
+	private validacionPermisosService = inject(ValidacionPermisosService);
+
 	constructor(
 		private menu: MenuController,
 		private gastosService: GastosService,
@@ -44,8 +53,42 @@ export class GastosPage implements OnInit, OnDestroy {
 		private storageService: StorageService,
 	) { }
 
-	ngOnInit() {
+	async ngOnInit() {
+    await this.validarPermisosIniciales();
 	}
+
+  private async validarPermisosIniciales() {
+    try {
+      // Validar permiso general del módulo
+      const resultado = await this.validacionPermisosService.validarPermisoParaAccion(
+        500100, // Permiso general para gastos
+        'acceder al módulo de gastos'
+      );
+
+      if (!resultado.valido) {
+        this.notificaciones.notificacion(resultado.mensaje);
+        this.router.navigateByUrl('/modulos/datosbasicos');
+        return;
+      }
+
+      this.permisoAccesoModulo = true;
+
+      // Validar permisos específicos
+      await this.validarPermisosEspecificos();
+
+    } catch (error) {
+      console.error('Error al validar permisos iniciales:', error);
+      this.notificaciones.notificacion('Error al validar permisos');
+    }
+  }
+
+  private async validarPermisosEspecificos() {
+    const resultados = await this.validacionPermisosService.validarMultiplesPermisos([
+      500100, // Gestión de gastos
+    ]);
+
+    this.permisoGuardarGastos = resultados[500100] || false;
+  }
 
 	ngOnDestroy() {
 		// Limpiar recursos si es necesario
@@ -170,6 +213,8 @@ export class GastosPage implements OnInit, OnDestroy {
 		}
 	}
 
+  @ValidarPermiso(500100, 'guardar gastos')
+  @LogAccion('Guardado de gastos')
 	async guardarMovimientos() {
 		let nit = 0;
 		await this.storageService.get('tokenNIT').then(
@@ -209,7 +254,6 @@ export class GastosPage implements OnInit, OnDestroy {
 	async cargarInformacion() {
 		this.loader(true);
 		this.gastosService.informacion({}, 'gastos/cGastos/cargarInformacion').then(async respuesta => {
-			console.log(respuesta);
 			this.listaSolicitudes = respuesta.Solicitudes;
 			this.Solicitudes = this.listaSolicitudes;
 			this.storageService.set('Solicitudes', this.listaSolicitudes);

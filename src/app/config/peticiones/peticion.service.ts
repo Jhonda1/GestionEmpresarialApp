@@ -45,8 +45,8 @@ export class PeticionService {
 	async desencriptar(encriptado: any) {		
 		// Validar si el objeto tiene las propiedades necesarias para desencriptar
 		if (!encriptado || (typeof encriptado !== 'object' && typeof encriptado !== 'string')) {
-			console.error('Datos de entrada inválidos para desencriptar:', encriptado);
-			throw new Error('Los datos para desencriptar no tienen el formato correcto');
+			console.warn('Datos de entrada inválidos para desencriptar:', encriptado);
+			return null; // Retornar null en lugar de lanzar error
 		}
 
 		// Si el objeto tiene propiedades de Zone.js, extraer el valor real
@@ -56,11 +56,13 @@ export class PeticionService {
 
 		// Si es un array vacío o null después de extraer de Zone.js
 		if (Array.isArray(encriptado) && encriptado.length === 0) {
+			console.warn('Array vacío recibido para desencriptar');
 			return null; // Retornar null en lugar de lanzar error
 		}
 
 		// Si es null o undefined después de las validaciones
 		if (encriptado === null || encriptado === undefined) {
+			console.warn('Datos null o undefined recibidos para desencriptar');
 			return null;
 		}
 
@@ -69,17 +71,19 @@ export class PeticionService {
 			try {
 				encriptado = JSON.parse(encriptado);
 			} catch (error) {
-				console.error('Error al parsear JSON:', error);
-				throw new Error('Los datos no tienen un formato JSON válido');
+				console.warn('Error al parsear JSON, los datos podrían no estar encriptados:', error);
+				// Si no se puede parsear, podría ser un string simple, retornarlo
+				return encriptado;
 			}
 		}
 
 		// Validar que tenga las propiedades necesarias para la desencriptación
 		if (!encriptado.salt || !encriptado.iv || !encriptado.ciphertext) {
-			console.error('El objeto no contiene las propiedades necesarias (salt, iv, ciphertext):', encriptado);
+			console.warn('El objeto no contiene las propiedades necesarias para desencriptación (salt, iv, ciphertext):', encriptado);
 			
 			// Si es un objeto que ya viene desencriptado (como en tu caso que tiene 'foto'), devolverlo tal como está
-			if (encriptado && typeof encriptado === 'object' && (encriptado.foto || Object.keys(encriptado).length > 0)) {
+			if (encriptado && typeof encriptado === 'object' && Object.keys(encriptado).length > 0) {
+				console.info('Datos ya parecen estar desencriptados, retornándolos tal como están');
 				return encriptado;
 			}
 			
@@ -91,6 +95,12 @@ export class PeticionService {
 			const salt = CryptoJS.enc.Hex.parse(encriptado.salt);
 			const iv = CryptoJS.enc.Hex.parse(encriptado.iv);
 			const crypt = JSON.parse(await this.storageService.get('crypt').then(resp => resp));
+			
+			if (!crypt || !crypt.key) {
+				console.error('No se encontró la clave de encriptación en el storage');
+				throw new Error('Clave de encriptación no encontrada');
+			}
+			
 			const key = CryptoJS.PBKDF2(crypt.key, salt, { hasher: CryptoJS.algo.SHA512, keySize: 64 / 8, iterations: crypt.it });
 			const decrypted = CryptoJS.AES.decrypt(encriptado.ciphertext, key, { iv: iv });
 			
@@ -125,29 +135,56 @@ export class PeticionService {
 		const uri = this.construirUrl(controlador);
 		const Conexion = await this.storageService.get('conexion').then(resp => resp);
 		let NIT = await this.storageService.get('nit').then(resp => resp);
-		let usuario = await this.desencriptar(JSON.parse(await this.storageService.get('usuario').then(resp => resp)));
+		
+		// Usar la función utilitaria segura para obtener datos del usuario
+		let usuario = await this.obtenerDatosStorage('usuario');
+		
+		if (!usuario) {
+			console.error('No se encontraron datos válidos de usuario para la petición');
+			throw new Error('Usuario no encontrado o datos inválidos');
+		}
+				
+		// Crear headers con valores seguros (convertir undefined a string vacío)
 		const headers = new HttpHeaders({
-			Token: usuario.IngresoId,
-			Conexion,
-			NIT,
-			Usuario: usuario.usuarioId,
-			Num_docu: usuario.num_docu,
-			Tercero_id: usuario.tercero_id
+			Token: usuario.IngresoId || '',
+			Conexion: Conexion || '',
+			NIT: NIT || '',
+			Usuario: usuario.usuarioId || '',
+			Num_docu: usuario.num_docu || '',
+			Tercero_id: usuario.tercero_id || ''
 		});
-		return await firstValueFrom(this.ejecutarPeticion('post', uri, data, headers)).then(async resp => {
+		return await firstValueFrom(this.ejecutarPeticion('post', uri, data, headers)).then(async resp => {			
 			if (valida == false) {
-				const desencriptado = await this.desencriptar(resp);
-				if (desencriptado.activoLogueo) {
-					// return Ejecutar cerrar sesion
-					this.storageService.limpiarTodo();
-				} else {
-					return desencriptado;
+				try {
+					const desencriptado = await this.desencriptar(resp);
+					
+					if (desencriptado.activoLogueo) {
+						// Solo cerrar sesión si es una respuesta crítica de autenticación
+						// No cerrar por operaciones normales como cargar fotos
+						console.warn('Servidor indicó activoLogueo=true, pero manteniendo sesión activa');
+						
+						// Verificar si realmente es necesario cerrar sesión
+						// o si es solo una advertencia del servidor
+						if (desencriptado.mensaje && desencriptado.mensaje.includes('sesión expirada')) {
+							this.storageService.limpiarTodo();
+							return null;
+						}
+						
+						// Para otros casos, mantener la sesión pero retornar la respuesta
+						return desencriptado;
+					} else {
+						return desencriptado;
+					}
+				} catch (error) {
+					console.error('DEBUG PETICION: Error en desencriptación:', error);
+					throw error;
 				}
 			}else{
 				return resp;
 			}
-		}).catch((request) => {
+		}).catch((request) => {			
 			this.validarAlertaError(request);
+			throw request; // Importante: re-lanzar el error para que se propague
 		});
 	}
 
@@ -199,10 +236,45 @@ export class PeticionService {
 		try {
 			const usuario = await this.obtenerDatosStorage('usuario');
 			const modulos = await this.obtenerDatosStorage('modulos');
+			const conexion = await this.storageService.getSafe('conexion');
+			const nit = await this.storageService.getSafe('nit');
 			
-			return !!(usuario && modulos);
+			// Validar que todos los datos esenciales estén presentes
+			if (!usuario || !modulos || !conexion || !nit) {
+				console.warn('Faltan datos esenciales para mantener la sesión activa');
+				return false;
+			}
+
+			// Validar que el usuario tenga las propiedades necesarias
+			if (!usuario.IngresoId || !usuario.usuarioId || !usuario.num_docu || !usuario.tercero_id) {
+				console.warn('Los datos de usuario no tienen las propiedades necesarias');
+				return false;
+			}
+
+			return true;
 		} catch (error) {
 			console.error('Error al validar sesión activa:', error);
+			return false;
+		}
+	}
+
+	/**
+	 * Inicializa o valida la sesión del usuario al iniciar la aplicación
+	 * @returns true si la sesión es válida, false si necesita re-autenticación
+	 */
+	async inicializarSesion(): Promise<boolean> {
+		try {
+			const sesionValida = await this.validarSesionActiva();
+			
+			if (!sesionValida) {
+				this.storageService.limpiarTodo(true);
+				return false;
+			}
+
+			return true;
+		} catch (error) {
+			console.error('Error al inicializar sesión:', error);
+			this.storageService.limpiarTodo(true);
 			return false;
 		}
 	}
@@ -224,25 +296,34 @@ export class PeticionService {
 		};
 		data = {
 			encriptado: await this.encriptar(data),
-			RASTREO: FuncionesGenerales.rastreo('Ingresa al Sistema Gestion Empresarial', 'Ingreso Sistema'),
+			RASTREO: FuncionesGenerales.rastreo('Ingresa al Sistema Gestión Empresarial', 'Ingreso Sistema'),
 		}
 		const Conexion = await this.storageService.get('conexion').then(resp => resp);
 		const NIT = await this.storageService.get('nit').then(resp => resp);
 		const headers = new HttpHeaders({ NIT, Conexion, Token: '0' });
-		console.log('Iniciando sesión con datos:', data);
 		return await firstValueFrom(this.ejecutarPeticion('post', `${this.url}Login/ingreso`, data, headers)).then(resp => resp, console.error);
 	}
 
 	async cerrarSesionUser() {
 		const Conexion = await this.storageService.get('conexion').then(resp => resp);
-		let usuario = await this.desencriptar(JSON.parse(await this.storageService.get('usuario').then(resp => resp)));
+		
+		// Usar la función utilitaria segura para obtener datos del usuario
+		let usuario = await this.obtenerDatosStorage('usuario');
+		
+		if (!usuario) {
+			console.error('No se encontraron datos válidos de usuario para cerrar sesión');
+			// Si no hay usuario válido, simplemente limpiar el storage
+			this.storageService.limpiarTodo(true);
+			return;
+		}
+		
 		let data: any = {
 			ingreso: usuario.IngresoId,
 			usuario: usuario.usuarioId
 		};
 		data = {
 			encriptado: await this.encriptar(data),
-			RASTREO: FuncionesGenerales.rastreo('Salida del Sistema Gestion Empresarial', 'Salida Sistema'),
+			RASTREO: FuncionesGenerales.rastreo('Salida del Sistema Gestión Empresarial', 'Salida Sistema'),
 		}
 		const headers = new HttpHeaders({ Conexion, Token: usuario.IngresoId });
 		return await firstValueFrom(this.ejecutarPeticion('post', `${this.url}Login/cierre`, data, headers)).then(resp => this.desencriptar(resp)).catch(error => {
