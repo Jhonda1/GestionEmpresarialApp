@@ -8,6 +8,7 @@ import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { CustomInjectorService } from './config/peticiones/peticion.service';
 import { PermisosInterceptor } from './interceptors/permisos.interceptor';
+import { CorsErrorInterceptor } from './interceptors/cors-error.interceptor';
 import { IonicStorageModule } from '@ionic/storage-angular';
 import { Drivers } from '@ionic/storage';
 import { IonicSelectableComponent } from 'ionic-selectable';
@@ -37,6 +38,11 @@ import { fab } from '@fortawesome/free-brands-svg-icons';
 	],
 	providers: [
 		{ provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: CorsErrorInterceptor,
+			multi: true
+		},
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: PermisosInterceptor,

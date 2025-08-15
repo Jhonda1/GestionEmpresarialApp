@@ -144,6 +144,18 @@ export class AgregarSolicitarPermisosComponent implements OnInit {
 			Object.keys(this.datosSeleccionados).forEach((key) => {
 				this.datosForm[key] = this.datosSeleccionados[key];
 			});
+
+			// Limpiar y validar datos antes de enviar
+			this.datosForm = this.limpiarDatosParaEnvio(this.datosForm);
+
+			// Log detallado para debugging
+			console.log('📝 Datos procesados para enviar al servidor:', {
+				datosFormulario: this.datosForm,
+				formularioOriginal: this.datosSolicitudPermisos.formulario.value,
+				cie10Seleccionados: this.selectedEnfermedades,
+				datosSeleccionados: this.datosSeleccionados,
+				timestamp: new Date().toISOString()
+			});
 	
 			// Enviar los datos y cerrar el modal
 			this.cerrarModal(this.datosForm);
@@ -162,6 +174,77 @@ export class AgregarSolicitarPermisosComponent implements OnInit {
 			}, 1500);
 			
 			return false;
+		}
+	}
+
+	/**
+	 * Limpia y valida los datos antes de enviarlos al servidor
+	 */
+	private limpiarDatosParaEnvio(datos: any): any {
+		const datosLimpios = { ...datos };
+
+		// Validar y limpiar fechas
+		if (datosLimpios.FechaInicio) {
+			datosLimpios.FechaInicio = this.formatearFecha(datosLimpios.FechaInicio);
+		}
+		if (datosLimpios.FechaFin) {
+			datosLimpios.FechaFin = this.formatearFecha(datosLimpios.FechaFin);
+		}
+
+		// Validar campos numéricos
+		if (datosLimpios.TipoAusentismoId) {
+			datosLimpios.TipoAusentismoId = parseInt(datosLimpios.TipoAusentismoId, 10);
+		}
+
+		// Validar horas y días
+		if (datosLimpios.horas) {
+			datosLimpios.horas = parseFloat(datosLimpios.horas) || 0;
+		}
+		if (datosLimpios.dias) {
+			datosLimpios.dias = parseInt(datosLimpios.dias, 10) || 0;
+		}
+
+		// Asegurar que CIE10 sea un array válido
+		if (!Array.isArray(datosLimpios.cie10)) {
+			datosLimpios.cie10 = [];
+		}
+
+		// Remover campos vacíos o inválidos
+		Object.keys(datosLimpios).forEach(key => {
+			if (datosLimpios[key] === null || datosLimpios[key] === undefined || datosLimpios[key] === '') {
+				delete datosLimpios[key];
+			}
+		});
+
+		console.log('🧹 Datos limpiados:', datosLimpios);
+		return datosLimpios;
+	}
+
+	/**
+	 * Formatea fecha para envío al servidor
+	 */
+	private formatearFecha(fecha: string): string {
+		if (!fecha) return '';
+		
+		try {
+			// Si la fecha viene en formato ISO, extraer solo la parte de fecha
+			if (fecha.includes('T')) {
+				return fecha.split('T')[0];
+			}
+			
+			// Si viene en formato DD-MM-YYYY, convertir a YYYY-MM-DD
+			if (fecha.includes('-') && fecha.length === 10) {
+				const partes = fecha.split('-');
+				if (partes.length === 3 && partes[0].length === 2) {
+					// Formato DD-MM-YYYY -> YYYY-MM-DD
+					return `${partes[2]}-${partes[1]}-${partes[0]}`;
+				}
+			}
+			
+			return fecha;
+		} catch (error) {
+			console.error('Error al formatear fecha:', fecha, error);
+			return fecha;
 		}
 	}
 	

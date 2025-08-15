@@ -7,63 +7,74 @@
 		<ion-refresher-content></ion-refresher-content>
 	</ion-refresher>
 
-	<ion-list>
-		<div class="informacion-familiar" color="gray">
-			<ion-searchbar (ionChange)="buscarFiltro('buscarPendientes', $event)" clearIcon="close-sharp"
-				placeholder="Buscar Estado" [debounce]="250"></ion-searchbar>
+	<!-- Mensaje de carga inicial -->
+	<div class="ion-padding ion-text-center" 
+		 *ngIf="!datosInicialmenteLoaded"
+		 style="margin-top: 100px;">
+		<ion-spinner name="crescent" color="primary"></ion-spinner>
+		<p style="margin-top: 20px;">Validando permisos y cargando datos...</p>
+	</div>
 
-			<ion-list lines="full" class="ion-no-padding">
+	<!-- Contenido principal solo se muestra cuando los datos están cargados -->
+	<div *ngIf="datosInicialmenteLoaded">
+		<ion-list>
+			<div class="informacion-familiar" color="gray">
+				<ion-searchbar (ionChange)="buscarFiltro('buscarPendientes', $event)" clearIcon="close-sharp"
+					placeholder="Buscar Estado" [debounce]="250"></ion-searchbar>
 
-				<ion-item *ngFor="let item of qPendientes | filtro: 'Estado': buscarPendientes;"
-					class="ion-margin familiar" lines="none" [style]="item['Color']">
+				<ion-list lines="full" class="ion-no-padding">
 
-					<ion-label>
-						<h2 class="ion-text-center">{{ item['nombre'] }}</h2>
+					<ion-item *ngFor="let item of qPendientes | filtro: 'Estado': buscarPendientes;"
+						class="ion-margin familiar" lines="none" [style]="item['Color']">
 
-						<div class="item d-flex justify-content-between">
-							<span><b>Fecha Inicio </b></span>
-							<span>{{ item['FechaInicio'] }}</span>
-						</div>
+						<ion-label>
+							<h2 class="ion-text-center">{{ item['nombre'] }}</h2>
 
-           			 	<div class="item d-flex justify-content-between">
-							<span><b>Fecha Fin </b></span>
-							<span>{{ item['FechaFin'] }}</span>
-						</div>
+							<div class="item d-flex justify-content-between">
+								<span><b>Fecha Inicio </b></span>
+								<span>{{ item['FechaInicio'] }}</span>
+							</div>
 
-						<div class="item d-flex justify-content-between">
-							<span><b>Días Ausentismo </b></span>
-							<span>{{ item['DiaCompensado'] }}</span>
-						</div>
+						 	<div class="item d-flex justify-content-between">
+								<span><b>Fecha Fin </b></span>
+								<span>{{ item['FechaFin'] }}</span>
+							</div>
 
-            			<div class="item d-flex justify-content-between">
-							<span><b>Horas Ausentismo </b></span>
-							<span>{{ item['horas'] }}</span>
-						</div>
+							<div class="item d-flex justify-content-between">
+								<span><b>Días Ausentismo </b></span>
+								<span>{{ item['DiaCompensado'] }}</span>
+							</div>
 
-						<div class="item d-flex justify-content-between">
-							<span><b>Estado solicitud</b></span>
-							<ion-label class="ion-text-wrap">
-								<ion-text [color]="item['ColorEstado']">
-									<span><b>{{ item['Estado'] }}</b></span>
-								</ion-text>
-							</ion-label>
-						</div>
+							<div class="item d-flex justify-content-between">
+								<span><b>Horas Ausentismo </b></span>
+								<span>{{ item['horas'] }}</span>
+							</div>
 
-						<div class="item d-flex justify-content-between">
-							<span><b>Tipo ausentismo </b></span>
-							<span>{{ item['NombreAusentismo'] }}</span>
-						</div>
+							<div class="item d-flex justify-content-between">
+								<span><b>Estado solicitud</b></span>
+								<ion-label class="ion-text-wrap">
+									<ion-text [color]="item['ColorEstado']">
+										<span><b>{{ item['Estado'] }}</b></span>
+									</ion-text>
+								</ion-label>
+							</div>
 
-						<span *ngIf="item['Observacion']"><b>Observación:</b> {{ item['Observacion'] }}</span>
+							<div class="item d-flex justify-content-between">
+								<span><b>Tipo ausentismo </b></span>
+								<span>{{ item['NombreAusentismo'] }}</span>
+							</div>
 
-					</ion-label>
-				</ion-item>
-			</ion-list>
-			<div class="ion-padding ion-text-center nohayresultado" *ngIf="!qPendientes.length && !searching">
-				No tiene solicitud en el historico.
+							<span *ngIf="item['Observacion']"><b>Observación:</b> {{ item['Observacion'] }}</span>
+
+						</ion-label>
+					</ion-item>
+				</ion-list>
+				<div class="ion-padding ion-text-center nohayresultado" *ngIf="!qPendientes.length && !searching">
+					No tiene solicitud en el historico.
+				</div>
 			</div>
-		</div>
-	</ion-list>
+		</ion-list>
+	</div>
 
 	<ion-fab vertical="bottom" *ngIf="permisoCrear" horizontal="end" slot="fixed">
 		<ion-fab-button (click)="irModal()" 

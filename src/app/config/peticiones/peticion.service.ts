@@ -369,7 +369,11 @@ export class PeticionService {
 					}
 				}];
 			} else {
-				if (request.error.includes('DELETE') && request.error.includes('REFERENCE') && request.error.includes('FK')) {
+				// Convertir error a string para poder usar includes()
+				const errorString = typeof request.error === 'string' ? request.error : 
+					(request.error?.message || request.error?.error || JSON.stringify(request.error));
+				
+				if (errorString.includes('DELETE') && errorString.includes('REFERENCE') && errorString.includes('FK')) {
 					mensaje = 'No se puede eliminar, el registro se encuentra referenciado en otras tablas.';
 					encabezado = 'Error de Integridad';
 					encabezado2 = encabezado;
@@ -377,7 +381,7 @@ export class PeticionService {
 				opciones = [{
 					text: 'Ver Detalle',
 					handler: () => {
-						this.notificacionesService.alerta(request.error, "Error", ['alerta-error'], [{ text: 'Cerrar', role: 'aceptar' }]);
+						this.notificacionesService.alerta(errorString, "Error", ['alerta-error'], [{ text: 'Cerrar', role: 'aceptar' }]);
 					}
 				}, {
 					text: 'Cerrar',

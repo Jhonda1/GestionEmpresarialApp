@@ -185,24 +185,4 @@ export class FuncionesGenerales {
 		};
 	}
 
-	/**
-	 * Genera un mensaje HTML para mostrar cuando no se tienen permisos
-	 * @param nombreModulo - Nombre del módulo
-	 * @param permisoId - ID del permiso requerido
-	 * @returns String con HTML del mensaje de sin permisos
-	 */
-	static generarMensajeSinPermisos(nombreModulo: string, permisoId?: number): string {
-		const permisoTexto = permisoId ? ` (Permiso requerido: ${permisoId})` : '';
-		
-		return `
-			<div style="text-align: center; padding: 40px 20px; color: #666;">
-				<ion-icon name="lock-closed-outline" style="font-size: 64px; color: #ff6b6b; margin-bottom: 20px;"></ion-icon>
-				<h2 style="color: #333; margin-bottom: 10px;">Acceso Restringido</h2>
-				<p style="font-size: 16px; line-height: 1.5; margin-bottom: 20px;">
-					No tiene permisos para acceder a <strong>${nombreModulo}</strong>.
-				</p>
-			</div>
-		`;
-	}
-
 }

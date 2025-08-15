@@ -15,7 +15,8 @@ const config: CapacitorConfig = {
     cleartext: true,
     // Configuración adicional para desarrollo
     hostname: 'localhost',
-    androidScheme: 'http' // Usar HTTP en desarrollo para evitar Mixed Content
+    androidScheme: 'http', // Usar HTTP en desarrollo para evitar Mixed Content
+    iosScheme: 'ionic'
   },
   android: {
     allowMixedContent: true,

@@ -1,0 +1,13 @@
+{
+  "/dev/*": {
+    "target": "http://192.168.0.224:8016",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "headers": {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With"
+    }
+  }
+}
