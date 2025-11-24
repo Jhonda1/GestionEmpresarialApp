@@ -37,18 +37,18 @@ export class MenuComponent implements OnInit, OnDestroy {
 	private destroy$ = new Subject<void>();
 
 	menus: Array<{ icon: string, title: string, path: string, badge?: boolean, hijos?: Array<any>, modulo?: string, permisoId?: number }> = [
-		{
-			modulo: 'GASTOSAPP', 
-			icon: '', 
-			title: 'Gastos', 
-			path: '', 
-			permisoId: 500100, // Permiso principal del menú
-			hijos: [{
-				icon: 'cash-outline', 
-				title: 'Gastos', 
-				path: '/modulos/gastos',
-			}]
-		},
+		// {
+		// 	modulo: 'GASTOSAPP', 
+		// 	icon: '', 
+		// 	title: 'Gastos', 
+		// 	path: '', 
+		// 	permisoId: 500100, // Permiso principal del menú
+		// 	hijos: [{
+		// 		icon: 'cash-outline', 
+		// 		title: 'Gastos', 
+		// 		path: '/modulos/gastos',
+		// 	}]
+		// },
 		{
 			modulo: 'AUTOGEST', 
 			icon: '', 
