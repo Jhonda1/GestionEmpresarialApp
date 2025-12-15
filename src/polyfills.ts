@@ -19,6 +19,21 @@
  */
 
 /**
+ * Polyfills para Android 5.x-6.x (Chrome 49-60)
+ * Estos polyfills son necesarios para que la aplicación funcione correctamente
+ * en versiones antiguas de Android que no soportan características modernas de ES6+
+ */
+
+// Polyfills de core-js para APIs de JavaScript moderno
+import 'core-js/es/array';
+import 'core-js/es/object';
+import 'core-js/es/promise';
+import 'core-js/es/string';
+import 'core-js/es/map';
+import 'core-js/es/set';
+import 'core-js/es/symbol';
+
+/**
  * By default, zone.js will patch all possible macroTask and DomEvents
  * user can disable parts of macroTask/DomEvents patch by setting following flags
  * because those flags need to be set before `zone.js` being loaded, and webpack

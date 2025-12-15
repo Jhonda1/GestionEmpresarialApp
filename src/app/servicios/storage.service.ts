@@ -67,12 +67,7 @@ export class StorageService {
 	async limpiarTodo(logout?: boolean) {
 		try {
 			const tema = await this.get('theme');
-			let nit: any = null;
-			
-			// Solo preservar el NIT si NO es un logout deliberado
-			if (!logout) {
-				nit = await this.get('nit');
-			}
+			const nit = await this.get('nit'); // Siempre preservar el NIT
 			
 			await this.storage.clear();
 			
@@ -87,8 +82,8 @@ export class StorageService {
 			// Restaurar configuraciones básicas
 			if (tema) await this.set('theme', tema);
 			
-			// Solo restaurar NIT si no fue un logout
-			if (nit && !logout) {
+			// Siempre restaurar el NIT para evitar errores de login
+			if (nit) {
 				await this.set('nit', nit);
 			}
 			

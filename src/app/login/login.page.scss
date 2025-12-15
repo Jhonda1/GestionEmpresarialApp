@@ -1,6 +1,14 @@
 ion-content::part(scroll) {
-	justify-content: center;
+	/* Prefijos para Android antiguo */
+	display: -webkit-box;
+	display: -webkit-flex;
 	display: flex;
+	-webkit-box-pack: center;
+	-webkit-justify-content: center;
+	justify-content: center;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	-webkit-flex-direction: column;
 	flex-direction: column;
 	overflow: hidden;
 }
@@ -8,13 +16,27 @@ ion-content::part(scroll) {
 .content {
 	overflow-y: auto;
 	overflow-x: hidden;
-    backdrop-filter: blur(3px);
-    background: rgba(0, 0, 0, 0.5);
+	/* Fallback para navegadores antiguos sin backdrop-filter */
+	background: rgba(0, 0, 0, 0.7);
+	/* Blur con fallback para Android antiguo */
+	-webkit-backdrop-filter: blur(3px);
+	backdrop-filter: blur(3px);
 	min-height: 100vh;
 	min-width: 100vw;
 	display: flex;
+	/* Prefijos para flexbox (Android 4.4) */
+	display: -webkit-box;
+	display: -webkit-flex;
+	display: flex;
+	-webkit-box-pack: center;
+	-webkit-justify-content: center;
 	justify-content: center;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	-webkit-flex-direction: column;
 	flex-direction: column;
+	-webkit-box-align: center;
+	-webkit-align-items: center;
 	align-items: center;
 }
 
@@ -66,9 +88,19 @@ ion-item ion-icon {
 }
 
 form {
+	/* Prefijos para Android antiguo */
+	display: -webkit-box;
+	display: -webkit-flex;
 	display: flex;
+	-webkit-box-pack: center;
+	-webkit-justify-content: center;
 	justify-content: center;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	-webkit-flex-direction: column;
 	flex-direction: column;
+	-webkit-box-align: center;
+	-webkit-align-items: center;
 	align-items: center;
 }
 

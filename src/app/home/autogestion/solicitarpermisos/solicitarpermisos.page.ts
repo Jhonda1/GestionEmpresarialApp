@@ -205,36 +205,6 @@ export class SolicitarpermisosPage implements OnInit, OnDestroy {
 
 	validarPermiso = (permiso: number) => this.segur.length > 0 && this.segur.includes(permiso);
 
-	// Método para debugging - revisar estado de permisos
-	async debugPermisos() {
-		console.log('🐛 DEBUG PERMISOS:', {
-			// Estado general
-			datosInicialmenteLoaded: this.datosInicialmenteLoaded,
-			searching: this.searching,
-			
-			// Datos del usuario
-			segurLength: this.segur.length,
-			segurArray: this.segur,
-			datosUsuario: !!this.datosUsuario,
-			
-			// Estados de permisos
-			permisoCrear: this.permisoCrear,
-			permisoPendientes: this.permisoPendientes,
-			permisoDisfrutados: this.permisoDisfrutados,
-			
-			// Validaciones directas
-			validacionDirecta60010083: this.validarPermiso(60010083),
-			validacionDirecta60010082: this.validarPermiso(60010082),
-			validacionDirecta60010081: this.validarPermiso(60010081),
-			
-			// Estado del storage
-			storageReady: await this.validacionPermisosService.verificarEstadoStorage(),
-			
-			// Permisos del servicio
-			permisosServicio: this.validacionPermisosService.obtenerPermisosActuales()
-		});
-	}
-
 	buscarFiltro(variable: keyof SolicitarpermisosPage, evento: any) {
 		(this[variable] as any) = evento.detail.value;
 	}
@@ -292,7 +262,6 @@ export class SolicitarpermisosPage implements OnInit, OnDestroy {
 			if (resp.success) {
 				(this[funcion] as Function)(resp);
 			} else {
-				console.warn('⚠️ Respuesta no exitosa:', resp);
 				this.notificacionService.notificacion(resp.mensaje || 'Error en la operación');
 			}
 			this.searching = false;

@@ -80,7 +80,6 @@ export class ElementosproteccionPage implements OnInit, OnDestroy {
   async obtenerUsuario() {
     // Usar el método que valida empleados retirados
     this.datosUsuario = await this.datosEmpleadosService.obtenerDatosStorage('usuario');
-    // console.log(this.datosUsuario, 'Datos de usuario obtenidos del storage');
     
     if (!this.datosUsuario) {
       console.error('No se pudo obtener usuario del storage');

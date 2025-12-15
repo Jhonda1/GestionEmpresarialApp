@@ -219,7 +219,6 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 	 * Maneja errores de carga de imagen
 	 */
 	onImageError(event: any): void {
-		console.warn('Error cargando imagen, usando imagen por defecto');
 		event.target.src = 'assets/images/nofoto.png';
 		
 		// Si era una URL del servidor que falló, intentar usar foto base64 del storage
@@ -271,7 +270,6 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 			this.datosUsuario = await this.datosBasicosService.obtenerDatosStorage('usuario');
 						
 			if (!this.datosUsuario) {
-				console.warn('No se encontraron datos de usuario válidos');
 				return;
 			}
 
@@ -282,15 +280,9 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 				return;
 			}
 			
-			this.segur = this.datosUsuario['SEGUR'] || [];
-			
-			console.log('DEBUG: SEGUR obtenido del usuario:', this.segur);
-			console.log('DEBUG: Validando permisos para módulo:', this.permisoModulo);
-			
+			this.segur = this.datosUsuario['SEGUR'] || [];			
 			// Validar permisos para el módulo - SOLUCION SIMPLE: SIEMPRE DAR PERMISOS SI HAY SEGUR
 			this.tienePermisos = this.validarPermisoSimple();
-			
-			console.log('DEBUG: tienePermisos resultado:', this.tienePermisos);
 			
 			// Forzar detección de cambios para que la UI se actualice inmediatamente
 			this.cdr.detectChanges();
@@ -319,18 +311,14 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 	 * Validación simple y eficaz de permisos
 	 * Si el usuario está logueado y tiene datos, darle acceso
 	 */
-	validarPermisoSimple(): boolean {
-		console.log('DEBUG: Validación simple de permisos');
-		
+	validarPermisoSimple(): boolean {		
 		// Si hay datos de usuario, dar permisos
 		if (this.datosUsuario) {
-			console.log('DEBUG: Usuario encontrado, otorgando permisos');
 			this.permisoGuardar = true;
 			return true;
 		}
 		
 		// Si no hay datos de usuario, denegar
-		console.log('DEBUG: Sin datos de usuario, sin permisos');
 		this.permisoGuardar = false;
 		return false;
 	}
@@ -340,18 +328,15 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 	 * Mantener como fallback para cuando el sistema moderno falle
 	 */
 	validarPermisoModuloLegacy(): boolean {
-		console.log('DEBUG: Validando permisos LEGACY para módulo 6001006. SEGUR array:', this.segur);
 		
 		// Si no hay SEGUR o está vacío, NO dar permisos automáticamente
 		if (!this.segur || this.segur.length === 0) {
-			console.warn('DEBUG: SEGUR vacío o undefined. Sin permisos.');
 			this.permisoGuardar = false;
 			return false;
 		}
 		
 		// Validación real de permisos usando la función de FuncionesGenerales
 		const tienePermiso = FuncionesGenerales.validarPermiso(this.permisoModulo, this.segur);
-		console.log('DEBUG: Resultado de validación de permisos LEGACY:', tienePermiso);
 		
 		// Actualizar permisoGuardar al mismo tiempo para evitar inconsistencias
 		this.permisoGuardar = tienePermiso;
@@ -742,9 +727,6 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 							// Solo hacer patchModelValue si datos existe
 							this.datosFormulario.formulario.patchModelValue(datos);
 							this.datosAdicionales.formulario.patchModelValue(datos);
-						} else {
-							console.warn('DEBUG: No hay datos en la respuesta, continuando sin datos de empleado');
-							// Continuar sin datos, solo con la estructura básica
 						}
 						
 						// Actualizar la URL de la foto después de cargar los datos del empleado
@@ -765,7 +747,6 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 					// Manejo de errores específicos
 					if (error?.message === 'EMPLEADO_RETIRADO') {
 						// No mostrar notificación de error, el servicio ya manejó el cierre de sesión
-						console.log('Empleado retirado, redirigiendo...');
 						this.searching = false;
 						if (event) {
 							event.target.complete();
@@ -888,28 +869,6 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 	async refresh(evento: any) {
 		this.subject.next(true);
 		await this.obtenerDatosEmpleado(evento);
-	}
-
-	/**
-	 * Método de debug simple para verificar estado de permisos
-	 */
-	debugPermisos() {
-		console.log('=== DEBUG PERMISOS SIMPLE ===');
-		console.log('tienePermisos:', this.tienePermisos);
-		console.log('permisoGuardar:', this.permisoGuardar);
-		console.log('permisoModulo:', this.permisoModulo);
-		console.log('SEGUR array:', this.segur);
-		console.log('Datos usuario:', this.datosUsuario);
-		console.log('======================');
-		
-		// Forzar permisos activos
-		this.tienePermisos = true;
-		this.permisoGuardar = true;
-		this.cdr.detectChanges();
-		
-		this.notificacionService.notificacion(
-			'Debug: Permisos forzados a ACTIVO. La página debería funcionar ahora.'
-		);
 	}
 
 	/**

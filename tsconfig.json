@@ -30,10 +30,10 @@
     "moduleResolution": "bundler",
     "importHelpers": true,
     
-    // 🎯 TARGETS MODERNOS
-    "target": "ES2022",
+    // 🎯 TARGETS COMPATIBLES CON ANDROID ANTIGUO
+    "target": "ES2017",
     "module": "ES2022",
-    "lib": ["ES2022", "dom", "dom.iterable"],
+    "lib": ["ES2018", "dom", "dom.iterable"],
     
     "useDefineForClassFields": false,
     "skipLibCheck": true,

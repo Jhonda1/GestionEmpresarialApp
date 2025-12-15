@@ -45,7 +45,6 @@ export class PeticionService {
 	async desencriptar(encriptado: any) {		
 		// Validar si el objeto tiene las propiedades necesarias para desencriptar
 		if (!encriptado || (typeof encriptado !== 'object' && typeof encriptado !== 'string')) {
-			console.warn('Datos de entrada inválidos para desencriptar:', encriptado);
 			return null; // Retornar null en lugar de lanzar error
 		}
 
@@ -56,13 +55,11 @@ export class PeticionService {
 
 		// Si es un array vacío o null después de extraer de Zone.js
 		if (Array.isArray(encriptado) && encriptado.length === 0) {
-			console.warn('Array vacío recibido para desencriptar');
 			return null; // Retornar null en lugar de lanzar error
 		}
 
 		// Si es null o undefined después de las validaciones
 		if (encriptado === null || encriptado === undefined) {
-			console.warn('Datos null o undefined recibidos para desencriptar');
 			return null;
 		}
 
@@ -71,7 +68,6 @@ export class PeticionService {
 			try {
 				encriptado = JSON.parse(encriptado);
 			} catch (error) {
-				console.warn('Error al parsear JSON, los datos podrían no estar encriptados:', error);
 				// Si no se puede parsear, podría ser un string simple, retornarlo
 				return encriptado;
 			}
@@ -79,8 +75,6 @@ export class PeticionService {
 
 		// Validar que tenga las propiedades necesarias para la desencriptación
 		if (!encriptado.salt || !encriptado.iv || !encriptado.ciphertext) {
-			console.warn('El objeto no contiene las propiedades necesarias para desencriptación (salt, iv, ciphertext):', encriptado);
-			
 			// Si es un objeto que ya viene desencriptado (como en tu caso que tiene 'foto'), devolverlo tal como está
 			if (encriptado && typeof encriptado === 'object' && Object.keys(encriptado).length > 0) {
 				console.info('Datos ya parecen estar desencriptados, retornándolos tal como están');
@@ -245,7 +239,6 @@ export class PeticionService {
 					hoy.setHours(0, 0, 0, 0); // Normalizar a medianoche
 					
 					if (fechaRetiro < hoy) {
-						console.warn('Usuario retirado detectado en storage:', desencriptado.fecha_retiro);
 						await this.cerrarSesionEmpleadoRetirado('El empleado se encuentra retirado.');
 						throw new Error('EMPLEADO_RETIRADO');
 					}
@@ -330,9 +323,7 @@ export class PeticionService {
 	 * Cierra la sesión del empleado retirado (método centralizado)
 	 * @param mensaje Mensaje personalizado (opcional)
 	 */
-	private async cerrarSesionEmpleadoRetirado(mensaje?: string): Promise<void> {
-		console.warn('Empleado retirado detectado - cerrando sesión completa');
-		
+	private async cerrarSesionEmpleadoRetirado(mensaje?: string): Promise<void> {		
 		// Mostrar notificación
 		this.notificacionesService.notificacion(
 			mensaje || 'El empleado se encuentra retirado.'
@@ -361,9 +352,7 @@ export class PeticionService {
 			}
 
 			// Verificar si tiene fecha_retiro
-			if (usuario.fecha_retiro && usuario.fecha_retiro !== null && usuario.fecha_retiro !== '') {
-				console.warn('Usuario retirado detectado en storage:', usuario.fecha_retiro);
-				
+			if (usuario.fecha_retiro && usuario.fecha_retiro !== null && usuario.fecha_retiro !== '') {				
 				// Mostrar notificación
 				this.notificacionesService.notificacion(
 					'El empleado se encuentra retirado.'
@@ -400,13 +389,11 @@ export class PeticionService {
 			
 			// Validar que todos los datos esenciales estén presentes
 			if (!usuario || !modulos || !conexion || !nit) {
-				console.warn('Faltan datos esenciales para mantener la sesión activa');
 				return false;
 			}
 
 			// Validar que el usuario tenga las propiedades necesarias
 			if (!usuario.IngresoId || !usuario.usuarioId || !usuario.num_docu || !usuario.tercero_id) {
-				console.warn('Los datos de usuario no tienen las propiedades necesarias');
 				return false;
 			}
 

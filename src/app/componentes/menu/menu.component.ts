@@ -583,7 +583,6 @@ export class MenuComponent implements OnInit, OnDestroy {
 	 * Maneja errores de carga de imagen en el menú
 	 */
 	onImageError(event: any): void {
-		console.warn('Menu - Error cargando imagen, usando imagen por defecto');
 		event.target.src = 'assets/images/nofoto.png';
 		
 		// Intentar recargar la foto desde el storage
