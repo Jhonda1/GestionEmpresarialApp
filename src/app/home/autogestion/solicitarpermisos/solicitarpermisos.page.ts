@@ -283,7 +283,7 @@ export class SolicitarpermisosPage implements OnInit, OnDestroy {
 
 		this.searching = true;
 		this.datosBasicosService.informacion(datos, this.rutaGeneral + metodo).then(resp => {
-			console.log('✅ Respuesta exitosa:', {
+			console.log('✅ Respuesta exitosa:', { 
 				metodo,
 				respuesta: resp,
 				timestamp: new Date().toISOString()
@@ -324,13 +324,8 @@ export class SolicitarpermisosPage implements OnInit, OnDestroy {
 				event.target.complete();
 			};
 		}).catch(err => {
-			console.error('💥 Error capturado en catch:', {
-				metodo,
-				error: err,
-				timestamp: new Date().toISOString()
-			});
-
-			this.notificacionService.notificacion('Error inesperado. Contacte al administrador.');
+			// ✅ Usar helper centralizado para manejar errores
+			this.datosBasicosService.manejarErrorEmpleadoRetirado(err, event);
 			this.searching = false;
 			if (event) {
 				event.target.complete();

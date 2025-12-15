@@ -78,9 +78,15 @@ export class ElementosproteccionPage implements OnInit, OnDestroy {
   }
 
   async obtenerUsuario() {
-    this.datosUsuario = await this.loginService.desencriptar(
-      JSON.parse(await this.storage.get('usuario').then(resp => resp))
-    );
+    // Usar el método que valida empleados retirados
+    this.datosUsuario = await this.datosEmpleadosService.obtenerDatosStorage('usuario');
+    // console.log(this.datosUsuario, 'Datos de usuario obtenidos del storage');
+    
+    if (!this.datosUsuario) {
+      console.error('No se pudo obtener usuario del storage');
+      return;
+    }
+    
     this.terceroId = this.datosUsuario['num_docu'];
     this.obtenerInformacion('obtenerElementosAsignados', 'cargarElementosAsignados', {
       terceroId: this.terceroId,
@@ -98,11 +104,8 @@ export class ElementosproteccionPage implements OnInit, OnDestroy {
         event.target.complete();
       }
     }).catch(err => {
-      console.log('Error ', err);
-      if (event) {
-        event.target.complete();
-      }
-      throw err;
+      // 🔥 Usar helper centralizado para manejar errores
+      this.datosEmpleadosService.manejarErrorEmpleadoRetirado(err, event);
     });
   }
 
@@ -369,6 +372,8 @@ export class ElementosproteccionPage implements OnInit, OnDestroy {
       }
   
     } catch (error) {
+      // 🔥 Usar helper centralizado para manejar errores
+      this.datosEmpleadosService.manejarErrorEmpleadoRetirado(error);
       console.log(error);
     }
     return resp;

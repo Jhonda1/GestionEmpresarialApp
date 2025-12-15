@@ -158,6 +158,26 @@ export class PeticionService {
 				try {
 					const desencriptado = await this.desencriptar(resp);
 					
+					// 🔥 VALIDAR SI EL EMPLEADO ESTÁ RETIRADO (respuesta de error del servidor con valido===0)
+					await this.validarEmpleadoRetirado(desencriptado, true);
+					
+					// 🔥 VALIDAR SI LOS DATOS CONTIENEN INFO DE EMPLEADO RETIRADO (respuesta normal con datos)
+					// Esto cubre casos donde el backend retorna datos normales pero el empleado tiene fecha_retiro
+					if (desencriptado && desencriptado.datos) {
+						// Si es un array de datos
+						if (Array.isArray(desencriptado.datos) && desencriptado.datos.length > 0) {
+							await this.validarEmpleadoRetirado(desencriptado.datos[0], false);
+						}
+						// Si es un objeto único
+						else if (typeof desencriptado.datos === 'object') {
+							await this.validarEmpleadoRetirado(desencriptado.datos, false);
+						}
+					}
+					// Si la respuesta directa tiene fecha_retiro (sin wrapper 'datos')
+					else if (desencriptado && desencriptado.fecha_retiro && !desencriptado.valido) {
+						await this.validarEmpleadoRetirado(desencriptado, false);
+					}
+					
 					if (desencriptado.activoLogueo) {
 						// Solo cerrar sesión si es una respuesta crítica de autenticación
 						// No cerrar por operaciones normales como cargar fotos
@@ -216,15 +236,154 @@ export class PeticionService {
 			// Si los datos parecen estar encriptados, desencriptarlos
 			if (datosParsed && typeof datosParsed === 'object' && 
 				(datosParsed.salt || datosParsed.iv || datosParsed.ciphertext)) {
-				return await this.desencriptar(datosParsed);
+					const desencriptado = await this.desencriptar(datosParsed);
+				
+				// 🔥 VALIDAR SI ES USUARIO Y ESTÁ RETIRADO (solo si la fecha ya pasó)
+				if (key === 'usuario' && desencriptado && desencriptado.fecha_retiro) {
+					const fechaRetiro = new Date(desencriptado.fecha_retiro);
+					const hoy = new Date();
+					hoy.setHours(0, 0, 0, 0); // Normalizar a medianoche
+					
+					if (fechaRetiro < hoy) {
+						console.warn('Usuario retirado detectado en storage:', desencriptado.fecha_retiro);
+						await this.cerrarSesionEmpleadoRetirado('El empleado se encuentra retirado.');
+						throw new Error('EMPLEADO_RETIRADO');
+					}
+				}
+				
+				return desencriptado;
 			}
 
 			// Si ya están desencriptados o son datos simples, retornarlos
 			return datosParsed;
 
-		} catch (error) {
+		} catch (error: any) {
+			// Re-lanzar error de empleado retirado
+			if (error?.message === 'EMPLEADO_RETIRADO') {
+				throw error;
+			}
 			console.error(`Error al obtener datos del storage para ${key}:`, error);
 			return null;
+		}
+	}
+
+	/**
+	 * 🔥 Valida si un empleado está retirado
+	 * @param dato Puede ser una respuesta del backend (con valido===0) o un objeto empleado
+	 * @param esRespuestaError true si es respuesta de error del servidor, false si es objeto empleado normal
+	 * @returns true si está retirado (y cierra sesión), false si no
+	 * @throws Error('EMPLEADO_RETIRADO') si está retirado
+	 */
+	async validarEmpleadoRetirado(dato: any, esRespuestaError: boolean = false): Promise<boolean> {
+		if (!dato) {
+			return false;
+		}
+
+		// Si es respuesta de error del backend (valido === 0)
+		if (esRespuestaError) {
+			if (dato.valido === 0 && dato.fecha_retiro) {
+				await this.cerrarSesionEmpleadoRetirado(dato.mensaje);
+				throw new Error('EMPLEADO_RETIRADO');
+			}
+			return false;
+		}
+
+		// Si es objeto empleado normal, validar por fecha
+		if (!dato.fecha_retiro) {
+			return false; // No tiene fecha de retiro, está activo
+		}
+
+		const fechaRetiro = new Date(dato.fecha_retiro);
+		const hoy = new Date();
+		hoy.setHours(0, 0, 0, 0);
+
+		if (fechaRetiro < hoy) {
+			await this.cerrarSesionEmpleadoRetirado();
+			throw new Error('EMPLEADO_RETIRADO');
+		}
+
+		return false;
+	}
+
+	/**
+	 * 🔥 HELPER: Maneja errores en catch, re-lanzando EMPLEADO_RETIRADO
+	 * Usar en todos los .catch() de los módulos
+	 * @param error Error capturado
+	 * @param event Evento de Ionic (opcional) para completar loading
+	 * @throws Error si es EMPLEADO_RETIRADO
+	 */
+	manejarErrorEmpleadoRetirado(error: any, event?: any): void {
+		if (event) {
+			event.target?.complete();
+		}
+
+		// Si es empleado retirado, re-lanzar para que se propague
+		if (error?.message === 'EMPLEADO_RETIRADO') {
+			throw error;
+		}
+
+		// Para otros errores, solo registrar
+		console.error('Error en petición:', error);
+	}
+
+	/**
+	 * Cierra la sesión del empleado retirado (método centralizado)
+	 * @param mensaje Mensaje personalizado (opcional)
+	 */
+	private async cerrarSesionEmpleadoRetirado(mensaje?: string): Promise<void> {
+		console.warn('Empleado retirado detectado - cerrando sesión completa');
+		
+		// Mostrar notificación
+		this.notificacionesService.notificacion(
+			mensaje || 'El empleado se encuentra retirado.'
+		);
+		
+		// Limpiar TODO el storage para volver a la pantalla de NIT
+		await this.storageService.clear();
+		
+		// Redirigir al login (primera pantalla - ingresar NIT)
+		setTimeout(() => {
+			window.location.href = '/login';
+		}, 1500);
+	}
+
+	/**
+	 * Valida si el usuario guardado en storage está retirado
+	 * Debe ser llamado al cargar cualquier página
+	 * @returns true si está activo, false si está retirado (y cierra sesión)
+	 */
+	async validarUsuarioStorage(): Promise<boolean> {
+		try {
+			const usuario = await this.obtenerDatosStorage('usuario');
+			
+			if (!usuario) {
+				return false;
+			}
+
+			// Verificar si tiene fecha_retiro
+			if (usuario.fecha_retiro && usuario.fecha_retiro !== null && usuario.fecha_retiro !== '') {
+				console.warn('Usuario retirado detectado en storage:', usuario.fecha_retiro);
+				
+				// Mostrar notificación
+				this.notificacionesService.notificacion(
+					'El empleado se encuentra retirado.'
+				);
+				
+				// Cerrar sesión
+				await this.storageService.clear();
+				
+				// Redirigir al login
+				setTimeout(() => {
+					window.location.href = '/login';
+				}, 1500);
+				
+				return false;
+			}
+
+			return true;
+		} catch (error) {
+			console.error('Error al validar usuario en storage:', error);
+			return false;
 		}
 	}
 

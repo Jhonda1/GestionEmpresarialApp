@@ -121,6 +121,17 @@ export class LoginPage implements OnInit {
 			const permisos = FuncionesGenerales.permisos();
 			const data = { ...this.formLogin.formulario.value, permisos };
 			this.loginService.iniciarSesionUser(data).then(async respuesta => {
+				// 🔥 VALIDAR SI EL EMPLEADO ESTÁ RETIRADO
+				if (respuesta && respuesta.valido === 0 && respuesta.fecha_retiro) {
+					this.notificaciones.notificacion(
+						respuesta.mensaje || 'El empleado se encuentra retirado.'
+					);
+					this.formLogin.formulario.reset();
+					this.formLogin.formulario.markAsUntouched();
+					this.cargadorService.ocultar();
+					return;
+				}
+				
 				if (respuesta && respuesta.password) {
 					this.olvidoPass(1);
 					this.formLogin.formulario.reset();

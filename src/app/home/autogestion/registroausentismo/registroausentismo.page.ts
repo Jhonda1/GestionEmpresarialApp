@@ -165,20 +165,32 @@ export class registroausentismoPage implements OnInit, OnDestroy {
 	}
 
 	async obtenerUsuario() {
-		this.datosUsuario = await this.loginService.desencriptar(
-			JSON.parse(await this.storage.get('usuario').then(resp => resp))
-		);
+		// Usar el método que valida empleados retirados
+		this.datosUsuario = await this.datosEmpleadosService.obtenerDatosStorage('usuario');
+		
+		if (!this.datosUsuario) {
+			console.error('No se pudo obtener usuario del storage');
+			return;
+		}
+		
 		this.terceroId = this.datosUsuario['num_docu']!;
 		this.segur = this.datosUsuario['SEGUR'] || [];
 	}
 
 	obtenerDatosEmpleado(event?: any) {
-		this.datosEmpleadosService.informacion({documento: event}, `${this.rutaGeneral}cargarEmpleado`).then((resp: any) => {
+		this.datosEmpleadosService.informacion({documento: event}, `${this.rutaGeneral}cargarEmpleado`).then(async (resp: any) => {			
 			this.empleado= resp[0];
+			
+			// 🔥 VALIDAR EMPLEADO RETIRADO (objeto empleado normal)
+			await this.datosEmpleadosService.validarEmpleadoRetirado(this.empleado, false);
+			
 			this.irPermisos('ausentismoForm', 'RC');
 			this.segur = this.datosUsuario['SEGUR'] || [];
 
-		}).catch(error => console.log('Error ', error));
+		}).catch(error => {
+			// 🔥 Usar helper centralizado para manejar errores
+			this.datosEmpleadosService.manejarErrorEmpleadoRetirado(error);
+		});
 
 	}
 
@@ -215,11 +227,9 @@ export class registroausentismoPage implements OnInit, OnDestroy {
 				event.target.complete();
 			}
 		}, console.error).catch(err => {
-			console.log('Error ', err);
+			// 🔥 Usar helper centralizado para manejar errores
+			this.datosEmpleadosService.manejarErrorEmpleadoRetirado(err, event);
 			this.searching = false;
-			if (event) {
-				event.target.complete();
-			}
 		});
 	}
 

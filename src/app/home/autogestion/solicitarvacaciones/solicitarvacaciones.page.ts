@@ -108,9 +108,14 @@ export class SolicitarvacacionesPage implements OnInit, OnDestroy {
 	}
 
 	async obtenerUsuario() {
-		this.datosUsuario = await this.loginService.desencriptar(
-			JSON.parse(await this.storage.get('usuario').then(resp => resp))
-		);
+		// ✅ Usar método centralizado que valida empleados retirados
+		this.datosUsuario = await this.datosBasicosService.obtenerDatosStorage('usuario');
+		
+		if (!this.datosUsuario) {
+			console.error('No se pudo obtener usuario del storage');
+			return;
+		}
+		
 		this.SEGUR = this.datosUsuario.SEGUR || [];
 		this.permisoCrear = this.validarPermiso(60010083);
 		this.permisoDisfrutados = this.validarPermiso(60010082);
@@ -171,9 +176,9 @@ export class SolicitarvacacionesPage implements OnInit, OnDestroy {
 			this.searching = false;
 			if (event) {event.target.complete();}
 		}, console.error).catch(err => {
-			console.log('Error ', err);
+			// ✅ Usar helper centralizado para manejar errores
+			this.datosBasicosService.manejarErrorEmpleadoRetirado(err, event);
 			this.searching = false;
-			if (event) {event.target.complete();}
 		}).catch(error => console.log('Error ', error));
 	}
 
@@ -193,7 +198,11 @@ export class SolicitarvacacionesPage implements OnInit, OnDestroy {
 			this.qAprobados = (qAprobados || []);
 			this.searching = false;
 			if (event) {event.target.complete();}
-		}).catch(error => console.log('Error ', error));
+		}).catch(error => {
+			// 🔥 Usar helper centralizado para manejar errores de empleado retirado
+			this.datosBasicosService.manejarErrorEmpleadoRetirado(error, event);
+			console.log('Error ', error);
+		});
 	}
 
 	buscarFiltro(variable: string, evento: any) {

@@ -481,8 +481,10 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 				event.target.complete();
 			}
 		}).catch((err: any) => {
-			console.error('Error en obtenerInformacion:', err);
+			// ✅ Usar helper centralizado para manejar errores
+			this.datosBasicosService.manejarErrorEmpleadoRetirado(err, event);
 			
+			console.error('Error en obtenerInformacion:', err);
 			// Mostrar mensaje de error al usuario
 			const mensaje = err.message || 'Error al comunicarse con el servidor';
 			this.notificacionService.notificacion(mensaje);
@@ -760,6 +762,18 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 						throw new Error('La respuesta del servidor está vacía');
 					}
 				}).catch((error: any) => {
+					// Manejo de errores específicos
+					if (error?.message === 'EMPLEADO_RETIRADO') {
+						// No mostrar notificación de error, el servicio ya manejó el cierre de sesión
+						console.log('Empleado retirado, redirigiendo...');
+						this.searching = false;
+						if (event) {
+							event.target.complete();
+						}
+						reject(error);
+						return;
+					}
+					
 					console.error('Error en servicio obtenerDatosEmpleado:', error);
 					
 					// Mostrar mensaje de error específico al usuario

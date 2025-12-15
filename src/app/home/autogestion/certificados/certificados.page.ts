@@ -172,9 +172,14 @@ export class CertificadosPage implements OnInit, OnDestroy {
 	}
 
   async obtenerUsuario() {
-		this.datosUsuario = await this.loginService.desencriptar(
-			JSON.parse(await this.storage.get('usuario').then(resp => resp))
-		);
+		// ✅ Usar método centralizado que valida empleados retirados
+		this.datosUsuario = await this.datosBasicosService.obtenerDatosStorage('usuario');
+		
+		if (!this.datosUsuario) {
+			console.error('No se pudo obtener usuario del storage');
+			return;
+		}
+		
 		this.SEGUR = this.datosUsuario['SEGUR'] || [];
     
     this.permisoExtrato = this.validacionPermisosService.validarPermisoLocal(60010072);
@@ -217,7 +222,10 @@ export class CertificadosPage implements OnInit, OnDestroy {
 			if (event) {
 				event.target.complete();
 			}
-		}).catch(error => console.log("Error ", error));
+		}).catch(error => {
+			// ✅ Usar helper centralizado para manejar errores
+			this.datosBasicosService.manejarErrorEmpleadoRetirado(error, event);
+		});
 	}
 
 	async download(url: string) {
@@ -350,6 +358,8 @@ export class CertificadosPage implements OnInit, OnDestroy {
         this.obtenerArchivo(file_aux);
       }
     } catch (error) {
+      // 🔥 Usar helper centralizado para manejar errores de empleado retirado
+      this.datosBasicosService.manejarErrorEmpleadoRetirado(error);
       console.error('Error al generar carta laboral:', error);
       this.notificacionService.notificacion('Error al generar la carta laboral');
     }
