@@ -2,7 +2,7 @@ import { Injectable, Injector, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import * as CryptoJS from 'crypto-js';
-import { Observable, firstValueFrom } from 'rxjs';
+import { Observable, empty, firstValueFrom } from 'rxjs';
 import { StorageService } from '../../servicios/storage.service';
 import { FuncionesGenerales } from '../funciones/funciones';
 import { NotificacionesService } from 'src/app/servicios/notificaciones.service';
@@ -281,7 +281,19 @@ export class PeticionService {
 			return false;
 		}
 
-		// Si es objeto empleado normal, validar por fecha
+		// Verificar si el objeto tiene campos de empleado antes de validar
+		// Si no tiene estado ni fecha_retiro, no es un objeto de empleado
+		if (dato.estado === undefined && dato.fecha_retiro === undefined) {
+			return false; // No es un objeto empleado, no validar
+		}
+
+		// Si es objeto empleado normal, validar por estado y fecha
+		if (dato.estado !== undefined && dato.estado != '1') {
+			await this.cerrarSesionEmpleadoRetirado('El empleado se encuentra inactivo.');
+			throw new Error('EMPLEADO_RETIRADO');
+		}
+
+		// Validar fecha de retiro si existe
 		if (!dato.fecha_retiro) {
 			return false; // No tiene fecha de retiro, está activo
 		}

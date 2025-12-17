@@ -69,12 +69,6 @@ export class SolicitarpermisosPage implements OnInit, OnDestroy {
 		try {
 			// 1. Primero cargar los datos del usuario desde el storage
 			await this.obtenerUsuario();
-			
-			console.log('🔍 Datos de usuario cargados:', {
-				segurLength: this.segur.length,
-				permisos: this.segur,
-				datosUsuario: !!this.datosUsuario
-			});
 
 			// 2. Asegurar que el servicio de validación esté inicializado
 			await this.validacionPermisosService.inicializar();
@@ -82,28 +76,13 @@ export class SolicitarpermisosPage implements OnInit, OnDestroy {
 			// 3. Validar permisos usando tanto el cache del servicio como la validación local
 			const permisos = [60010081, 60010082, 60010083];
 			
-			// Primero intentar con el servicio de validación
-			const resultadosServicio = await this.validacionPermisosService.validarMultiplesPermisos(permisos);
-			
 			// Luego validar localmente como respaldo
 			const resultadosLocales = permisos.map(permiso => this.validarPermiso(permiso));
-			
-			console.log('🔒 Resultados validación:', {
-				servicio: resultadosServicio,
-				locales: resultadosLocales,
-				permisos: permisos
-			});
 
 			// Usar la validación local como principal (más confiable en este contexto)
 			this.permisoPendientes = resultadosLocales[0];
 			this.permisoDisfrutados = resultadosLocales[1]; 
 			this.permisoCrear = resultadosLocales[2];
-
-			console.log('✅ Permisos asignados:', {
-				permisoPendientes: this.permisoPendientes,
-				permisoDisfrutados: this.permisoDisfrutados,
-				permisoCrear: this.permisoCrear
-			});
 
 		} catch (error) {
 			console.error('❌ Error validando permisos iniciales:', error);
@@ -122,7 +101,6 @@ export class SolicitarpermisosPage implements OnInit, OnDestroy {
 	}
 
 	ionViewDidEnter() {
-		console.log('🏠 SolicitarPermisos: ionViewDidEnter iniciado');
 		this.searching = true;
 		
 		// Cargar datos iniciales y validar permisos en secuencia
@@ -136,21 +114,13 @@ export class SolicitarpermisosPage implements OnInit, OnDestroy {
 			this.subjectMenu.next(true);
 		}, error => {
 			console.log('Error ', error);
-		}, () => console.log('Completado Menú !!'));
+		}, () => console.log(''));
 	}
 
 	private async cargarDatosIniciales() {
-		try {			
-			console.log('🔄 Iniciando carga de datos iniciales...');
-			
+		try {						
 			// 1. Primero cargar los datos del usuario y validar permisos
 			await this.validarPermisosIniciales();
-			
-			console.log('✅ Validación de permisos completada:', {
-				permisoCrear: this.permisoCrear,
-				permisoPendientes: this.permisoPendientes,
-				permisoDisfrutados: this.permisoDisfrutados
-			});
 			
 			// 2. Marcar que los datos iniciales están cargados
 			this.datosInicialmenteLoaded = true;
@@ -182,17 +152,6 @@ export class SolicitarpermisosPage implements OnInit, OnDestroy {
 			}
 			
 			this.segur = this.datosUsuario['SEGUR'] || [];
-
-			console.log('👤 Usuario cargado:', {
-				segurLength: this.segur.length,
-				tieneSegur: !!this.segur.length,
-				permisosBuscados: [60010081, 60010082, 60010083],
-				permisosEncontrados: [60010081, 60010082, 60010083].map(p => ({
-					permiso: p,
-					tiene: this.segur.includes(p)
-				}))
-			});
-
 		} catch (error) {
 			console.error('❌ Error obteniendo usuario:', error);
 			this.segur = [];
@@ -213,7 +172,12 @@ export class SolicitarpermisosPage implements OnInit, OnDestroy {
 		this.obtenerInformacion('getData', 'obtenerDatosEmpleado', {}, evento);
 	}
 
-	obtenerDatosEmpleado({ qPendientes }: { qPendientes: any }) {
+	async obtenerDatosEmpleado({ qPendientes, datos }: { qPendientes: any, datos?: any }) {
+		// NOTA: 'datos' es un array [{estado, fecha_retiro, ...}]
+		// Validar el primer elemento del array si existe
+		if (datos && Array.isArray(datos) && datos.length > 0) {
+			await this.datosBasicosService.validarEmpleadoRetirado(datos[0], false);
+		}
 		this.qPendientes = qPendientes;
 	}
 
@@ -242,63 +206,19 @@ export class SolicitarpermisosPage implements OnInit, OnDestroy {
 			return;
 		}
 
-		// Log detallado para debugging
-		console.log('🚀 Enviando petición:', {
-			metodo,
-			funcion,
-			url: this.rutaGeneral + metodo,
-			datos: datos,
-			timestamp: new Date().toISOString()
-		});
-
 		this.searching = true;
 		this.datosBasicosService.informacion(datos, this.rutaGeneral + metodo).then(resp => {
-			console.log('✅ Respuesta exitosa:', { 
-				metodo,
-				respuesta: resp,
-				timestamp: new Date().toISOString()
-			});
-
 			if (resp.success) {
 				(this[funcion] as Function)(resp);
-			} else {
-				this.notificacionService.notificacion(resp.mensaje || 'Error en la operación');
 			}
 			this.searching = false;
 			if (event) {
 				event.target.complete();
-			};
-		}, (error) => {
-			console.error('❌ Error en petición:', {
-				metodo,
-				error: error,
-				errorMessage: error.message,
-				errorStatus: error.status,
-				timestamp: new Date().toISOString()
-			});
-			
-			// Mostrar mensaje específico según el tipo de error
-			let mensajeError = 'Error al procesar la solicitud.';
-			if (error.status === 500) {
-				mensajeError = 'Error interno del servidor. Verifique los datos enviados.';
-			} else if (error.status === 0) {
-				mensajeError = 'Error de conexión con el servidor.';
-			} else if (error.message) {
-				mensajeError = error.message;
 			}
-
-			this.notificacionService.notificacion(mensajeError);
-			this.searching = false;
-			if (event) {
-				event.target.complete();
-			};
-		}).catch(err => {
+		}, console.error).catch(err => {
 			// ✅ Usar helper centralizado para manejar errores
 			this.datosBasicosService.manejarErrorEmpleadoRetirado(err, event);
 			this.searching = false;
-			if (event) {
-				event.target.complete();
-			};
 		});
 	}
 
