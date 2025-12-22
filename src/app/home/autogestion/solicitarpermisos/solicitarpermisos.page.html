@@ -51,6 +51,13 @@
 							</div>
 
 							<div class="item d-flex justify-content-between">
+								<span><b>Tipo ausentismo </b></span>
+								<span>{{ item['NombreAusentismo'] }}</span>
+							</div>
+
+							<span *ngIf="item['Observacion']"><b>Observación:</b> {{ item['Observacion'] }}</span>
+
+							<div class="item d-flex justify-content-between">
 								<span><b>Estado solicitud</b></span>
 								<ion-label class="ion-text-wrap">
 									<ion-text [color]="item['ColorEstado']">
@@ -58,13 +65,6 @@
 									</ion-text>
 								</ion-label>
 							</div>
-
-							<div class="item d-flex justify-content-between">
-								<span><b>Tipo ausentismo </b></span>
-								<span>{{ item['NombreAusentismo'] }}</span>
-							</div>
-
-							<span *ngIf="item['Observacion']"><b>Observación:</b> {{ item['Observacion'] }}</span>
 
 						</ion-label>
 					</ion-item>

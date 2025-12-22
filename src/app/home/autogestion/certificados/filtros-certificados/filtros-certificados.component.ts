@@ -35,7 +35,7 @@ export class FiltrosCertificadosComponent implements OnInit, AfterViewInit {
 
 	quincena: any = [
 		{ valor: '01', titulo: 'Primera' },
-		{ valor: '02', titulo: 'Segunda' }
+		{ valor: '16', titulo: 'Segunda' }
 	];
 
 	documento: any = [

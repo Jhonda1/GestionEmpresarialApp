@@ -1,3 +1,75 @@
+/***************************************************************************************************
+ * Polyfills para compatibilidad con Android 9 y versiones anteriores
+ * Polyfills completos para máxima compatibilidad
+ */
+import './globalthis-polyfill';
+
+// Polyfills específicos para Android 9 WebView - solo lo necesario para evitar romper Angular 20
+import 'core-js/es/array';
+import 'core-js/es/promise';
+import 'core-js/es/object';
+import 'core-js/es/function';
+import 'core-js/es/parse-int';
+import 'core-js/es/parse-float';
+import 'core-js/es/number';
+import 'core-js/es/date';
+import 'core-js/es/string';
+import 'core-js/es/regexp';
+import 'core-js/es/map';
+import 'core-js/es/set';
+
+/***************************************************************************************************
+ * Polyfill para queueMicrotask (requerido para Android 9)
+ */
+if (typeof queueMicrotask === 'undefined') {
+  console.log('GestionEmpresarial: Aplicando polyfill para queueMicrotask (Android 9 compatibility)');
+  (window as any).queueMicrotask = function(callback: () => void) {
+    Promise.resolve().then(() => callback()).catch(e => setTimeout(() => { throw e; }, 0));
+  };
+}
+
+/***************************************************************************************************
+ * Polyfill para PerformanceObserver (Android 9 compatibility)
+ */
+if (typeof PerformanceObserver === 'undefined') {
+  console.log('GestionEmpresarial: Aplicando polyfill para PerformanceObserver (Android 9 compatibility)');
+  (window as any).PerformanceObserver = class {
+    private callback: Function;
+    constructor(callback: Function) {
+      this.callback = callback;
+    }
+    observe(options: any) {
+      if (!options || !options.entryTypes) {
+        console.warn('GestionEmpresarial PerformanceObserver polyfill: entryTypes is required but missing');
+        return;
+      }
+      console.log('GestionEmpresarial PerformanceObserver polyfill: observe called with', options);
+    }
+    disconnect() {
+      console.log('GestionEmpresarial PerformanceObserver polyfill: disconnect called');
+    }
+  };
+} else {
+  // Parche para PerformanceObserver existente pero roto en Android 9
+  const originalObserve = PerformanceObserver.prototype.observe;
+  PerformanceObserver.prototype.observe = function(options: any) {
+    try {
+      if (!options || !options.entryTypes) {
+        console.warn('GestionEmpresarial: PerformanceObserver.observe called without entryTypes, skipping');
+        return;
+      }
+      return originalObserve.call(this, options);
+    } catch (error) {
+      console.warn('GestionEmpresarial: PerformanceObserver.observe failed, using fallback:', error);
+    }
+  };
+}
+
+/***************************************************************************************************
+ * Load `$localize` onto the global scope - used if i18n tags appear in Angular templates.
+ */
+import '@angular/localize/init';
+
 /**
  * This file includes polyfills needed by Angular and is loaded before the app.
  * You can add your own extra polyfills to this file.
@@ -8,8 +80,8 @@
  *      file.
  *
  * The current setup is for so-called "evergreen" browsers; the last versions of browsers that
- * automatically update themselves. This includes recent versions of Safari, Chrome (including
- * Opera), Edge on the desktop, and iOS and Chrome on mobile.
+ * automatically update themselves. This includes Safari >= 10, Chrome >= 55 (including Opera),
+ * Edge >= 13 on the desktop, and iOS 10 and Chrome on mobile.
  *
  * Learn more in https://angular.io/guide/browser-support
  */
@@ -17,21 +89,6 @@
 /***************************************************************************************************
  * BROWSER POLYFILLS
  */
-
-/**
- * Polyfills para Android 5.x-6.x (Chrome 49-60)
- * Estos polyfills son necesarios para que la aplicación funcione correctamente
- * en versiones antiguas de Android que no soportan características modernas de ES6+
- */
-
-// Polyfills de core-js para APIs de JavaScript moderno
-import 'core-js/es/array';
-import 'core-js/es/object';
-import 'core-js/es/promise';
-import 'core-js/es/string';
-import 'core-js/es/map';
-import 'core-js/es/set';
-import 'core-js/es/symbol';
 
 /**
  * By default, zone.js will patch all possible macroTask and DomEvents
@@ -56,7 +113,7 @@ import 'core-js/es/symbol';
  *  (window as any).__Zone_enable_cross_context_check = true;
  *
  */
- 
+
 import './zone-flags';
 
 /***************************************************************************************************

@@ -166,7 +166,22 @@ export class MenuComponent implements OnInit, OnDestroy {
 					rutaFoto = rutaFoto.substring(2);
 				}
 				
-				const urlCompleta = this.foto + rutaFoto;
+				// SOLUCIÓN MIXED CONTENT: Determinar qué URL usar según el entorno
+				const isHTTPS = window.location.protocol === 'https:';
+				const isMobile = window && (window as any).Capacitor !== undefined;
+				const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+				
+				let urlCompleta: string;
+				if (isMobile) {
+					// PRODUCCIÓN MÓVIL: URL completa
+					urlCompleta = this.foto + rutaFoto;
+				} else if (isLocalhost && isHTTPS) {
+					// DESARROLLO: Proxy
+					urlCompleta = '/' + rutaFoto;
+				} else {
+					// WEB/HTTP: URL completa
+					urlCompleta = this.foto + rutaFoto;
+				}
 				
 				this.secureImageService.getSecureImageUrl(urlCompleta).subscribe(
 					(urlSegura) => {
@@ -214,6 +229,13 @@ export class MenuComponent implements OnInit, OnDestroy {
 		this.cambioMenuService.suscripcion().pipe(
 			takeUntil(this.destroy$)
 		).subscribe(() => {
+			// 🔥 IMPORTANTE: Resetear TODOS los datos del usuario anterior
+			// Esto previene que datos del usuario anterior persistan en memoria
+			this.photoSyncService.reset();
+			this.urlFotoUsuario = 'assets/images/nofoto.png';
+			this.datosUsuario = {}; // Limpiar datos de usuario anterior
+			this.SEGUR = []; // Limpiar permisos
+			
 			// Re-obtener usuario completo cuando se notifique un cambio (e.g., nuevo login)
 			this.obtenerUsuario().then(() => {
 				// Después de recargar datos del usuario, actualizar foto y permisos
@@ -250,9 +272,13 @@ export class MenuComponent implements OnInit, OnDestroy {
 				const userParsed = JSON.parse(userStorage);
 				const userDecrypted = await this.loginService.desencriptar(userParsed);
 				
+				// Validar que datosUsuario no esté vacío antes de intentar asignar propiedades
 				if (userDecrypted?.foto && userDecrypted.foto !== this.datosUsuario?.foto) {
-					this.datosUsuario.foto = userDecrypted.foto;
-					this.actualizarFotoDesdeUsuario();
+					// Solo actualizar si datosUsuario tiene al menos un id (usuario válido cargado)
+					if (this.datosUsuario && Object.keys(this.datosUsuario).length > 0) {
+						this.datosUsuario.foto = userDecrypted.foto;
+						this.actualizarFotoDesdeUsuario();
+					}
 				}
 			}
 		} catch (error) {
@@ -265,27 +291,53 @@ export class MenuComponent implements OnInit, OnDestroy {
 	}
 
 	async obtenerUsuario() {
-		this.datosUsuario = await this.loginService.desencriptar(
-			JSON.parse(await this.storageService.get('usuario').then(resp => resp))
-		);
+		try {
+			const usuarioStorage = await this.storageService.get('usuario');
+			
+			// Validar que exista usuario en storage
+			if (!usuarioStorage) {
+				this.datosUsuario = {};
+				this.SEGUR = [];
+				return;
+			}
 
-		// Cargar permisos de seguridad
-		this.SEGUR = this.datosUsuario.SEGUR || [];
+			const usuarioParsed = JSON.parse(usuarioStorage);
+			this.datosUsuario = await this.loginService.desencriptar(usuarioParsed);
 
-		const modulosRaw = await this.loginService.desencriptar(
-			JSON.parse(await this.storageService.get('modulos').then(resp => resp))
-		);
+			// Validar que la desencriptación fue exitosa
+			if (!this.datosUsuario || typeof this.datosUsuario !== 'object') {
+				console.error('Menu - Error al desencriptar usuario');
+				this.datosUsuario = {};
+				this.SEGUR = [];
+				return;
+			}
+
+			// Cargar permisos de seguridad
+			this.SEGUR = this.datosUsuario.SEGUR || [];
+
+			const modulosStorage = await this.storageService.get('modulos');
+			if (!modulosStorage) {
+				console.warn('Menu - No hay módulos en storage');
+				return;
+			}
+
+			const modulosRaw = await this.loginService.desencriptar(JSON.parse(modulosStorage));
 	
-		// Verificamos si modulosRaw es un objeto
-		if (modulosRaw && typeof modulosRaw === 'object') {
-			// Usamos Object.keys() para obtener las claves de modulosRaw
-			this.modulos = Object.keys(modulosRaw).reduce((acc: { [key: string]: boolean }, modulo: string) => {
-				acc[modulo] = true; // O puedes hacer algo más con el valor si lo necesitas
-				return acc;
-			}, {});
-		} else {
-			console.error('modulosRaw no es un objeto:', modulosRaw);
-			// Aquí puedes manejar el caso si `modulosRaw` no es un objeto de la manera que prefieras
+			// Verificamos si modulosRaw es un objeto
+			if (modulosRaw && typeof modulosRaw === 'object') {
+				// Usamos Object.keys() para obtener las claves de modulosRaw
+				this.modulos = Object.keys(modulosRaw).reduce((acc: { [key: string]: boolean }, modulo: string) => {
+					acc[modulo] = true; // O puedes hacer algo más con el valor si lo necesitas
+					return acc;
+				}, {});
+			} else {
+				console.error('modulosRaw no es un objeto:', modulosRaw);
+				// Aquí puedes manejar el caso si `modulosRaw` no es un objeto de la manera que prefieras
+			}
+		} catch (error) {
+			console.error('Menu - Error en obtenerUsuario:', error);
+			this.datosUsuario = {};
+			this.SEGUR = [];
 		}
 	}
 

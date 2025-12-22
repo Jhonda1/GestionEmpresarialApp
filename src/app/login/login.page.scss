@@ -17,7 +17,7 @@ ion-content::part(scroll) {
 	overflow-y: auto;
 	overflow-x: hidden;
 	/* Fallback para navegadores antiguos sin backdrop-filter */
-	background: rgba(0, 0, 0, 0.7);
+	background: rgba(0, 0, 0, 0.5);
 	/* Blur con fallback para Android antiguo */
 	-webkit-backdrop-filter: blur(3px);
 	backdrop-filter: blur(3px);
@@ -38,6 +38,13 @@ ion-content::part(scroll) {
 	-webkit-box-align: center;
 	-webkit-align-items: center;
 	align-items: center;
+	padding: 20px 16px;
+
+	// Contenedor interno para mantener todo alineado
+	> * {
+		max-width: 288px;
+		width: 100%;
+	}
 }
 
 ion-img {
@@ -113,23 +120,14 @@ form {
 
 // Estilos para la información de la empresa
 .empresa-info {
-	margin-top: 30px;
-	padding: 20px;
-	
-	.logo-container {
-		margin-bottom: 15px;
+	width: 100%;
+	max-width: 288px;
+	margin-top: 20px;
 		
-		.empresa-logo {
-			max-width: 150px;
-			max-height: 80px;
-			object-fit: contain;
-		}
-	}
-	
 	.contacto-info {
 		.info-text {
 			color: #ffffff;
-			font-size: 14px;
+			font-size: 12px;
 			margin: 8px 0;
 			font-weight: 500;
 		}
@@ -143,14 +141,54 @@ form {
 	}
 }
 
+.empresa-logo {
+	width: 100%;
+	height: auto;
+	margin: 20px auto 10px auto;
+	display: block;
+}
+.configuracion{
+	position: fixed;
+	right: 15px;
+	z-index: 1000;
+	display: flex;
+	max-width: 8%;
+}
+
+.text-login{
+	color: #75ab38;
+	font-weight: bold;
+	margin-bottom: 10px;
+}
+
+.contenido.Nombreempresa {
+	width: 100%;
+	max-width: 288px;
+	margin: 0 auto;
+}
+
+.divNombreEmpresa{
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	width: 100%;
+	
+	span{
+		color: #ffffff;
+		font-weight: normal;
+		font-size: 1em;
+	}
+	
+	div {
+		color: #75ab38;
+		font-weight: bold;
+		font-size: 1.15em;
+	}
+}
+
+
 @media (min-width: 750px) {
 	.empresa-info {
-		.logo-container {
-			.empresa-logo {
-				max-width: 180px;
-				max-height: 100px;
-			}
-		}
 		
 		.contacto-info {
 			.info-text {

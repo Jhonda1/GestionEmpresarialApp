@@ -163,7 +163,7 @@ export class CertificadosPage implements OnInit, OnDestroy {
 		this.formFiltro = {
 			anio: this.anio,
 			meses: [this.Month],
-			quincena: ['01', '02'],
+			quincena: ['01', '16'],
 			documento: 'T',
 			salario: null,
 			destino: null

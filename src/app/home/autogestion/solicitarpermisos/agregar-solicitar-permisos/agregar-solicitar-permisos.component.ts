@@ -2,8 +2,6 @@ import { Component, Input, OnInit, ViewChild, inject} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
 import { ModalController, IonModal } from '@ionic/angular';
 import { FuncionesGenerales } from 'src/app/config/funciones/funciones';
 import { InformacionPermiso } from 'src/app/servicios/informacionpermiso.service';
@@ -43,15 +41,15 @@ export class AgregarSolicitarPermisosComponent implements OnInit {
 	datosSolicitudPermisos!: { formulario: FormGroup };
 	datosForm: { [key: string]: any } = {};
 	datosSeleccionados: { [key: string]: any } = {};
-	divCie10 = {};
 	selectedOption: string = '';
 	fechaInicio: Date = new Date();
 	fechaFin: Date = new Date();
 	diferenciaDias: number = 0;
-	search$ = new Subject<string>();
 	selectedEnfermedadesText = '0 Items';
-  	selectedEnfermedades: string[] = [];
+	selectedEnfermedades: string[] = [];
 	diasAusentismo: string = '';
+	horasAusentismo: string = '';
+	total_horas: number = 0;
 
 	// Inyección del nuevo servicio de validación
 	private validacionPermisosService = inject(ValidacionPermisosService);
@@ -71,22 +69,15 @@ export class AgregarSolicitarPermisosComponent implements OnInit {
 			  TipoCalculo: ['', Validators.required],
 			  Dias: [''],
 			  horas: [''],
-			  Observacion: ['']
+			  Observacion: [''],
+				total_horas: [0],
+				horas_dia_laboradas: [0]
 			})
 		};
 	}
 
 	ngOnInit() {
 		this.datosSolicitudPermisos = FuncionesGenerales.crearFormulario(this.informacionPermiso);
-		//funcionalidad para que cuando se busque algo en el CIE10 espera y no haga la busqueda
-		// de una y de tiempo de escribir lo que se desea buscar
-		this.search$.pipe(
-			debounceTime(600) // espera 600 milisegundos antes de hacer la busqueda
-		).subscribe(term => {
-			if(term !== ''){
-				this.obtenerInformacion('enfermedades', '', { search: term }); // Aquí llamas a la función para obtener los datos
-			}
-		});
 	}
 
 	cerrarModal(datos?: any) {
@@ -137,25 +128,12 @@ export class AgregarSolicitarPermisosComponent implements OnInit {
 	
 			// Procesar datos si todo es válido
 			this.datosForm = { ...this.datosSolicitudPermisos.formulario.value };
-	
-			// Agregar códigos CIE10 seleccionados
-			this.datosForm['cie10'] = this.selectedEnfermedades;
-	
 			Object.keys(this.datosSeleccionados).forEach((key) => {
 				this.datosForm[key] = this.datosSeleccionados[key];
 			});
 
 			// Limpiar y validar datos antes de enviar
 			this.datosForm = this.limpiarDatosParaEnvio(this.datosForm);
-
-			// Log detallado para debugging
-			console.log('📝 Datos procesados para enviar al servidor:', {
-				datosFormulario: this.datosForm,
-				formularioOriginal: this.datosSolicitudPermisos.formulario.value,
-				cie10Seleccionados: this.selectedEnfermedades,
-				datosSeleccionados: this.datosSeleccionados,
-				timestamp: new Date().toISOString()
-			});
 	
 			// Enviar los datos y cerrar el modal
 			this.cerrarModal(this.datosForm);
@@ -204,11 +182,6 @@ export class AgregarSolicitarPermisosComponent implements OnInit {
 			datosLimpios.dias = parseInt(datosLimpios.dias, 10) || 0;
 		}
 
-		// Asegurar que CIE10 sea un array válido
-		if (!Array.isArray(datosLimpios.cie10)) {
-			datosLimpios.cie10 = [];
-		}
-
 		// Remover campos vacíos o inválidos
 		Object.keys(datosLimpios).forEach(key => {
 			if (datosLimpios[key] === null || datosLimpios[key] === undefined || datosLimpios[key] === '') {
@@ -216,7 +189,6 @@ export class AgregarSolicitarPermisosComponent implements OnInit {
 			}
 		});
 
-		console.log('🧹 Datos limpiados:', datosLimpios);
 		return datosLimpios;
 	}
 
@@ -294,7 +266,8 @@ export class AgregarSolicitarPermisosComponent implements OnInit {
 				horasAusentismo.setAttribute('disabled','true');
 			}else if (this.selectedOption === 'H') {
 				diasAusentismo.value= 0;
-				horasAusentismo.removeAttribute('disabled');
+				diasAusentismo.setAttribute('disabled','true');
+				horasAusentismo.removeAttribute('readonly');
 			}
 		}else{
 			this.notificacionService.notificacion('Los campos de fecha inicio y fecha fin no pueden estar vacios');
@@ -302,13 +275,25 @@ export class AgregarSolicitarPermisosComponent implements OnInit {
 		}
 	}
 
+	onHorasLaboralesChange(event: any) {
+		const horasLaborales = event.target.value;
+
+		if (this.selectedOption === 'D') {
+			const totalHorasAusente = parseInt(horasLaborales) * this.diferenciaDias;
+			this.total_horas = totalHorasAusente;
+		}
+	}
+
+	onHorasAusentismoChange(event: any) {
+		const horasAusentismo = event.target.value;
+		if (this.selectedOption === 'H') {
+			this.total_horas = parseFloat(horasAusentismo) || 0;
+		}
+	}
+
 	parsearFecha(fechaStr: string): Date{
 		const [ano,mes,dia]=fechaStr.split('-').map(Number);
 		return new Date(ano,mes-1,dia);
-	}
-
-	searchbarInput(term: string): void {
-		this.search$.next(term); // Envía el término al Subject, que luego lo pasa por debounceTime
 	}
 
 	obtenerInformacion(metodo: string, funcion: string, datos: any) {

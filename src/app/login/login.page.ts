@@ -12,7 +12,8 @@ import { RxFormGroup } from '@rxweb/reactive-form-validators';
 import { timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, ModalController } from '@ionic/angular';
+import { UrlConfigModalComponent } from '../componentes/url-config-modal/url-config-modal.component';
 @Component({
 	selector: 'app-login',
 	templateUrl: './login.page.html',
@@ -29,7 +30,15 @@ export class LoginPage implements OnInit {
 	claseUsuario = '';
 	verPassword = false;
 	urlFondoImagen = '/assets/images/fondoLogin.jpg';
-    mostrarBotonesSesion: boolean = false;
+	mostrarBotonesSesion: boolean = false;
+	nombreEmpresa: string = '';
+	version: string = '';
+	
+	// Variables para el long-press
+	private longPressTimer: any;
+	private isModalOpen: boolean = false;
+	isPressing: boolean = false; // Para mostrar feedback visual
+	private readonly LONG_PRESS_DURATION = 500; // 0.5 segundos
 
 	constructor(
 		private sanitizer: DomSanitizer,
@@ -40,6 +49,7 @@ export class LoginPage implements OnInit {
 		private storageService: StorageService,
 		private cargadorService: CargadorService,
 		private cambioMenu: CambioMenuService,
+		private modalCtrl: ModalController,
 	) { }
 
 	ngOnInit() {
@@ -48,6 +58,15 @@ export class LoginPage implements OnInit {
 
 	ionViewWillEnter() {
 		this.validarAccion();
+	}
+
+	ionViewWillLeave() {
+		// Limpiar timer y cerrar modal si la página se abandona
+		this.onPressEnd();
+		if (this.isModalOpen) {
+			this.modalCtrl.dismiss();
+			this.isModalOpen = false;
+		}
 	}
 
 	async validarAccion() {
@@ -77,11 +96,15 @@ export class LoginPage implements OnInit {
 		if (this.formLogin.formulario.get('nit')?.valid) {
 			const nit = this.formLogin.formulario.get('nit')?.value;
 			this.loginService.validarNit(nit).then(respuesta => {
+				console.log(respuesta);
 				if (respuesta && respuesta.success) {
 					this.storageService.set('nit', nit);
 					this.storageService.set('crypt', respuesta.crypt);
 					this.storageService.set('modulos', respuesta.modulos);
 					this.storageService.set('conexion', respuesta.db);
+					this.storageService.set('empresa', respuesta.Empresa || '');
+					this.nombreEmpresa = respuesta.Empresa || '';
+					this.version = '- V' + (respuesta.version || '');
 					this.claseDocumento = 'animate__fadeOutLeft';
 					this.ejecutarTimer('claseUsuario', 'animate__fadeInRight')
 						.then(item => this.ingresoDocumento = !this.ingresoDocumento);
@@ -107,6 +130,8 @@ export class LoginPage implements OnInit {
 		this.formLogin.formulario.reset();
 		this.formLogin.formulario.markAsUntouched();
 		this.mostrarBotonesSesion = false;
+		this.version = '';
+		this.nombreEmpresa = '';
 		this.claseUsuario = 'animate__fadeOutRight';
 		this.ejecutarTimer('claseDocumento', 'animate__fadeInLeft').then(item => this.ingresoDocumento = !this.ingresoDocumento);
 	}
@@ -138,16 +163,31 @@ export class LoginPage implements OnInit {
 					this.formLogin.formulario.markAsUntouched();
 				}
 				if (respuesta && respuesta.valido) {
-					// Guardar usuario en storage
-					this.storageService.set('usuario', respuesta.usuario);
-					// Notificar a otros componentes (menú) que el usuario cambió para que recarguen datos/foto
-					this.cambioMenu.cambio('usuarioActualizado');
-					// Navegar al inicio de módulos
-					this.router.navigateByUrl('/modulos/datosbasicos');
-					// Resetear formulario y estados visuales
-					this.formLogin.formulario.reset();
-					this.formLogin.formulario.markAsUntouched();
-					// this.retornar(); // Comentado para evitar regresar al formulario de NIT después del login exitoso
+					
+					// 🔥 CRÍTICO: Limpiar PRIMERO cualquier dato del usuario anterior
+					// Remover explícitamente el usuario anterior del storage
+					await this.storageService.remove('usuario');
+					await this.storageService.remove('urlFotoUsuarioSesion'); // Limpiar foto anterior
+					
+					// Espera para asegurar que se eliminó en Android SQLite
+					await new Promise(resolve => setTimeout(resolve, 200));
+										
+					// Guardar nuevo usuario en storage (AWAIT para asegurar que se guarde)
+					await this.storageService.set('usuario', respuesta.usuario);
+										
+					// 🔥 IMPORTANTE: Marcar que hay un nuevo usuario para forzar recarga
+					await this.storageService.set('_nuevoLogin', 'true');
+										
+					// Espera adicional para asegurar que el storage se escribió en disco (Android)
+					await new Promise(resolve => setTimeout(resolve, 300));
+										
+					// 🔥 SOLUCIÓN DEFINITIVA: Recargar la página para limpiar TODO el estado
+					// Esto fuerza que Angular/Ionic recargue completamente eliminando:
+					// - Todos los servicios singleton en memoria
+					// - Todos los componentes cacheados
+					// - Todas las variables estáticas
+					// - Todo el estado de la aplicación
+					window.location.href = '/modulos/datosbasicos';
 				} else {
 					this.notificaciones.notificacion(respuesta.mensaje);
 				}
@@ -163,5 +203,92 @@ export class LoginPage implements OnInit {
 
 	olvidoPass(extra = 0) {
 		this.router.navigateByUrl(`forget-password/${this.formLogin.formulario.get('num_docu')?.value || '0'}/${extra}`);
+	}
+
+	/**
+	 * Inicia el contador para long-press
+	 */
+	onPressStart(event?: Event) {
+		// Prevenir comportamiento por defecto
+		if (event) {
+			event.preventDefault();
+			event.stopPropagation();
+		}
+		
+		// No hacer nada si ya hay un modal abierto
+		if (this.isModalOpen) {
+			return;
+		}
+		
+		// Limpiar cualquier timer previo
+		if (this.longPressTimer) {
+			clearTimeout(this.longPressTimer);
+			this.longPressTimer = null;
+		}
+		
+		// Activar feedback visual
+		this.isPressing = true;
+		
+		// Iniciar nuevo timer
+		this.longPressTimer = setTimeout(() => {
+			this.longPressTimer = null;
+			this.isPressing = false;
+			this.abrirConfiguracionUrls();
+		}, this.LONG_PRESS_DURATION);
+	}
+
+	/**
+	 * Cancela el contador si se suelta antes de tiempo
+	 */
+	onPressEnd(event?: Event) {
+		// Prevenir comportamiento por defecto
+		if (event) {
+			event.preventDefault();
+			event.stopPropagation();
+		}
+		
+		// Desactivar feedback visual
+		this.isPressing = false;
+		
+		// Limpiar el timer si existe
+		if (this.longPressTimer) {
+			clearTimeout(this.longPressTimer);
+			this.longPressTimer = null;
+		}
+	}
+
+	/**
+	 * Abre el modal de configuración de URLs
+	 */
+	async abrirConfiguracionUrls() {
+		// Prevenir múltiples aperturas
+		if (this.isModalOpen) {
+			console.log('Modal ya está abierto, ignorando...');
+			return;
+		}
+		
+		try {
+			this.isModalOpen = true;
+			
+			const modal = await this.modalCtrl.create({
+				component: UrlConfigModalComponent,
+				cssClass: 'url-config-modal',
+				backdropDismiss: true
+			});
+
+			await modal.present();
+
+			const { data } = await modal.onWillDismiss();
+			
+			// Resetear la bandera cuando se cierre el modal
+			this.isModalOpen = false;
+			
+			if (data && data.guardado) {
+				console.log('Configuración de URLs actualizada');
+			}
+		} catch (error) {
+			console.error('Error al abrir modal de configuración:', error);
+			this.isModalOpen = false;
+		}
 	}
 }

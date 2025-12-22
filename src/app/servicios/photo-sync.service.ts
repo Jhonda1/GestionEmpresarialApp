@@ -25,4 +25,12 @@ export class PhotoSyncService {
   getCurrentPhotoUrl(): string {
     return this.photoUpdatedSubject.value;
   }
+
+  /**
+   * Resetea el servicio al cerrar sesión o cambiar de usuario
+   * Esto evita que la foto del usuario anterior persista en memoria
+   */
+  reset(): void {
+    this.photoUpdatedSubject.next('assets/images/nofoto.png');
+  }
 }

@@ -66,26 +66,23 @@
 			</ion-item>
 
 			<ion-item>
+				<ion-label position="floating" color="dark">Horas Laborales Diarias</ion-label>
+				<ion-input formControlName="horas_dia_laboradas" color="dark" type="number" id="horasLaborales" (ionChange)="onHorasLaboralesChange($event)"></ion-input>
+			</ion-item>
+
+			<ion-item>
 				<ion-label position="floating" color="dark">Dias Ausentismo</ion-label>
 				<ion-input formControlName="Dias" color="dark" type="text" id="diasAusentismo" [(ngModel)]="diasAusentismo" readonly></ion-input>
-				<ion-text class="animate__animated animate__bounceIn animate__faster"
-					*ngIf="datosSolicitudPermisos.formulario.get('Dias')?.touched" color="danger">{{
-					datosSolicitudPermisos.formulario.get('Dias')?.getError('errorMessage') }}</ion-text>
 			</ion-item>
 
 			<ion-item>
 				<ion-label position="floating" color="dark">Horas Ausentismo</ion-label>
-				<ion-input formControlName="horas" color="dark" type="text" id="horasAusentismo" readonly></ion-input>
-				<ion-text class="animate__animated animate__bounceIn animate__faster"
-					*ngIf="datosSolicitudPermisos.formulario.get('horas')?.touched" color="danger">{{
-					datosSolicitudPermisos.formulario.get('horas')?.getError('errorMessage') }}</ion-text>
+				<ion-input formControlName="horas" color="dark" type="text" id="horasAusentismo" (ionChange)="onHorasAusentismoChange($event)" readonly></ion-input>
 			</ion-item>
 
-			<ion-item class="Cie10Div">
-				<ion-item [button]="true" [detail]="false" id="select-enfermedades">
-				  <ion-label>CIE 10</ion-label>
-				  <div slot="end"  id="selected-enfermedades">{{ selectedEnfermedadesText }}</div>
-				</ion-item>
+			<ion-item>
+				<ion-label position="floating" color="dark">Total Horas Ausente</ion-label>
+				<ion-input formControlName="total_horas" color="dark" type="number" id="total_horas" [(ngModel)]="total_horas" readonly></ion-input>
 			</ion-item>
 
 			<ion-item>

@@ -25,17 +25,16 @@ export class SecureImageService {
       return of(imageUrl);
     }
 
-    // Verificar si hay problemas de Mixed Content
-    if (this.hasMixedContentIssue(imageUrl)) {
-      console.warn('Mixed Content detectado. Convirtiendo imagen a base64:', imageUrl);
-      return this.convertToBase64(imageUrl);
-    }
-
-    // En dispositivos móviles con allowMixedContent, usar URL directa
+    // 🔥 En dispositivos móviles nativos (Android/iOS), SIEMPRE usar URL directa
+    // capacitor.config.ts tiene allowMixedContent: true y network_security_config.xml permite HTTP
     if (this.isMobileApp()) {
       return of(imageUrl);
     }
 
+    // Verificar si hay problemas de Mixed Content (solo para WEB)
+    if (this.hasMixedContentIssue(imageUrl)) {
+      return this.convertToBase64(imageUrl);
+    }
     return of(imageUrl);
   }
 
@@ -66,34 +65,10 @@ export class SecureImageService {
       const ctx = canvas.getContext('2d');
       const img = new Image();
       
-      // Configurar CORS
       img.crossOrigin = 'anonymous';
       
-      img.onload = () => {
-        try {
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx?.drawImage(img, 0, 0);
-          
-          const dataURL = canvas.toDataURL('image/jpeg', 0.8);
-          observer.next(dataURL);
-          observer.complete();
-        } catch (error) {
-          console.error('Error convirtiendo imagen a base64:', error);
-          observer.next('assets/images/nofoto.png'); // Fallback
-          observer.complete();
-        }
-      };
-      
-      img.onerror = (error) => {
-        console.error('Error cargando imagen:', error);
-        observer.next('assets/images/nofoto.png'); // Fallback
-        observer.complete();
-      };
-      
-      // Usar un timeout para evitar que se cuelgue
+      // Timeout para evitar que se cuelgue
       const timeout = setTimeout(() => {
-        console.warn('Timeout cargando imagen:', imageUrl);
         observer.next('assets/images/nofoto.png');
         observer.complete();
       }, 10000);
@@ -109,12 +84,21 @@ export class SecureImageService {
           observer.next(dataURL);
           observer.complete();
         } catch (error) {
-          console.error('Error convirtiendo imagen a base64:', error);
+          console.error('❌ SecureImageService - Error convirtiendo imagen a base64:', error);
           observer.next('assets/images/nofoto.png');
           observer.complete();
         }
       };
       
+      img.onerror = (error) => {
+        clearTimeout(timeout);
+        console.error('❌ SecureImageService - Error cargando imagen:', error);
+        console.error('❌ SecureImageService - URL que falló:', imageUrl);
+        observer.next('assets/images/nofoto.png');
+        observer.complete();
+      };
+      
+      // Intentar cargar la imagen
       img.src = imageUrl;
     });
   }

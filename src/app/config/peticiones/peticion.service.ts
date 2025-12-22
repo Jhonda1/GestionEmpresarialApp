@@ -6,6 +6,7 @@ import { Observable, empty, firstValueFrom } from 'rxjs';
 import { StorageService } from '../../servicios/storage.service';
 import { FuncionesGenerales } from '../funciones/funciones';
 import { NotificacionesService } from 'src/app/servicios/notificaciones.service';
+import { UrlConfigService } from '../../servicios/url-config.service';
 
 export class CustomInjectorService {
 	static injector: Injector
@@ -20,12 +21,27 @@ export class PeticionService {
 	private storageService = inject(StorageService);
 	private notificacionesService = inject(NotificacionesService);
 	private httpClient = inject(HttpClient);
+	private urlConfigService = inject(UrlConfigService);
 	
 	public url: string = environment.urlBack + 'index.php/API/';
 	public categoria: string = '';
 
 	constructor() {
 		// Los servicios ya están inyectados mediante inject()
+		// No inicializamos la URL aquí para evitar problemas con Storage no inicializado
+	}
+
+	/**
+	 * Obtiene la URL activa actualizada en tiempo real
+	 */
+	private async getActiveUrl(): Promise<string> {
+		try {
+			const activeUrl = await this.urlConfigService.getActiveUrl();
+			return activeUrl + 'index.php/API/';
+		} catch (error) {
+			// Si hay error, usar la URL por defecto de environment sin loggear
+			return environment.urlBack + 'index.php/API/';
+		}
 	}
 
 	async encriptar(datos: any) {
@@ -112,7 +128,7 @@ export class PeticionService {
 	}
 
 	async obtener(controlador: string) {
-		const uri = this.construirUrl(controlador);
+		const uri = await this.construirUrl(controlador);
 		try {
 			const resp = await firstValueFrom(this.ejecutarPeticion('get', uri));
 			return await this.desencriptar(resp);
@@ -126,7 +142,7 @@ export class PeticionService {
 		const data = {
 			encriptado: await this.encriptar(body)
 		};
-		const uri = this.construirUrl(controlador);
+		const uri = await this.construirUrl(controlador);
 		const Conexion = await this.storageService.get('conexion').then(resp => resp);
 		let NIT = await this.storageService.get('nit').then(resp => resp);
 		
@@ -212,7 +228,6 @@ export class PeticionService {
 			const datos = await this.storageService.get(key);
 			
 			if (!datos) {
-				console.warn(`No se encontraron datos para la clave: ${key}`);
 				return null;
 			}
 
@@ -437,12 +452,14 @@ export class PeticionService {
 		}
 	}
 
-	private construirUrl(controlador: string) {
-		return this.url + this.categoria + controlador;
+	private async construirUrl(controlador: string): Promise<string> {
+		const baseUrl = await this.getActiveUrl();
+		return baseUrl + this.categoria + controlador;
 	}
 
 	async validarNit(NIT: any) {
-		return await firstValueFrom(this.ejecutarPeticion('post', `${this.url}Login/ValidarNIT`, { NIT })).then(resp => resp, console.error);
+		const baseUrl = await this.getActiveUrl();
+		return await firstValueFrom(this.ejecutarPeticion('post', `${baseUrl}Login/ValidarNIT`, { NIT })).then(resp => resp, console.error);
 	}
 
 	async iniciarSesionUser(data: any) {
@@ -459,7 +476,8 @@ export class PeticionService {
 		const Conexion = await this.storageService.get('conexion').then(resp => resp);
 		const NIT = await this.storageService.get('nit').then(resp => resp);
 		const headers = new HttpHeaders({ NIT, Conexion, Token: '0' });
-		return await firstValueFrom(this.ejecutarPeticion('post', `${this.url}Login/ingreso`, data, headers)).then(resp => resp, console.error);
+		const baseUrl = await this.getActiveUrl();
+		return await firstValueFrom(this.ejecutarPeticion('post', `${baseUrl}Login/ingreso`, data, headers)).then(resp => resp, console.error);
 	}
 
 	async cerrarSesionUser() {
@@ -484,7 +502,8 @@ export class PeticionService {
 			RASTREO: FuncionesGenerales.rastreo('Salida del Sistema Gestión Empresarial', 'Salida Sistema'),
 		}
 		const headers = new HttpHeaders({ Conexion, Token: usuario.IngresoId });
-		return await firstValueFrom(this.ejecutarPeticion('post', `${this.url}Login/cierre`, data, headers)).then(resp => this.desencriptar(resp)).catch(error => {
+		const baseUrl = await this.getActiveUrl();
+		return await firstValueFrom(this.ejecutarPeticion('post', `${baseUrl}Login/cierre`, data, headers)).then(resp => this.desencriptar(resp)).catch(error => {
 			this.validarAlertaError(error);
 		});
 	}
@@ -557,7 +576,7 @@ export class PeticionService {
 			conexion: await this.storageService.get('conexion').then(resp => resp),
 			nit: await this.storageService.get('nit').then(resp => resp)
 		}
-		const uri = this.construirUrl(controlador);
+		const uri = await this.construirUrl(controlador);
 		const NIT = await this.storageService.get('nit').then(resp => resp);
 		const headers = new HttpHeaders({ NIT, Token: '0' });
 		return await firstValueFrom(this.ejecutarPeticion('post', uri, data, headers)).then(async resp => {

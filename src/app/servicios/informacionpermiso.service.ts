@@ -14,7 +14,8 @@ export class InformacionPermiso extends PeticionService {
 	private _TipoAusentismoId: string = '';
 	private _TipoCalculo: string = '';
 	private _Observacion: string = '';
-	private _cie10: string = '';
+	private _horas_dia_laboradas: number = 0;
+	private _total_horas: number = 0;
 
 	constructor() {
 		super();
@@ -51,12 +52,19 @@ export class InformacionPermiso extends PeticionService {
 	public set Observacion(value: string) {
 		this._Observacion = value;
 	}
-	@maxLength({ value: 30, message: 'Maximo 30 caracteres' })
-	public get cie10(): string {
-		return this._cie10;
+	@maxLength({ value: 3, message: 'Maximo 3 caracteres' })
+	public get horas_dia_laboradas(): number {
+		return this._horas_dia_laboradas;
 	}
-	public set cie10(value: string) {
-		this._cie10 = value;
+	public set horas_dia_laboradas(value: number) {
+		this._horas_dia_laboradas = value;
+	}
+	@maxLength({ value: 3, message: 'Maximo 3 caracteres' })
+	public get total_horas(): number {
+		return this._total_horas;
+	}
+	public set total_horas(value: number) {
+		this._total_horas = value;
 	}
 
   @required({ message: 'Campo requerido.' })

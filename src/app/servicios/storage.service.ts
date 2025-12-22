@@ -16,8 +16,8 @@ export class StorageService {
 		, private notifcaciones: NotificacionesService
 	) { }
 
-	set(llave: string, valor: any) {
-		this.storage.set(llave, valor);
+	async set(llave: string, valor: any) {
+		return await this.storage.set(llave, valor);
 	}
 
 	async get(llave: any) {
@@ -34,7 +34,6 @@ export class StorageService {
 			const datos = await this.storage.get(llave);
 			
 			if (datos === null || datos === undefined) {
-				console.warn(`No se encontraron datos para la clave: ${llave}`);
 				return null;
 			}
 
@@ -60,15 +59,17 @@ export class StorageService {
 		}
 	}
 
-	remove(llave: string) {
-		this.storage.remove(llave);
+	async remove(llave: string) {
+		return await this.storage.remove(llave);
 	}
 
 	async limpiarTodo(logout?: boolean) {
-		try {
+		try {			
 			const tema = await this.get('theme');
 			const nit = await this.get('nit'); // Siempre preservar el NIT
 			
+			// 🔥 IMPORTANTE: En Android/iOS, clear() puede ser asíncrono
+			// Debemos esperar a que termine
 			await this.storage.clear();
 			
 			if (!logout) {
@@ -76,21 +77,30 @@ export class StorageService {
 			}
 			
 			if (this.modalController) {
-				this.modalController.dismiss();
+				await this.modalController.dismiss().catch(() => {});
 			}
 			
-			// Restaurar configuraciones básicas
-			if (tema) await this.set('theme', tema);
+			// Restaurar configuraciones básicas con await explícito
+			if (tema) {
+				await this.storage.set('theme', tema);
+			}
 			
 			// Siempre restaurar el NIT para evitar errores de login
 			if (nit) {
-				await this.set('nit', nit);
+				await this.storage.set('nit', nit);
 			}
 			
+			// 🔥 IMPORTANTE: Resetear la foto de sesión a la imagen por defecto
+			// Esto evita que la foto del usuario anterior aparezca al hacer login con otro usuario
+			await this.storage.set('urlFotoUsuarioSesion', 'assets/images/nofoto.png');
+			
+			// Pequeña espera para asegurar que el storage se haya guardado en disco (Android SQLite)
+			await new Promise(resolve => setTimeout(resolve, 100));
+						
 			// Navegar al login
 			this.router.navigateByUrl('login');
 		} catch (error) {
-			console.error('Error al limpiar storage:', error);
+			console.error('❌ Error al limpiar storage:', error);
 			// En caso de error, al menos navegar al login
 			this.router.navigateByUrl('login');
 		}

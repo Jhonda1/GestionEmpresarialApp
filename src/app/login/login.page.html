@@ -1,27 +1,51 @@
 <ion-content [fullscreen]="true">
-    <div [style]="obtenerFondo()">
-        <div class="content">
+	<div [style]="obtenerFondo()">
+		<div class="configuracion" slot="settings" *ngIf="ingresoDocumento" [class.pressing]="isPressing">
+			<ion-text class="ion-text-end">
+				<img 
+					src="assets/icon/favicon.png" 
+					alt="Icon" 
+					(touchstart)="onPressStart($event)"
+					(touchend)="onPressEnd($event)"
+					(touchcancel)="onPressEnd($event)"
+					(touchmove)="onPressEnd($event)"
+					(mousedown)="onPressStart($event)"
+					(mouseup)="onPressEnd($event)"
+					(mouseleave)="onPressEnd($event)"
+					(contextmenu)="onPressEnd($event)">
+			</ion-text>
+		</div>
+		<div class="content">
+			<div class="contenido Nombreempresa ion-text-center" *ngIf="!ingresoDocumento">
+				<img src="assets/images/logoInicio.png" alt="Logo Prosof S.A.S" class="empresa-logo">
+			</div>
+			<div class="ion-text-left">
+				<h3 class="ion-text-center text-login" >Gestión Empresarial</h3>
+				<div *ngIf="!ingresoDocumento" class="divNombreEmpresa">
+					<span >Hola </span>
+					<div color="success">{{ nombreEmpresa }}</div>
+				</div>
+			</div>
 
-            <form [formGroup]="formLogin.formulario" *ngIf="ingresoDocumento">
-                <ion-item class="ion-margin-top" lines="none">
-                    <ion-icon class="ion-margin-end" slot="start" name="card-outline"></ion-icon>
-                    <ion-input formControlName="nit" type="text" placeholder="Nit"></ion-input>
-                </ion-item>
-                <ion-grid class="ion-no-margin">
-                    <ion-row>
-                        <ion-col size="12" class="ion-align-self-center">
-                            <ion-button [disabled]="formLogin.formulario.get('nit')?.invalid" (click)="irFormulario()"
-                                class="ion-no-margin">
-                                Ingresar
-                                <ion-icon slot="end" name="arrow-forward"></ion-icon>
-                            </ion-button>
-                        </ion-col>
-                    </ion-row>
-                </ion-grid>
-            </form>
+			<form [formGroup]="formLogin.formulario" *ngIf="ingresoDocumento">
+				<ion-item class="ion-margin-top" lines="none">
+						<ion-icon class="ion-margin-end" slot="start" name="card-outline"></ion-icon>
+						<ion-input formControlName="nit" type="text" placeholder="Nit"></ion-input>
+				</ion-item>
+				<ion-grid class="ion-no-margin">
+						<ion-row>
+								<ion-col size="12" class="ion-align-self-center">
+										<ion-button [disabled]="formLogin.formulario.get('nit')?.invalid" (click)="irFormulario()"
+												class="ion-no-margin" color="success">
+												Ingresar
+												<ion-icon slot="end" name="enter-outline"></ion-icon>
+										</ion-button>
+								</ion-col>
+						</ion-row>
+				</ion-grid> 
+			</form>
 
-           <form [formGroup]="formLogin.formulario" (ngSubmit)="login()" *ngIf="!ingresoDocumento"
-				[class]="'animate__animated animate__faster ' + claseUsuario">
+			<form [formGroup]="formLogin.formulario" (ngSubmit)="login()" *ngIf="!ingresoDocumento" [class]="'animate__animated animate__faster ' + claseUsuario">
 				<ion-item class="ion-margin-top" lines="full">
 					<ion-icon class="ion-margin-end" name="person-outline"></ion-icon>
 					<ion-input formControlName="num_docu" type="text" placeholder="N°. Documento"></ion-input>
@@ -47,47 +71,32 @@
 							class="ion-align-self-center ion-text-center">
 							<ion-button
 								[disabled]="formLogin.formulario.get('num_docu')?.invalid || formLogin.formulario.get('password')?.invalid"
-								type="submit" class="ion-no-margin">
+								type="submit" class="ion-no-margin" color ='success'>
 								Iniciar sesión
-								<ion-icon slot="start" name="log-in-outline"></ion-icon>
+								<ion-icon slot="start" name="enter-outline"></ion-icon>
 							</ion-button>
 						</ion-col>
 						<ion-col size="6" size-xs='12' size-lg='6' size-md='6'
 							class="ion-align-self-center ion-text-center">
-							<ion-button class="ion-no-margin" (click)="retornar()" color="tertiary">
+							<ion-button class="ion-no-margin" (click)="retornar()" color="medium">
 								Regresar
 								<ion-icon slot="start" name="arrow-back"></ion-icon>
 							</ion-button>
 						</ion-col>
 					</ion-row>
-                    <!-- <ion-row>
-                        <ion-col size="12" class="ion-align-self-center ion-text-center">
-                            <ion-button class="ion-no-margin" (click)="loginWithFingerprint()" color="secondary">
-                                Ingresar con huella
-                                <ion-icon slot="start" name="finger-print-outline"></ion-icon>
-                            </ion-button>
-                        </ion-col>
-                    </ion-row> -->
 				</ion-grid>
-				<!-- <ion-text class="ion-margin ion-text-center" (click)="olvidoPass()">
-					<h4 class="text-light">¿Recuperar tu contraseña?</h4>
-				</ion-text> -->
-
-				<!-- Información de la empresa -->
-				<div class="empresa-info ion-text-center ion-margin-top">
-					<div class="logo-container ion-margin-bottom">
-						<img src="assets/images/logo.png" alt="Logo Prosof S.A.S" class="empresa-logo">
-					</div>
-					<div class="contacto-info">
-						<ion-text>
-							<p class="info-text">Servicio al Cliente (6) 3151720 - Móvil 320 632 1074</p>
-						</ion-text>
-						<ion-text>
-							<p class="copyright-text">Copyright (c) By Prosof S.A.S</p>
-						</ion-text>
-					</div>
-				</div>
 			</form>
-        </div>
-    </div>
+			<!-- Información de la empresa -->
+			<div class="empresa-info ion-text-center" >
+				<div class="contacto-info">
+					<ion-text>
+						<p class="info-text">Servicio al Cliente (6) 3151720 - Móvil 320 632 1074</p>
+					</ion-text>
+					<ion-text>
+						<p class="copyright-text">Copyright (c) By Prosof S.A.S {{ version }}</p>
+					</ion-text>
+				</div>
+			</div>
+		</div>
+	</div>
 </ion-content>

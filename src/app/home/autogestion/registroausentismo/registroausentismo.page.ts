@@ -14,7 +14,7 @@ import { LoginService } from 'src/app/servicios/login.service';
 import { StorageService } from 'src/app/servicios/storage.service';
 import { FormGroup, FormControl} from '@angular/forms';
 import { DatosAusentismosService } from 'src/app/servicios/datosAusentismo.service';
-import { Item } from '@app/componentes/UI/types';
+import { Item } from 'src/app/componentes/UI/types';
 import { HeaderComponent } from 'src/app/componentes/header/header.component';
 import { TypeaheadModule } from 'src/app/componentes/UI/typehead/typehead.module';
 import { ValidacionPermisosService } from 'src/app/servicios/validacion-permisos.service';
@@ -60,12 +60,12 @@ export class registroausentismoPage implements OnInit, OnDestroy {
 	@ViewChild('modalFechaSolicitudesInicio') modalFechaSolicitudesInicio!: IonModal;
 	@ViewChild('modalFechaSolicitudesFin') modalFechaSolicitudesFin!: IonModal;
 	@ViewChild('modal', { static: true }) modal!: IonModal;
-  	@Input() enfermedades: Item[] = [];
+	@Input() enfermedades: Item[] = [];
 
 
 	tipoCalculo = Constantes.tipoCalculo;
 	escalaAusentismo = Constantes.escalaAusentismo;
-  	segur: Array<object> = [];
+	segur: Array<object> = [];
 	src: any;
 	base64Img: any;
 	pdfObj: any;
@@ -87,7 +87,7 @@ export class registroausentismoPage implements OnInit, OnDestroy {
 	subject = new Subject();
 	empleado: Empleado | null = null;
 	areas: Area[] = [];
-  	ausentismo: Ausentismo[] = [];
+	ausentismo: Ausentismo[] = [];
 	selectedFiles: File[] = [];
 	grado: string = '';
 	tipoausentismoId: string = '';
@@ -115,7 +115,7 @@ export class registroausentismoPage implements OnInit, OnDestroy {
 	permisoRegistrar = false; // 6001009 - Registro de Ausentismo
 	divCie10 = {};
 	selectedEnfermedadesText = '0 Items';
-  	selectedEnfermedades: string[] = [];
+	selectedEnfermedades: string[] = [];
 	search$ = new Subject<string>();
 
 	datosFormulario!: { formulario: RxFormGroup, propiedades: Array<string> };
@@ -130,11 +130,11 @@ export class registroausentismoPage implements OnInit, OnDestroy {
 		private datosAusentismo: DatosAusentismosService,
 		private validacionPermisosService: ValidacionPermisosService,
 	) { }
-	ngOnInit() {
+	async ngOnInit() {
 		this.datosFormulario = FuncionesGenerales.crearFormulario(this.datosEmpleadosService);
 		this.datosFormularioEnvio = FuncionesGenerales.crearFormulario(this.datosAusentismo);
-		this.obtenerUsuario();
-		this.validarPermisosIniciales();
+		await this.obtenerUsuario();
+		await this.validarPermisosIniciales();
 
 		//funcionalidad para que cuando se busque algo en el CIE10 espera y no haga la busqueda
 		// de una y de tiempo de escribir lo que se desea buscar
@@ -147,7 +147,10 @@ export class registroausentismoPage implements OnInit, OnDestroy {
 		});
 	}
 
-	private validarPermisosIniciales() {
+	private async validarPermisosIniciales() {
+		// Asegurar que el servicio de permisos esté inicializado
+		await this.validacionPermisosService.inicializar();
+		
 		// Validar permiso para registro de ausentismo (6001009)
 		this.permisoRegistrar = this.validacionPermisosService.validarPermisoLocal(6001009);
 	}
@@ -159,7 +162,10 @@ export class registroausentismoPage implements OnInit, OnDestroy {
 		this.search$.complete();
 	}
 
-	ionViewDidEnter() {
+	async ionViewDidEnter() {
+		// Revalidar permisos cada vez que se entra a la vista
+		await this.validarPermisosIniciales();
+		
 		this.obtenerDatosEmpleado(this.terceroId);
 		this.obtenerInformacion('obtenerDatosSelects', 'obtenerSelect');
 	}

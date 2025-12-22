@@ -22,6 +22,7 @@ import { AgregarEstudioComponent } from './agregar-estudio/agregar-estudio.compo
 import { AgregarFamiliarComponent } from './agregar-familiar/agregar-familiar.component';
 import { SecureImageService } from 'src/app/servicios/secure-image.service';
 import { PhotoSyncService } from 'src/app/servicios/photo-sync.service';
+import { UrlConfigService } from 'src/app/servicios/url-config.service';
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
 // Importaciones de componentes y pipes necesarios
 import { HeaderComponent } from 'src/app/componentes/header/header.component';
@@ -86,7 +87,7 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 	tienePermisos = false;
 	permisoGuardar = false; // Permiso para guardar/agregar información
 	permisoModulo = 6001006; // Permiso para datos personales
-	foto: string = FuncionesGenerales.urlGestion();
+	foto: string = ''; // Se cargará dinámicamente desde la configuración
 	rutaGeneral = 'Autogestion/cDatosBasicos/';
 	datosFormulario!: { formulario: RxFormGroup, propiedades: Array<string> };
 	datosAdicionales!: { formulario: RxFormGroup, propiedades: Array<string> };
@@ -142,7 +143,7 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 	 * Se ejecuta solo cuando es necesario actualizar la foto
 	 * Maneja el problema de Mixed Content en dispositivos móviles usando SecureImageService
 	 */
-	private actualizarUrlFoto(): void {
+	private async actualizarUrlFoto(): Promise<void> {
 		// PRIORIDAD 1: Foto recién tomada (fotoDePerfil)
 		if (this.fotoDePerfil) {
 			this.urlFotoUsuario = this.fotoDePerfil;
@@ -170,7 +171,38 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 				rutaFoto = rutaFoto.substring(2);
 			}
 			
-			const urlCompleta = this.foto + rutaFoto;
+			// Obtener la URL base activa (con configuración dinámica)
+			if (!this.foto) {
+				try {
+					const urlConfigService = this.datosBasicosService['urlConfigService'];
+					if (urlConfigService) {
+						this.foto = await urlConfigService.getActiveUrl();
+					} else {
+						this.foto = FuncionesGenerales.urlGestion();
+					}
+				} catch (error) {
+					console.error('Error al obtener URL activa:', error);
+					this.foto = FuncionesGenerales.urlGestion();
+				}
+			}
+			
+			// SOLUCIÓN MIXED CONTENT: Determinar qué URL usar según el entorno
+			let urlCompleta: string;
+			const isHTTPS = window.location.protocol === 'https:';
+			const isMobile = window && (window as any).Capacitor !== undefined;
+			const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+			
+			if (isMobile) {
+				// PRODUCCIÓN MÓVIL (Android/iOS): Usar URL completa
+				// Capacitor permite HTTP sin restricciones
+				urlCompleta = this.foto + rutaFoto;
+			} else if (isLocalhost && isHTTPS) {
+				// DESARROLLO LOCAL (ionic serve con HTTPS): Usar proxy
+				urlCompleta = '/' + rutaFoto;
+			} else {
+				// OTROS CASOS: HTTP local o producción web
+				urlCompleta = this.foto + rutaFoto;
+			}
 			
 			// Mostrar spinner mientras se carga la imagen del servidor
 			this.isLoadingSecureImage = true;
@@ -276,7 +308,6 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 			// Verificar que tenga las propiedades esenciales
 			if (!this.datosUsuario.IngresoId || !this.datosUsuario.usuarioId || 
 				!this.datosUsuario.num_docu || !this.datosUsuario.tercero_id) {
-				console.error('Los datos de usuario no tienen las propiedades necesarias:', this.datosUsuario);
 				return;
 			}
 			
@@ -347,11 +378,31 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 		this.searching = true;
 		
 		try {
+			
+			// 🔥 VERIFICAR si hay un nuevo login para forzar limpieza
+			const nuevoLogin = await this.storage.get('_nuevoLogin');
+			if (nuevoLogin) {				
+				// Limpiar TODOS los datos anteriores
+				this.datosUsuario = {};
+				this.terceroId = undefined;
+				this.fotoDePerfil = undefined;
+				this.urlFotoUsuario = 'assets/images/nofoto.png';
+				this.datosForm = {};
+				
+				// Limpiar el flag
+				await this.storage.remove('_nuevoLogin');
+				
+				// Esperar un poco más para asegurar que el storage esté listo
+				await new Promise(resolve => setTimeout(resolve, 100));
+			}
+			
 			// Obtener datos del usuario
 			await this.obtenerUsuario();
-
 			// Siempre obtener datos del empleado (ya no validamos permisos aquí)
 			await this.obtenerDatosEmpleado();
+			
+			// 🔥 IMPORTANTE: Actualizar la foto DESPUÉS de obtener los datos del usuario
+			this.actualizarUrlFoto();
 			
 			this.menu.suscripcion().pipe(
 				takeUntil(this.subjectMenu)
@@ -701,23 +752,38 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 									if (rutaFoto.startsWith('./')) {
 										rutaFoto = rutaFoto.substring(2);
 									}
-									const urlCompleta = this.foto + rutaFoto;
-									
-									// Mostrar spinner mientras se carga la imagen del servidor
-									this.isLoadingSecureImage = true;
-									
-									// Usar servicio seguro para obtener URL y actualizar storage
-									this.secureImageService.getSecureImageUrl(urlCompleta).subscribe(
-										(urlSegura) => {
-											this.storage.set('urlFotoUsuarioSesion', urlSegura);
-											this.isLoadingSecureImage = false;
-										},
-										(error) => {
-											console.error('Error obteniendo imagen segura en obtenerDatosEmpleado:', error);
-											this.storage.set('urlFotoUsuarioSesion', 'assets/images/nofoto.png');
-											this.isLoadingSecureImage = false;
-										}
-									);
+								
+								// SOLUCIÓN MIXED CONTENT: Determinar qué URL usar según el entorno
+								const isHTTPS = window.location.protocol === 'https:';
+								const isMobile = window && (window as any).Capacitor !== undefined;
+								const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+								
+								let urlCompleta: string;
+								if (isMobile) {
+									// PRODUCCIÓN MÓVIL: Usar URL completa
+									urlCompleta = this.foto + rutaFoto;
+								} else if (isLocalhost && isHTTPS) {
+									// DESARROLLO: Usar proxy
+									urlCompleta = '/' + rutaFoto;
+								} else {
+									// WEB/HTTP: URL completa
+									urlCompleta = this.foto + rutaFoto;
+								}
+								
+								// Mostrar spinner mientras se carga la imagen del servidor
+								this.isLoadingSecureImage = true;
+								
+								this.secureImageService.getSecureImageUrl(urlCompleta).subscribe(
+									(urlSegura) => {
+										this.storage.set('urlFotoUsuarioSesion', urlSegura);
+										this.isLoadingSecureImage = false;
+									},
+									(error) => {
+										console.error('[obtenerDatosEmpleado] - Error:', error);
+										this.storage.set('urlFotoUsuarioSesion', 'assets/images/nofoto.png');
+										this.isLoadingSecureImage = false;
+									}
+								);
 								} else {
 									// Si viene como base64 del servidor, guardarlo directamente
 									this.storage.set('urlFotoUsuarioSesion', datos.foto);

@@ -9,8 +9,19 @@ if (environment.production) {
   enableProdMode();
 }
 
-// Llamar al elemento PWA loader después de la plataforma ha sido inicializada
-defineCustomElements(window);
+// Fix para el error "Cannot read properties of null (reading 'offsetHeight')"
+// Asegurar que el DOM esté completamente listo antes de inicializar
+const initializeApp = () => {
+  // Llamar al elemento PWA loader después de la plataforma ha sido inicializada
+  defineCustomElements(window);
 
-platformBrowserDynamic().bootstrapModule(AppModule)
-  .catch(err => console.log(err));
+  platformBrowserDynamic().bootstrapModule(AppModule)
+    .catch(err => console.log(err));
+};
+
+// Esperar a que el DOM esté completamente listo
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  setTimeout(initializeApp, 1);
+} else {
+  document.addEventListener('DOMContentLoaded', initializeApp);
+}

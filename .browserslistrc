@@ -1,0 +1,5 @@
+# Target Android 9+ (Chrome 73+)
+# ES2018 compatible
+Chrome >= 73
+ChromeAndroid >= 73
+not dead

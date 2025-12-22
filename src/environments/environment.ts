@@ -6,14 +6,15 @@ export const environment = {
   production: false,
   
   // 🚀 API Configuration
-  urlBack: 'http://192.168.0.224:8016/dev/GestionEmp_Jhonda/', // dev
+  // urlBack: 'http://192.168.0.224:8016/dev/GestionEmp_Jhonda/', // dev
   // urlBack: 'http://144.217.75.8:8018/testing/GestionEmpresarial/', // testing
   // urlBack: 'http://144.217.75.8:8018/Release/GestionEmpresarial/', // Release
-  
+  urlBack: 'https://prosof.co:8011/GestionEmpresarial/', // producción
+
   // 🔒 Security Settings
   allowMixedContent: true,
   isDevelopment: true,
-  
+
   // 📱 App Configuration
   appName: 'Gestión Empresarial',
   version: '2.0.0',

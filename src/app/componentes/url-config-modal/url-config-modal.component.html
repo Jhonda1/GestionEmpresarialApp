@@ -1,0 +1,98 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Configuración de URLs</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="cerrar()">
+        <ion-icon slot="icon-only" name="close"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <form [formGroup]="configForm">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-subtitle>
+          <ion-icon name="settings-outline"></ion-icon>
+          Configuración de la API
+        </ion-card-subtitle>
+      </ion-card-header>
+      
+      <ion-card-content>
+        <!-- URL Principal -->
+        <ion-item lines="full" class="ion-margin-bottom">
+          <ion-label position="stacked">
+            URL de la API <ion-text color="danger">*</ion-text>
+          </ion-label>
+          <ion-input
+            formControlName="urlPrincipal"
+            type="url"
+            placeholder="https://ejemplo.com/api/"
+            clearInput>
+          </ion-input>
+        </ion-item>
+        
+        <ion-text color="danger" *ngIf="configForm.get('urlPrincipal')?.touched && configForm.get('urlPrincipal')?.invalid">
+          <p class="ion-padding-start">
+            <small>Ingresa una URL válida (debe comenzar con http:// o https://)</small>
+          </p>
+        </ion-text>
+
+        <!-- URL Contingencia -->
+        <ion-item lines="full" class="ion-margin-bottom ion-margin-top">
+          <ion-label position="stacked">
+            URL Contingencia
+          </ion-label>
+          <ion-input
+            formControlName="urlContingencia"
+            type="url"
+            placeholder="https://contingencia.ejemplo.com/api/"
+            clearInput>
+          </ion-input>
+        </ion-item>
+
+        <ion-text color="danger" *ngIf="configForm.get('urlContingencia')?.touched && configForm.get('urlContingencia')?.invalid">
+          <p class="ion-padding-start">
+            <small>Ingresa una URL válida (debe comenzar con http:// o https://)</small>
+          </p>
+        </ion-text>
+
+        <!-- Activar Contingencia -->
+        <ion-item lines="none" class="ion-margin-top">
+          <ion-label>Usar URL de Contingencia</ion-label>
+          <ion-toggle
+            formControlName="usarContingencia"
+            color="success"
+            slot="end">
+          </ion-toggle>
+        </ion-item>
+
+        <ion-text color="medium" *ngIf="configForm.get('usarContingencia')?.value">
+          <p class="ion-padding-start ion-margin-top">
+            <ion-icon name="information-circle-outline"></ion-icon>
+            <small> Las peticiones se realizarán a la URL de contingencia</small>
+          </p>
+        </ion-text>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Botones de acción -->
+    <ion-grid class="ion-margin-top">
+      <ion-row>
+        <ion-col size="12" size-md="6">
+          <ion-button expand="block" color="success" (click)="guardar()">
+            <ion-icon slot="start" name="save-outline"></ion-icon>
+            Guardar
+          </ion-button>
+        </ion-col>
+        <ion-col size="12" size-md="6">
+          <ion-button expand="block" color="medium"  (click)="cerrar()">
+            <ion-icon slot="start" name="close"></ion-icon>
+            cancelar
+          </ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </form>
+</ion-content>

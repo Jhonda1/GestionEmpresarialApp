@@ -1,56 +1,30 @@
+/* To learn more about this file see: https://angular.io/config/tsconfig. */
 {
   "compileOnSave": false,
   "compilerOptions": {
     "baseUrl": "./",
-    "paths": {
-      "@app/*": ["src/app/*"],
-      "@env/*": ["src/environments/*"],
-      "@assets/*": ["src/assets/*"],
-      "@shared/*": ["src/app/shared/*"],
-      "@core/*": ["src/app/core/*"]
-    },
     "outDir": "./dist/out-tsc",
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    
-    // 🔥 MODO ESTRICTO PROGRESIVO (activar gradualmente)
-    "strict": false,
-    "noImplicitAny": false,
-    "noImplicitReturns": true,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": false,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": false,
-    
-    // ⚡ OPTIMIZACIONES MODERNAS
     "sourceMap": true,
     "declaration": false,
+    "downlevelIteration": true,
     "experimentalDecorators": true,
     "moduleResolution": "bundler",
     "importHelpers": true,
-    
-    // 🎯 TARGETS COMPATIBLES CON ANDROID ANTIGUO
-    "target": "ES2017",
-    "module": "ES2022",
-    "lib": ["ES2018", "dom", "dom.iterable"],
-    
-    "useDefineForClassFields": false,
+    "target": "es2017",
+    "module": "es2020",
+    "lib": [
+      "es2017",
+      "dom",
+      "dom.iterable"
+    ],
     "skipLibCheck": true,
-    
-    // 📊 ANÁLISIS AVANZADO (para futuras mejoras)
-    "noImplicitThis": true
+    "skipDefaultLibCheck": true,
+    "useDefineForClassFields": false
   },
-  "exclude": ["node_modules", "dist"],
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,
-    "strictTemplates": true,
-    
-    // 🚀 OPTIMIZACIONES ANGULAR MODERNAS
-    "enableBlockSyntax": true,
-    "preserveWhitespaces": false,
-    "fullTemplateTypeCheck": true
+    "strictTemplates": true
   }
 }
