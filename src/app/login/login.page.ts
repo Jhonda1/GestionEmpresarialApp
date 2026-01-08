@@ -96,7 +96,6 @@ export class LoginPage implements OnInit {
 		if (this.formLogin.formulario.get('nit')?.valid) {
 			const nit = this.formLogin.formulario.get('nit')?.value;
 			this.loginService.validarNit(nit).then(respuesta => {
-				console.log(respuesta);
 				if (respuesta && respuesta.success) {
 					this.storageService.set('nit', nit);
 					this.storageService.set('crypt', respuesta.crypt);

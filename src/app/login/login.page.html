@@ -28,8 +28,11 @@
 			</div>
 
 			<form [formGroup]="formLogin.formulario" *ngIf="ingresoDocumento">
+				<ion-text class="ion-text-left ion-margin-top mensaje-usuario h6 mb-1" >
+					Ingrese el NIT de tu empresa para continuar.
+				</ion-text>
 				<ion-item class="ion-margin-top" lines="none">
-						<ion-icon class="ion-margin-end" slot="start" name="card-outline"></ion-icon>
+						<ion-icon class="ion-margin-end" slot="start" name="business-outline"></ion-icon>
 						<ion-input formControlName="nit" type="text" placeholder="Nit"></ion-input>
 				</ion-item>
 				<ion-grid class="ion-no-margin">
@@ -46,6 +49,9 @@
 			</form>
 
 			<form [formGroup]="formLogin.formulario" (ngSubmit)="login()" *ngIf="!ingresoDocumento" [class]="'animate__animated animate__faster ' + claseUsuario">
+				<ion-text class="ion-text-left ion-margin-top mensaje-usuario h6 mb-1" >
+					Ingrese sus credenciales para continuar.
+				</ion-text>
 				<ion-item class="ion-margin-top" lines="full">
 					<ion-icon class="ion-margin-end" name="person-outline"></ion-icon>
 					<ion-input formControlName="num_docu" type="text" placeholder="N°. Documento"></ion-input>
