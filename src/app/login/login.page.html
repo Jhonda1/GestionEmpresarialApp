@@ -2,17 +2,15 @@
 	<div [style]="obtenerFondo()">
 		<div class="configuracion" slot="settings" *ngIf="ingresoDocumento" [class.pressing]="isPressing">
 			<ion-text class="ion-text-end">
-				<img 
-					src="assets/icon/favicon.png" 
-					alt="Icon" 
-					(touchstart)="onPressStart($event)"
-					(touchend)="onPressEnd($event)"
-					(touchcancel)="onPressEnd($event)"
-					(touchmove)="onPressEnd($event)"
-					(mousedown)="onPressStart($event)"
-					(mouseup)="onPressEnd($event)"
-					(mouseleave)="onPressEnd($event)"
-					(contextmenu)="onPressEnd($event)">
+				   <img 
+					   src="assets/icon/favicon.png" 
+					   alt="Icon" 
+					   (touchstart)="onPressStart($event)"
+					   (touchend)="onPressEnd($event)"
+					   (mousedown)="onPressStart($event)"
+					   (mouseup)="onPressEnd($event)"
+					   (mouseleave)="onPressEnd($event)"
+					   (contextmenu)="onPressEnd($event)">
 			</ion-text>
 		</div>
 		<div class="content">
