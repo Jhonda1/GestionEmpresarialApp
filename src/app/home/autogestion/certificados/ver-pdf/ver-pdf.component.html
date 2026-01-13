@@ -16,10 +16,11 @@
 	
 	<!-- Para base64 -->
 	<div *ngIf="isBase64 && safeUrl" style="width: 100%; height: 100%;">
-		<pdf-viewer [src]="safeUrl" [rotation]="0" [show-all]="true" [fit-to-page]="false"
-			[zoom]="valorZoom" [zoom-scale]="'page-width'" [stick-to-page]="false" [external-link-target]="'blank'"
-			[autoresize]="true" [show-borders]="true" [render-text]="true" [original-size]="false"
-			style="width: 99vw; height: 100%;">
+		<pdf-viewer [src]="safeUrl" [rotation]="0" [show-all]="false" [fit-to-page]="true"
+			[zoom]="valorZoom" [zoom-scale]="'page-fit'" [stick-to-page]="true" [external-link-target]="'blank'"
+			[autoresize]="true" [show-borders]="false" [render-text]="true" [original-size]="false"
+			(onDocumentLoad)="onDocumentLoad($event)"
+			style="width: 100%; height: 100%;">
 		</pdf-viewer>
 	</div>
 	

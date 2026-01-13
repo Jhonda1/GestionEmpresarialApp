@@ -15,8 +15,8 @@
 
 			<ion-item>
 				<ion-label position="floating" color="dark">* Tipo Ausentismo</ion-label>
-				<ion-select formControlName="TipoAusentismoId" okText="Aceptar" cancelText="Cancelar"
-					[interfaceOptions]="{cssClass: 'modal-color'}" placeholder="Selecciona el Tipo de Ausentismo">
+			<ion-select formControlName="TipoAusentismoId" okText="Aceptar" cancelText="Cancelar"
+				[interfaceOptions]="selectTipoAusentismoOptions" placeholder="Selecciona el Tipo de Ausentismo">
 					<ion-select-option color="dark" *ngFor="let item of ausentimos" [value]="item.id">{{
 						item['nombre'] }}
 					</ion-select-option>
@@ -53,9 +53,9 @@
 			</ion-item>
 			
 			<ion-item>
-				<ion-label position="floating" color="dark">* Tipo Calculo</ion-label>
-				<ion-select formControlName="TipoCalculo" [(ngModel)]="selectedOption" (ionChange)="onSelectChange()" okText="Aceptar" cancelText="Cancelar" 
-					[interfaceOptions]="{cssClass: 'modal-color'}" placeholder="Selecciona el tipo de calculo">
+				<ion-label position="floating" color="dark">* Tipo de cálculo</ion-label>
+			<ion-select formControlName="TipoCalculo" [(ngModel)]="selectedOption" (ionChange)="onSelectChange()" okText="Aceptar" cancelText="Cancelar" 
+				[interfaceOptions]="selectTipoCalculoOptions" placeholder="Selecciona el tipo de cálculo">
 					<ion-select-option color="dark" *ngFor="let item of tipoCalculo;" [value]="item.valor">{{
 						item['titulo'] }}
 					</ion-select-option>
@@ -71,12 +71,12 @@
 			</ion-item>
 
 			<ion-item>
-				<ion-label position="floating" color="dark">Dias Ausentismo</ion-label>
+				<ion-label position="floating" color="dark">Días de ausentismo</ion-label>
 				<ion-input formControlName="Dias" color="dark" type="text" id="diasAusentismo" [(ngModel)]="diasAusentismo" readonly></ion-input>
 			</ion-item>
 
 			<ion-item>
-				<ion-label position="floating" color="dark">Horas Ausentismo</ion-label>
+				<ion-label position="floating" color="dark">Horas de ausentismo</ion-label>
 				<ion-input formControlName="horas" color="dark" type="text" id="horasAusentismo" (ionChange)="onHorasAusentismoChange($event)" readonly></ion-input>
 			</ion-item>
 

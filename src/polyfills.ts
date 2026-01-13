@@ -35,34 +35,94 @@ if (typeof PerformanceObserver === 'undefined') {
   console.log('GestionEmpresarial: Aplicando polyfill para PerformanceObserver (Android 9 compatibility)');
   (window as any).PerformanceObserver = class {
     private callback: Function;
+    private entryTypes: string[] = [];
+    
     constructor(callback: Function) {
       this.callback = callback;
     }
+    
     observe(options: any) {
-      if (!options || !options.entryTypes) {
-        console.warn('GestionEmpresarial PerformanceObserver polyfill: entryTypes is required but missing');
-        return;
+      try {
+        if (!options || !options.entryTypes) {
+          console.warn('GestionEmpresarial PerformanceObserver polyfill: entryTypes is required but missing');
+          return;
+        }
+        
+        // Almacenar los tipos de entrada solicitados
+        this.entryTypes = Array.isArray(options.entryTypes) ? options.entryTypes : [options.entryTypes];
+        console.log('GestionEmpresarial PerformanceObserver polyfill: observing', this.entryTypes);
+      } catch (error) {
+        console.error('GestionEmpresarial PerformanceObserver.observe error:', error);
       }
-      console.log('GestionEmpresarial PerformanceObserver polyfill: observe called with', options);
     }
+    
     disconnect() {
+      this.entryTypes = [];
       console.log('GestionEmpresarial PerformanceObserver polyfill: disconnect called');
+    }
+    
+    takeRecords() {
+      return [];
     }
   };
 } else {
-  // Parche para PerformanceObserver existente pero roto en Android 9
-  const originalObserve = PerformanceObserver.prototype.observe;
-  PerformanceObserver.prototype.observe = function(options: any) {
-    try {
-      if (!options || !options.entryTypes) {
-        console.warn('GestionEmpresarial: PerformanceObserver.observe called without entryTypes, skipping');
-        return;
+  // Parche para PerformanceObserver existente pero roto en Android 9/14
+  try {
+    const originalObserve = PerformanceObserver.prototype.observe;
+    const originalDisconnect = PerformanceObserver.prototype.disconnect;
+    const originalTakeRecords = PerformanceObserver.prototype.takeRecords;
+    
+    // Parche para observe
+    PerformanceObserver.prototype.observe = function(options: any) {
+      try {
+        if (!options || !options.entryTypes) {
+          console.warn('GestionEmpresarial: PerformanceObserver.observe called without entryTypes, skipping');
+          return;
+        }
+        
+        // Asegurar que entryTypes es un array
+        if (!Array.isArray(options.entryTypes)) {
+          options.entryTypes = [options.entryTypes];
+        }
+        
+        // Filtrar entryTypes válidos para evitar errores
+        const validTypes = ['navigation', 'resource', 'paint', 'measure', 'mark', 'longtask', 'largest-contentful-paint', 'layout-shift', 'first-input'];
+        options.entryTypes = options.entryTypes.filter((type: string) => validTypes.includes(type));
+        
+        if (options.entryTypes.length === 0) {
+          console.warn('GestionEmpresarial: No valid entryTypes found');
+          return;
+        }
+        
+        return originalObserve.call(this, options);
+      } catch (error) {
+        console.warn('GestionEmpresarial: PerformanceObserver.observe failed, using fallback:', error);
       }
-      return originalObserve.call(this, options);
-    } catch (error) {
-      console.warn('GestionEmpresarial: PerformanceObserver.observe failed, using fallback:', error);
+    };
+    
+    // Parche para disconnect
+    PerformanceObserver.prototype.disconnect = function() {
+      try {
+        return originalDisconnect?.call(this);
+      } catch (error) {
+        console.warn('GestionEmpresarial: PerformanceObserver.disconnect failed:', error);
+      }
+    };
+    
+    // Parche para takeRecords
+    if (originalTakeRecords) {
+      PerformanceObserver.prototype.takeRecords = function() {
+        try {
+          return originalTakeRecords.call(this);
+        } catch (error) {
+          console.warn('GestionEmpresarial: PerformanceObserver.takeRecords failed:', error);
+          return [];
+        }
+      };
     }
-  };
+  } catch (error) {
+    console.error('GestionEmpresarial: Failed to patch PerformanceObserver:', error);
+  }
 }
 
 /***************************************************************************************************

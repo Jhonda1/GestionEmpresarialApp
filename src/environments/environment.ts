@@ -6,6 +6,7 @@ export const environment = {
   production: false,
   
   // 🚀 API Configuration
+  urlContingencia:  'http://192.168.0.224:8016/dev/GestionEmp_Jhonda/',
   // urlBack: 'http://192.168.0.224:8016/dev/GestionEmp_Jhonda/', // dev
   // urlBack: 'http://144.217.75.8:8018/testing/GestionEmpresarial/', // testing
   // urlBack: 'http://144.217.75.8:8018/Release/GestionEmpresarial/', // Release

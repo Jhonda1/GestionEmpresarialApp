@@ -1,5 +1,4 @@
-import { Injectable, inject } from '@angular/core';
-import { StorageService } from './storage.service';
+import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 
 export interface UrlConfig {
@@ -12,42 +11,49 @@ export interface UrlConfig {
   providedIn: 'root'
 })
 export class UrlConfigService {
-  private storageService = inject(StorageService);
   private readonly CONFIG_KEY = 'url_config';
+  private readonly CONTINGENCIA_KEY = 'usar_contingencia';
 
   constructor() { }
 
   /**
-   * Obtiene la configuración de URLs del storage o valores por defecto
+   * Obtiene la configuración de URLs del localStorage o valores por defecto
+   * ✅ Síncrono y persiste entre sesiones (no se borra en logout)
    */
-  async getConfig(): Promise<UrlConfig> {
+  getConfig(): UrlConfig {
     try {
-      const savedConfig = await this.storageService.get(this.CONFIG_KEY);
+      const usarContingencia = localStorage.getItem(this.CONTINGENCIA_KEY) === 'true';
+      const savedConfig = localStorage.getItem(this.CONFIG_KEY);
+      
       if (savedConfig) {
-        return JSON.parse(savedConfig);
+        const config = JSON.parse(savedConfig);
+        return {
+          ...config,
+          usarContingencia
+        };
       }
     } catch (error) {
-      // Silenciar el error si es porque el storage no está inicializado
-      // Solo loggear si es otro tipo de error
-      if (error instanceof Error && !error.message.includes('Database not created')) {
-        console.error('Error al obtener configuración de URLs:', error);
-      }
+      console.error('Error al obtener configuración de URLs:', error);
     }
 
-    // Valores por defecto desde environment
     return {
       urlPrincipal: environment.urlBack,
-      urlContingencia: '',
-      usarContingencia: false
+      urlContingencia: environment.urlContingencia,
+      usarContingencia: localStorage.getItem(this.CONTINGENCIA_KEY) === 'true'
     };
   }
 
   /**
-   * Guarda la configuración de URLs en el storage
+   * Guarda la configuración de URLs en localStorage
+   * ✅ Persiste entre sesiones (no se borra en logout)
    */
-  async saveConfig(config: UrlConfig): Promise<void> {
+  saveConfig(config: UrlConfig): void {
     try {
-      await this.storageService.set(this.CONFIG_KEY, JSON.stringify(config));
+      localStorage.setItem(this.CONFIG_KEY, JSON.stringify({
+        urlPrincipal: config.urlPrincipal,
+        urlContingencia: config.urlContingencia
+      }));
+      localStorage.setItem(this.CONTINGENCIA_KEY, config.usarContingencia ? 'true' : 'false');
     } catch (error) {
       console.error('Error al guardar configuración de URLs:', error);
       throw error;
@@ -57,23 +63,18 @@ export class UrlConfigService {
   /**
    * Obtiene la URL activa actual (principal o contingencia)
    */
-  async getActiveUrl(): Promise<string> {
-    const config = await this.getConfig();
-    if (config.usarContingencia && config.urlContingencia) {
-      return config.urlContingencia;
+  getActiveUrl(): string {
+    if (localStorage.getItem(this.CONTINGENCIA_KEY) === 'true') {
+      return environment.urlContingencia;
     }
-    return config.urlPrincipal || environment.urlBack;
+    return environment.urlBack;
   }
 
   /**
    * Reinicia la configuración a valores por defecto
    */
-  async resetConfig(): Promise<void> {
-    const defaultConfig: UrlConfig = {
-      urlPrincipal: environment.urlBack,
-      urlContingencia: '',
-      usarContingencia: false
-    };
-    await this.saveConfig(defaultConfig);
+  resetConfig(): void {
+    localStorage.removeItem(this.CONFIG_KEY);
+    localStorage.removeItem(this.CONTINGENCIA_KEY);
   }
 }

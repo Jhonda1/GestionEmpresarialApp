@@ -39,7 +39,7 @@
 			<ion-item>
 				<ion-label position="floating" color="dark">* Residencia Principal</ion-label>
 				<ion-select formControlName="principal" okText="Aceptar" cancelText="Cancelar"
-					[interfaceOptions]="{cssClass: 'modal-color'}" placeholder="Selecciona principal">
+					[interfaceOptions]="selectResidenciaPrincipalOptions" placeholder="Selecciona principal">
 					<ion-select-option color="dark" *ngFor="let item of ppal;" [value]="item.valor">{{
 						item.titulo }}
 					</ion-select-option>

@@ -51,6 +51,10 @@ export class AgregarSolicitarPermisosComponent implements OnInit {
 	horasAusentismo: string = '';
 	total_horas: number = 0;
 
+	// InterfaceOptions para cada select con header automático
+	selectTipoAusentismoOptions = { cssClass: 'modal-color', header: 'Tipo Ausentismo' };
+	selectTipoCalculoOptions = { cssClass: 'modal-color', header: 'Tipo de cálculo' };
+
 	// Inyección del nuevo servicio de validación
 	private validacionPermisosService = inject(ValidacionPermisosService);
 

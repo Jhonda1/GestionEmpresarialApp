@@ -32,16 +32,12 @@ export class PeticionService {
 	}
 
 	/**
-	 * Obtiene la URL activa actualizada en tiempo real
+	 * Obtiene la URL activa actualizada en tiempo real (síncrono)
+	 * ✅ Verifica si está activa la contingencia y retorna la URL correspondiente
 	 */
-	private async getActiveUrl(): Promise<string> {
-		try {
-			const activeUrl = await this.urlConfigService.getActiveUrl();
-			return activeUrl + 'index.php/API/';
-		} catch (error) {
-			// Si hay error, usar la URL por defecto de environment sin loggear
-			return environment.urlBack + 'index.php/API/';
-		}
+	private getActiveUrl(): string {
+		const baseUrl = this.urlConfigService.getActiveUrl();
+		return baseUrl + 'index.php/API/';
 	}
 
 	async encriptar(datos: any) {
@@ -452,13 +448,13 @@ export class PeticionService {
 		}
 	}
 
-	private async construirUrl(controlador: string): Promise<string> {
-		const baseUrl = await this.getActiveUrl();
-		return baseUrl + this.categoria + controlador;
+	private construirUrl(controlador: string): Promise<string> {
+		const baseUrl = this.getActiveUrl();
+		return Promise.resolve(baseUrl + this.categoria + controlador);
 	}
 
 	async validarNit(NIT: any) {
-		const baseUrl = await this.getActiveUrl();
+		const baseUrl = this.getActiveUrl();
 		return await firstValueFrom(this.ejecutarPeticion('post', `${baseUrl}Login/ValidarNIT`, { NIT })).then(resp => resp, console.error);
 	}
 
@@ -476,7 +472,7 @@ export class PeticionService {
 		const Conexion = await this.storageService.get('conexion').then(resp => resp);
 		const NIT = await this.storageService.get('nit').then(resp => resp);
 		const headers = new HttpHeaders({ NIT, Conexion, Token: '0' });
-		const baseUrl = await this.getActiveUrl();
+		const baseUrl = this.getActiveUrl();
 		return await firstValueFrom(this.ejecutarPeticion('post', `${baseUrl}Login/ingreso`, data, headers)).then(resp => resp, console.error);
 	}
 
@@ -502,7 +498,7 @@ export class PeticionService {
 			RASTREO: FuncionesGenerales.rastreo('Salida del Sistema Gestión Empresarial', 'Salida Sistema'),
 		}
 		const headers = new HttpHeaders({ Conexion, Token: usuario.IngresoId });
-		const baseUrl = await this.getActiveUrl();
+		const baseUrl = this.getActiveUrl();
 		return await firstValueFrom(this.ejecutarPeticion('post', `${baseUrl}Login/cierre`, data, headers)).then(resp => this.desencriptar(resp)).catch(error => {
 			this.validarAlertaError(error);
 		});

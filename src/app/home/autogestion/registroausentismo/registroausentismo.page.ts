@@ -114,12 +114,19 @@ export class registroausentismoPage implements OnInit, OnDestroy {
 	guardarAusentismoPermiso = false;
 	permisoRegistrar = false; // 6001009 - Registro de Ausentismo
 	divCie10 = {};
-	selectedEnfermedadesText = '0 Items';
+	selectedEnfermedadesText = '0 Ítems';
 	selectedEnfermedades: string[] = [];
 	search$ = new Subject<string>();
 
 	datosFormulario!: { formulario: RxFormGroup, propiedades: Array<string> };
 	datosFormularioEnvio!: { formulario: RxFormGroup, propiedades: Array<string> };
+
+	// InterfaceOptions para cada select con header automático
+	selectAreaOptions = { cssClass: 'modal-color', header: 'Área' };
+	selectTipoAusentismoOptions = { cssClass: 'modal-color', header: 'Tipo Ausentismo' };
+	selectEscalaOptions = { cssClass: 'modal-color', header: 'Escala' };
+	selectTipoCalculoOptions = { cssClass: 'modal-color', header: 'Tipo de cálculo' };
+
 
 	constructor(
 		private datosEmpleadosService: DatosEmpleadosService,
@@ -411,7 +418,7 @@ export class registroausentismoPage implements OnInit, OnDestroy {
 	  
 		  this.obtenerInformacion('guardarAnexo', 'guardarA', datosEnviar);
 		  this.selectedEnfermedades = [];
-		  this.selectedEnfermedadesText = '0 Items';
+		  this.selectedEnfermedadesText = '0 Ítems';
 		} else {
 		  this.notificacionService.notificacion('Diligencia todos los campos obligatorios.');
 		}
@@ -455,6 +462,6 @@ export class registroausentismoPage implements OnInit, OnDestroy {
 
 	// Formatear el texto para mostrar los ítems seleccionados
 	private formatData(data: string[]): string {
-		return data.length > 0 ? `${data.length} items seleccionados` : 'No hay selección';
+		return data.length > 0 ? `${data.length} ítems seleccionados` : 'No hay selección';
 	}
 }

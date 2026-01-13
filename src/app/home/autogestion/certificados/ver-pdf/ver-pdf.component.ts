@@ -24,6 +24,8 @@ export class VerPdfComponent implements OnInit {
 	valorZoom: number = 1;
 	safeUrl: SafeResourceUrl | string = '';
 	isBase64: boolean = false;
+	totalPages: number = 0;
+	currentPage: number = 1;
 
 	constructor(private modalController: ModalController, private sanitizer: DomSanitizer) { }
 
@@ -56,6 +58,21 @@ export class VerPdfComponent implements OnInit {
 
 	cerrarModal(datos?: any) {
 		this.modalController.dismiss(datos);
+	}
+
+	/**
+	 * Detecta cuando el PDF se carga y obtiene información
+	 * para evitar mostrar páginas en blanco
+	 */
+	onDocumentLoad(event: any) {
+		try {
+			if (event && event.pagesCount) {
+				this.totalPages = event.pagesCount;
+				console.log(`PDF cargado con ${this.totalPages} páginas`);
+			}
+		} catch (error) {
+			console.error('Error al obtener información del PDF:', error);
+		}
 	}
 
 }

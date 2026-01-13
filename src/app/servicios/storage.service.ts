@@ -66,7 +66,6 @@ export class StorageService {
 	async limpiarTodo(logout?: boolean) {
 		try {			
 			const tema = await this.get('theme');
-			const nit = await this.get('nit'); // Siempre preservar el NIT
 			
 			// 🔥 IMPORTANTE: En Android/iOS, clear() puede ser asíncrono
 			// Debemos esperar a que termine
@@ -83,11 +82,6 @@ export class StorageService {
 			// Restaurar configuraciones básicas con await explícito
 			if (tema) {
 				await this.storage.set('theme', tema);
-			}
-			
-			// Siempre restaurar el NIT para evitar errores de login
-			if (nit) {
-				await this.storage.set('nit', nit);
 			}
 			
 			// 🔥 IMPORTANTE: Resetear la foto de sesión a la imagen por defecto

@@ -14,7 +14,7 @@
 				</ion-button>
 			</ion-buttons>
 		</ion-toolbar>
-		<ion-img  [src]="urlFotoUsuario" (error)="onImageError($event)" ></ion-img>
+		<img [src]="urlFotoUsuario" (error)="onImageError($event)" class="menu-photo" alt="Foto de perfil">
 		<ion-text class="w-100" color="dark">
 			<h4 class="ion-margin text-truncate ion-text-center">{{ datosUsuario?.nombre || 'Usuario' }}</h4>
 			<p class="ion-no-margin  ion-text-center">{{ datosUsuario?.email || '' }}</p>
@@ -31,7 +31,7 @@
 				</ion-item-divider>
 				<!-- Filtrar hijos por permisos -->
 				<ion-item 
-					(click)="toggleMenu(); irPagina(hijo.path)" 
+				(click)="irPagina(hijo.path)" 
 					lines="full" 
 					*ngFor="let hijo of filtrarHijosPorPermisos(men['hijos']);">
 					<ion-icon slot="start" [name]="hijo.icon" color="dark"></ion-icon>
@@ -41,7 +41,7 @@
 		</ion-list>
 	</ion-content>
 	<ion-footer class="ion-no-border">
-    	<ion-toolbar (click)="toggleMenu(true); SincronizarPermisos();">
+    	<ion-toolbar (click)="cerrarYSincronizar();">
 			<ion-buttons slot="start">
 				<ion-button>
 					<ion-icon slot="icon-only" name="sync"></ion-icon>
@@ -50,7 +50,7 @@
 			<ion-title class="ion-no-padding" [ngClass]="size" style="cursor: pointer;">Sincronizar Permisos</ion-title>
 		</ion-toolbar>
 
-    	<ion-toolbar (click)="toggleMenu(true); confirmarCambioClave();">
+    	<ion-toolbar (click)="cerrarYCambiarClave();">
 			<ion-buttons slot="start">
 				<ion-button>
 					<ion-icon slot="icon-only" name="lock-open-outline"></ion-icon>
@@ -59,7 +59,7 @@
 			<ion-title class="ion-no-padding" [ngClass]="size" style="cursor: pointer;">Modificar Contraseña</ion-title>
 		</ion-toolbar>
 
-		<ion-toolbar (click)="toggleMenu(true); confirmarCerrarSesion();">
+		<ion-toolbar (click)="confirmarCerrarSesion();">
 			<ion-buttons slot="start">
 				<ion-button>
 					<ion-icon slot="icon-only" name="power"></ion-icon>

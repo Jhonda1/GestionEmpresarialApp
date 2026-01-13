@@ -35,6 +35,7 @@ export class AgregarResidenciaComponent implements OnInit {
 	datosSeleccionados: { [key: string]: any } = {};
 	llaveActual: string = '';
 	rutaGeneral: string = 'Autogestion/cDatosBasicos/';
+	selectResidenciaPrincipalOptions = { cssClass: 'modal-color', header: 'Residencia Principal' };
 
 	constructor(
 		private modalController: ModalController,

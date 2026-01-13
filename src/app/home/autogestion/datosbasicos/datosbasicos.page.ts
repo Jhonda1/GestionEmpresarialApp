@@ -148,6 +148,8 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 		if (this.fotoDePerfil) {
 			this.urlFotoUsuario = this.fotoDePerfil;
 			this.photoSyncService.notifyPhotoUpdate(this.fotoDePerfil);
+			//  Forzar actualización inmediata en el menú
+			this.photoSyncService.notifyPhotoUpdate(this.fotoDePerfil);
 			// Actualizar storage de sesión para sincronizar con menu component
 			this.storage.set('urlFotoUsuarioSesion', this.fotoDePerfil);
 			return;
@@ -157,6 +159,8 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 		if (this.datosUsuario?.foto && this.datosUsuario?.validaFoto === '1') {
 			if (this.datosUsuario.foto.startsWith('data:image')) {
 				this.urlFotoUsuario = this.datosUsuario.foto;
+				this.photoSyncService.notifyPhotoUpdate(this.datosUsuario.foto);
+				//  Forzar actualización inmediata en el menú
 				this.photoSyncService.notifyPhotoUpdate(this.datosUsuario.foto);
 				// Actualizar storage de sesión para sincronizar con menu component
 				this.storage.set('urlFotoUsuarioSesion', this.datosUsuario.foto);
@@ -214,6 +218,8 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 					if (!this.fotoDePerfil && (!this.datosUsuario?.validaFoto || this.datosUsuario.validaFoto !== '1')) {
 						this.urlFotoUsuario = urlSegura;
 						this.photoSyncService.notifyPhotoUpdate(urlSegura);
+						//  Forzar actualización inmediata en el menú
+						this.photoSyncService.notifyPhotoUpdate(urlSegura);
 						
 						// Actualizar storage de sesión para sincronizar con menu component
 						this.storage.set('urlFotoUsuarioSesion', urlSegura);
@@ -223,6 +229,8 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 				(error) => {
 					console.error('Error obteniendo imagen segura:', error);
 					this.urlFotoUsuario = 'assets/images/nofoto.png';
+					this.photoSyncService.notifyPhotoUpdate('assets/images/nofoto.png');
+					//  Forzar actualización inmediata en el menú incluso si hay error
 					this.photoSyncService.notifyPhotoUpdate('assets/images/nofoto.png');
 					// Actualizar storage de sesión para sincronizar con menu component
 					this.storage.set('urlFotoUsuarioSesion', 'assets/images/nofoto.png');
@@ -234,6 +242,8 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 
 		// PRIORIDAD 4: Foto por defecto
 		this.urlFotoUsuario = 'assets/images/nofoto.png';
+		this.photoSyncService.notifyPhotoUpdate('assets/images/nofoto.png');
+		//  Forzar actualización inmediata en el menú
 		this.photoSyncService.notifyPhotoUpdate('assets/images/nofoto.png');
 		// Actualizar storage de sesión para sincronizar con menu component
 		this.storage.set('urlFotoUsuarioSesion', 'assets/images/nofoto.png');
@@ -379,7 +389,7 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 		
 		try {
 			
-			// 🔥 VERIFICAR si hay un nuevo login para forzar limpieza
+			//  VERIFICAR si hay un nuevo login para forzar limpieza
 			const nuevoLogin = await this.storage.get('_nuevoLogin');
 			if (nuevoLogin) {				
 				// Limpiar TODOS los datos anteriores
@@ -401,7 +411,7 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 			// Siempre obtener datos del empleado (ya no validamos permisos aquí)
 			await this.obtenerDatosEmpleado();
 			
-			// 🔥 IMPORTANTE: Actualizar la foto DESPUÉS de obtener los datos del usuario
+			//  IMPORTANTE: Actualizar la foto DESPUÉS de obtener los datos del usuario
 			this.actualizarUrlFoto();
 			
 			this.menu.suscripcion().pipe(
@@ -649,8 +659,15 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 						const userEncrypted = await this.loginService.encriptar(userDecrypted);					
 						await this.storage.set('usuario', JSON.stringify(userEncrypted));
 						
-						// CLAVE: También actualizar el storage de sesión para que el menu component se entere inmediatamente
+						// Guardar también en storage de sesión para acceso rápido
 						await this.storage.set('urlFotoUsuarioSesion', foto);
+						
+						// CRÍTICO PARA ANDROID 14: Esperar a que sincronice el storage
+						// antes de notificar al menú
+						await new Promise(resolve => setTimeout(resolve, 50));
+						
+						// Notificar al servicio que hubo cambio de foto
+						this.photoSyncService.notifyPhotoUpdate(foto);
 						
 					} catch (storageError) {
 						console.error('Error manejando storage:', storageError);
@@ -776,17 +793,23 @@ export class DatosbasicosPage implements OnInit, OnDestroy {
 								this.secureImageService.getSecureImageUrl(urlCompleta).subscribe(
 									(urlSegura) => {
 										this.storage.set('urlFotoUsuarioSesion', urlSegura);
+										//  FORZAR ACTUALIZACIÓN INMEDIATA: Notificar al menú que actualice la foto
+										this.photoSyncService.notifyPhotoUpdate(urlSegura);
 										this.isLoadingSecureImage = false;
 									},
 									(error) => {
 										console.error('[obtenerDatosEmpleado] - Error:', error);
 										this.storage.set('urlFotoUsuarioSesion', 'assets/images/nofoto.png');
+										//  FORZAR ACTUALIZACIÓN: Notificar al menú incluso si hay error
+										this.photoSyncService.notifyPhotoUpdate('assets/images/nofoto.png');
 										this.isLoadingSecureImage = false;
 									}
 								);
 								} else {
 									// Si viene como base64 del servidor, guardarlo directamente
 									this.storage.set('urlFotoUsuarioSesion', datos.foto);
+									//  FORZAR ACTUALIZACIÓN INMEDIATA: Notificar al menú que actualice la foto
+									this.photoSyncService.notifyPhotoUpdate(datos.foto);
 								}
 							}
 							

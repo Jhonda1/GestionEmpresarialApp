@@ -26,6 +26,8 @@ export class AgregarCorreoComponent implements OnInit {
 	datosCorreo!: { formulario: RxFormGroup, propiedades: Array<string> };
 	ppal = Constantes.ppal;
 	datosSeleccionados: { [key: string]: any } = {};
+	selectCorreoPrincipalOptions = { cssClass: 'modal-color', header: 'Correo Principal' };
+
 
 	constructor(
 		private modalController: ModalController,

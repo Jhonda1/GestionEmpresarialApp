@@ -26,6 +26,8 @@ export class AgregarTelefonoComponent implements OnInit {
 	datosTelefono!: { formulario: RxFormGroup, propiedades: Array<string> };
 	ppal = Constantes.ppal;
 	datosSeleccionados: { [key: string]: any } = {};
+	selectTelefonoPrincipalOptions = { cssClass: 'modal-color', header: 'Telefono Principal' };
+
 
 	constructor(
 		private modalController: ModalController,

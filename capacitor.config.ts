@@ -8,12 +8,15 @@ const config: CapacitorConfig = {
     allowMixedContent: true,
     // Configuraciones adicionales para Android
     webContentsDebuggingEnabled: true,
-    useLegacyBridge: false
+    useLegacyBridge: false,
+    // CRÍTICO PARA ANDROID 14: Permitir mixed content explícitamente
+    // Esto permite que una app HTTPS cargue imágenes de servidores HTTP
+    // En Android 14+, esto es bloqueado por defecto por seguridad
   },
   server: {
     cleartext: true,
     // Configuración adicional para desarrollo
-    androidScheme: 'https', // HTTPS para compatibilidad, allowMixedContent permite backend HTTP
+    androidScheme: 'http', // Cambiar a HTTP para evitar mixed content en Android 14
     iosScheme: 'ionic'
   }
 };

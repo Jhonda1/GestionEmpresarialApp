@@ -23,6 +23,14 @@
 				width: 40%;
 				min-height: 100px;
 			}
+			// Estilos para img regular (compatibilidad Android 14)
+			img.menu-photo {
+				width: 40%;
+				min-height: 100px;
+				max-height: 150px;
+				object-fit: cover;
+				border-radius: 8px;
+			}
 		}
 	}
 	ion-content {

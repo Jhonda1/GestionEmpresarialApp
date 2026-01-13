@@ -52,7 +52,7 @@ export class MenuComponent implements OnInit, OnDestroy {
 		{
 			modulo: 'AUTOGEST', 
 			icon: '', 
-			title: 'Auto Gestión', 
+			title: 'Autogestión', 
 			path: '', 
 			permisoId: 600100, // Permiso principal del menú
 			hijos: [{
@@ -158,7 +158,12 @@ export class MenuComponent implements OnInit, OnDestroy {
 				this.urlFotoUsuario = this.datosUsuario.foto;
 				// Sincronizar con storage de sesión
 				this.storageService.set('urlFotoUsuarioSesion', this.datosUsuario.foto);
-				this.cdr.detectChanges();
+				
+				// CRÍTICO PARA ANDROID 14: Forzar detectChanges después de un micro-delay
+				// Android 14 necesita tiempo para procesar datos URI de imágenes
+				setTimeout(() => {
+					this.cdr.detectChanges();
+				}, 50);
 			} else {
 				// Es una ruta del servidor, usar servicio seguro
 				let rutaFoto = this.datosUsuario.foto;
@@ -211,43 +216,34 @@ export class MenuComponent implements OnInit, OnDestroy {
 	private configurarListenerFoto() {
 		// Escuchar notificaciones del PhotoSyncService
 		this.photoSyncService.photoUpdated$.pipe(
-			takeUntil(this.destroy$),
-			filter(url => url !== '' && url !== this.urlFotoUsuario)
-		).subscribe(newPhotoUrl => {
-			this.urlFotoUsuario = newPhotoUrl;
-			this.cdr.detectChanges();
-		});
-
-		// Verificar cambios en el storage cada 1.5 segundos (más responsivo)
-		interval(1500).pipe(
 			takeUntil(this.destroy$)
-		).subscribe(() => {
-			this.verificarCambiosFoto();
+		).subscribe(newPhotoUrl => {
+			if (newPhotoUrl && newPhotoUrl !== 'assets/images/nofoto.png') {
+				this.urlFotoUsuario = newPhotoUrl;
+				
+				// CRÍTICO PARA ANDROID 14: Detectar cambios inmediatamente y luego después de un delay
+				this.cdr.detectChanges();
+				
+				// Ejecutar detectChanges nuevamente después de un micro-delay para Android 14
+				setTimeout(() => {
+					this.cdr.detectChanges();
+				}, 100);
+			}
 		});
 
-		// También escuchar cambios del servicio de menú
+		// También escuchar cambios del servicio de menú (logout/login)
 		this.cambioMenuService.suscripcion().pipe(
 			takeUntil(this.destroy$)
 		).subscribe(() => {
-			// 🔥 IMPORTANTE: Resetear TODOS los datos del usuario anterior
-			// Esto previene que datos del usuario anterior persistan en memoria
 			this.photoSyncService.reset();
 			this.urlFotoUsuario = 'assets/images/nofoto.png';
-			this.datosUsuario = {}; // Limpiar datos de usuario anterior
-			this.SEGUR = []; // Limpiar permisos
+			this.datosUsuario = {};
+			this.SEGUR = [];
 			
-			// Re-obtener usuario completo cuando se notifique un cambio (e.g., nuevo login)
 			this.obtenerUsuario().then(() => {
-				// Después de recargar datos del usuario, actualizar foto y permisos
-				this.actualizarFotoDesdeUsuario();
-				this.cdr.detectChanges(); // Forzar detección de cambios para actualizar permisos
-				
-				// Verificar si el usuario sigue teniendo permisos para la ruta actual
+				this.inicializarFotoUsuario();
+				this.cdr.detectChanges();
 				this.verificarPermisosRutaActual();
-				
-				setTimeout(() => {
-					this.verificarCambiosFoto();
-				}, 300); // Reducir tiempo de espera
 			});
 		});
 	}
@@ -257,29 +253,12 @@ export class MenuComponent implements OnInit, OnDestroy {
 	 */
 	private async verificarCambiosFoto() {
 		try {
-			// PRIORIDAD 1: Verificar si hay una nueva foto en el storage de sesión
+			// Verificar si hay una nueva foto en el storage de sesión
 			const urlSesion = await this.storageService.get('urlFotoUsuarioSesion');
 			
 			if (urlSesion && urlSesion !== this.urlFotoUsuario && urlSesion !== 'assets/images/nofoto.png') {
 				this.urlFotoUsuario = urlSesion;
 				this.cdr.detectChanges();
-				return;
-			}
-
-			// PRIORIDAD 2: También verificar cambios en los datos del usuario
-			const userStorage = await this.storageService.get('usuario');
-			if (userStorage) {
-				const userParsed = JSON.parse(userStorage);
-				const userDecrypted = await this.loginService.desencriptar(userParsed);
-				
-				// Validar que datosUsuario no esté vacío antes de intentar asignar propiedades
-				if (userDecrypted?.foto && userDecrypted.foto !== this.datosUsuario?.foto) {
-					// Solo actualizar si datosUsuario tiene al menos un id (usuario válido cargado)
-					if (this.datosUsuario && Object.keys(this.datosUsuario).length > 0) {
-						this.datosUsuario.foto = userDecrypted.foto;
-						this.actualizarFotoDesdeUsuario();
-					}
-				}
 			}
 		} catch (error) {
 			console.error('Menu - Error verificando cambios de foto:', error);
@@ -496,8 +475,17 @@ export class MenuComponent implements OnInit, OnDestroy {
 	}
 
 	irPagina(ruta: string) {
-		this.cambioMenuService.cambio(ruta);
-		this.router.navigateByUrl(ruta);
+		// Cerrar el menú y agregar un pequeño delay antes de navegar para evitar conflictos de eventos touch
+		this.menuController.close('first').then(() => {
+			setTimeout(() => {
+				this.cambioMenuService.cambio(ruta);
+				this.router.navigateByUrl(ruta);
+			}, 100);
+		}).catch(() => {
+			// Si el menú no se abre, navegar de todas formas
+			this.cambioMenuService.cambio(ruta);
+			this.router.navigateByUrl(ruta);
+		});
 	}
 
 	/**
@@ -563,11 +551,24 @@ export class MenuComponent implements OnInit, OnDestroy {
 				this.cargadorService.presentar().then(resp => {
 					this.loginService.cerrarSesionUser().then(respc => {
 						if (respc.valido === 1) {
-							this.storageService.limpiarTodo(true);
+							// Cerrar el menú primero para evitar conflictos de eventos touch
+							this.menuController.close('first').then(() => {
+								// Agregar un pequeño delay para permitir que los eventos touch se procesen completamente
+								setTimeout(() => {
+									this.storageService.limpiarTodo(true);
+									this.cargadorService.ocultar();
+								}, 300);
+							}).catch(() => {
+								// Si hay error cerrando el menú, ejecutar de todas formas
+								setTimeout(() => {
+									this.storageService.limpiarTodo(true);
+									this.cargadorService.ocultar();
+								}, 300);
+							});
 						} else {
 							this.notificacionesService.notificacion(respc.mensaje);
+							this.cargadorService.ocultar();
 						}
-						this.cargadorService.ocultar();
 					}).catch(error => {
 						this.notificacionesService.notificacion('ha ocurrido un error');
 						this.cargadorService.ocultar();
@@ -580,9 +581,30 @@ export class MenuComponent implements OnInit, OnDestroy {
 	confirmarCambioClave(extra = 0) {
 		this.notificacionesService.alerta('¿Esta seguro de cambiar la clave?').then(respuesta => {
 			if (respuesta.role === 'aceptar') {
-				this.router.navigateByUrl(`forget-password/${this.formLogin.formulario.get('num_docu')?.value || '0'}/${extra}`);
+				// Cerrar el menú primero con delay antes de navegar
+				this.menuController.close('first').then(() => {
+					setTimeout(() => {
+						this.router.navigateByUrl(`forget-password/${this.formLogin.formulario.get('num_docu')?.value || '0'}/${extra}`);
+					}, 100);
+				});
 			}
 		}, console.error);
+	}
+
+	cerrarYCambiarClave() {
+		this.menuController.close('first').then(() => {
+			setTimeout(() => {
+				this.confirmarCambioClave();
+			}, 100);
+		});
+	}
+
+	cerrarYSincronizar() {
+		this.menuController.close('first').then(() => {
+			setTimeout(() => {
+				this.SincronizarPermisos();
+			}, 100);
+		});
 	}
 
 	async SincronizarPermisos() {

@@ -27,7 +27,7 @@
 
 			<form [formGroup]="formLogin.formulario" *ngIf="ingresoDocumento">
 				<ion-text class="ion-text-left ion-margin-top mensaje-usuario h6 mb-1" >
-					Ingrese el NIT de tu empresa para continuar.
+					Ingresa el NIT de tu empresa para continuar.
 				</ion-text>
 				<ion-item class="ion-margin-top" lines="none">
 						<ion-icon class="ion-margin-end" slot="start" name="business-outline"></ion-icon>
@@ -48,7 +48,7 @@
 
 			<form [formGroup]="formLogin.formulario" (ngSubmit)="login()" *ngIf="!ingresoDocumento" [class]="'animate__animated animate__faster ' + claseUsuario">
 				<ion-text class="ion-text-left ion-margin-top mensaje-usuario h6 mb-1" >
-					Ingrese sus credenciales para continuar.
+					Ingresa tus credenciales para continuar.
 				</ion-text>
 				<ion-item class="ion-margin-top" lines="full">
 					<ion-icon class="ion-margin-end" name="person-outline"></ion-icon>
